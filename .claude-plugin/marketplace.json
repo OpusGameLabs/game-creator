@@ -1,0 +1,41 @@
+{
+  "name": "game-creator",
+  "owner": {
+    "name": "OpusGameLabs"
+  },
+  "metadata": {
+    "description": "Opinionated game development toolkit for building browser games with Three.js (3D) and Phaser (2D), including visual design, audio engineering, QA testing, and Play.fun monetization",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "game-creator",
+      "source": ".",
+      "description": "Build 2D and 3D browser games with opinionated architecture, visual polish, procedural audio, and automated QA",
+      "version": "1.0.0",
+      "author": {
+        "name": "OpusGameLabs"
+      },
+      "homepage": "https://github.com/OpusGameLabs/game-creator",
+      "repository": "https://github.com/OpusGameLabs/game-creator",
+      "license": "MIT",
+      "keywords": [
+        "games",
+        "gamedev",
+        "threejs",
+        "phaser",
+        "3d",
+        "2d",
+        "browser-games",
+        "playfun",
+        "monetization",
+        "game-design",
+        "game-audio",
+        "strudel",
+        "playwright",
+        "qa"
+      ],
+      "category": "development"
+    }
+  ]
+}
