@@ -1,0 +1,9 @@
+{
+  "name": "game-creator",
+  "description": "Opinionated game development plugin for building 3D (Three.js) and 2D (Phaser) browser games with event-driven architecture, centralized state, and Play.fun monetization",
+  "version": "1.0.0",
+  "author": {
+    "name": "OpusGameLabs"
+  },
+  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "playfun", "monetization"]
+}

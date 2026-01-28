@@ -1,0 +1,23 @@
+import { BIRD_CONFIG } from './Constants.js';
+
+class GameState {
+  constructor() {
+    this.reset();
+  }
+
+  reset() {
+    this.score = 0;
+    this.bestScore = this.bestScore || 0;
+    this.started = false;
+    this.gameOver = false;
+  }
+
+  addScore() {
+    this.score += 1;
+    if (this.score > this.bestScore) {
+      this.bestScore = this.score;
+    }
+  }
+}
+
+export const gameState = new GameState();
