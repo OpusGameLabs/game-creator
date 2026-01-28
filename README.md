@@ -7,8 +7,8 @@ An opinionated Claude Code plugin for building browser games. Scaffolds, designs
 ## Quick Start
 
 ```bash
-# Install the plugin
-claude plugin add /path/to/game-creator
+# Install the plugin inside of claude
+/plugin marketplace add OpusGameLabs/game-creator
 
 # Scaffold a new 2D game
 /game-creator:new-game 2d my-game
