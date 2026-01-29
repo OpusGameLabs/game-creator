@@ -30,6 +30,9 @@ commands/
   review-game.md           # Architecture review
 agents/
   game-reviewer.md         # Code review agent
+  game-creator.md          # Autonomous game creation pipeline
+  game-qa-runner.md        # Test execution and failure fixing
+  game-deploy.md           # Deployment automation
 examples/
   flappy-bird/             # Complete example game (see below)
 ```

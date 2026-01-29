@@ -95,11 +95,14 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 | `/game-creator:qa-game [path]` | Add Playwright automated tests |
 | `/game-creator:review-game [path]` | Review architecture, performance, code quality |
 
-## Agent
+## Agents
 
 | Agent | Description |
 |-------|-------------|
 | `game-reviewer` | Reviews codebases for architecture compliance, performance, and monetization readiness |
+| `game-creator` | Autonomous end-to-end game creation pipeline with build/test gates |
+| `game-qa-runner` | Runs tests, diagnoses failures, fixes game code, and re-runs until green |
+| `game-deploy` | Deploys games to GitHub Pages, Vercel, or itch.io with pre/post validation |
 
 ## Example: Flappy Bird
 
