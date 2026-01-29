@@ -1,42 +1,37 @@
-// Wires EventBus game events to AudioManager playback
 import { eventBus, Events } from '../core/EventBus.js';
 import { audioManager } from './AudioManager.js';
 import { menuTheme, gameplayBGM, gameOverTheme } from './music.js';
-import { flapSfx, scoreSfx, deathSfx, buttonClickSfx } from './sfx.js';
+import { ringCollectSfx, crashSfx } from './sfx.js';
 
 export function initAudioBridge() {
-  // Init audio on first user interaction
+  // Initialize Strudel audio on first user interaction (browser autoplay policy)
   eventBus.on(Events.AUDIO_INIT, () => {
     audioManager.init();
   });
 
-  // Music transitions
+  // Music transitions (Strudel BGM)
   eventBus.on(Events.MUSIC_MENU, () => {
-    audioManager.playBGM(menuTheme);
+    audioManager.playMusic(menuTheme);
   });
 
   eventBus.on(Events.MUSIC_GAMEPLAY, () => {
-    audioManager.playBGM(gameplayBGM);
+    audioManager.playMusic(gameplayBGM);
   });
 
   eventBus.on(Events.MUSIC_GAMEOVER, () => {
-    audioManager.playBGM(gameOverTheme);
+    audioManager.playMusic(gameOverTheme);
   });
 
   eventBus.on(Events.MUSIC_STOP, () => {
-    audioManager.stopBGM();
+    audioManager.stopMusic();
   });
 
   // SFX (Web Audio API — true one-shot, no looping)
-  eventBus.on(Events.BIRD_FLAP, () => {
-    flapSfx();
+  eventBus.on(Events.RING_COLLECTED, () => {
+    ringCollectSfx();
   });
 
-  eventBus.on(Events.SCORE_CHANGED, () => {
-    scoreSfx();
-  });
-
-  eventBus.on(Events.BIRD_DIED, () => {
-    deathSfx();
+  eventBus.on(Events.PLAYER_DIED, () => {
+    crashSfx();
   });
 }

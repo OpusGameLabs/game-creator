@@ -6,7 +6,7 @@ argument-hint: "[path-to-game]"
 
 # QA Game
 
-Add automated QA testing with Playwright to an existing game project.
+Add automated QA testing with Playwright to an existing game project. Tests verify your game boots, scenes work, scoring functions, and visuals haven't broken — like a safety net for your game.
 
 ## Instructions
 
@@ -46,9 +46,9 @@ First, load the game-qa skill to get the full testing patterns and fixtures.
 
 Write tests based on what the game actually does:
 
-- **game.spec.js**: Boot test, scene transitions, input handling, scoring, game over
-- **visual.spec.js**: Screenshot regression for each scene (menu, gameplay, game over)
-- **perf.spec.js**: Load time budget, FPS during gameplay
+- **game.spec.js**: Boot test, scene transitions, input handling, scoring, game over, restart
+- **visual.spec.js**: Screenshot regression for stable scenes (menu, game over). Skip active gameplay screenshots — moving objects make them unstable.
+- **perf.spec.js**: Load time budget, FPS during gameplay, canvas dimensions
 
 Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()` to read game state. Use `page.keyboard.press()` for input.
 
@@ -61,8 +61,16 @@ Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()`
 
 ### Step 5: Report
 
-List:
-- Every file created
-- Every test and what it verifies
-- How to run tests (`npm test`, `npm run test:ui`, `npm run test:headed`)
-- How to update visual baselines (`npm run test:update-snapshots`)
+Tell the user in plain English:
+
+- How many tests were created and what they check
+- How to run them: `npm test` (headless), `npm run test:headed` (see the browser), `npm run test:ui` (interactive dashboard)
+- "These tests are your safety net. Run them after making changes to make sure nothing broke."
+
+## Next Step
+
+Tell the user:
+
+> Your game now has automated tests! Finally, run `/game-creator:review-game` for a full architecture review — it checks your code structure, performance patterns, and gives you a score with specific improvement suggestions.
+>
+> **Pipeline progress:** ~~/make-game~~ → ~~/design-game~~ → ~~/add-audio~~ → ~~/qa-game~~ → `/review-game`

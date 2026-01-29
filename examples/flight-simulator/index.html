@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flight Simulator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+    canvas { display: block; }
+
+    /* HUD Instrument Panel */
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(0, 10, 20, 0.55);
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 6px;
+      padding: 12px 16px;
+      backdrop-filter: blur(4px);
+      min-width: 160px;
+    }
+    #hud span {
+      display: block;
+      font-size: 16px;
+      color: #d0e8ff;
+      text-shadow: 0 0 8px rgba(100, 200, 255, 0.4);
+      letter-spacing: 1px;
+      transition: transform 0.15s, color 0.3s;
+    }
+    #hud-score {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffcc00;
+      text-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(100, 180, 255, 0.2);
+    }
+
+    /* Altitude warning */
+    #hud-alt.warning {
+      color: #ff6644;
+      text-shadow: 0 0 10px rgba(255, 80, 40, 0.6);
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      color: #fff;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .overlay::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(0,10,30,0.6) 0%, rgba(0,0,0,0.85) 100%);
+      z-index: -1;
+    }
+
+    .overlay h1 {
+      font-size: 52px;
+      margin-bottom: 8px;
+      letter-spacing: 6px;
+      text-shadow: 0 0 20px rgba(100, 200, 255, 0.4);
+    }
+    .overlay .subtitle {
+      font-size: 16px;
+      color: #88bbdd;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
+    .overlay .controls {
+      margin: 10px 0;
+      font-size: 13px;
+      color: #8899bb;
+      line-height: 2.0;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .overlay .controls strong {
+      color: #bbddff;
+    }
+    .overlay .score-display {
+      font-size: 28px;
+      margin: 10px 0;
+      text-shadow: 0 0 12px rgba(255, 200, 0, 0.4);
+    }
+    .overlay .score-display#best-score {
+      font-size: 18px;
+      color: #8899bb;
+      text-shadow: none;
+    }
+    .overlay button {
+      margin-top: 30px;
+      padding: 14px 48px;
+      font-size: 18px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: #fff;
+      background: linear-gradient(180deg, #3388cc 0%, #2266aa 100%);
+      border: 1px solid rgba(100, 180, 255, 0.4);
+      border-radius: 4px;
+      cursor: pointer;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+    .overlay button:hover {
+      background: linear-gradient(180deg, #44aaee 0%, #3388cc 100%);
+      box-shadow: 0 0 20px rgba(68, 170, 238, 0.3);
+      transform: scale(1.04);
+    }
+    .overlay button:active {
+      transform: scale(0.97);
+    }
+
+    /* Crashed title red tint */
+    #gameover-overlay h1 {
+      color: #ff6644;
+      text-shadow: 0 0 20px rgba(255, 80, 40, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <span id="hud-score">RINGS: 0</span>
+    <span id="hud-alt">ALT: 0m</span>
+    <span id="hud-speed">SPD: 0 km/h</span>
+  </div>
+
+  <div id="menu-overlay" class="overlay">
+    <h1>FLIGHT SIMULATOR</h1>
+    <div class="subtitle">Fly through the rings</div>
+    <div class="controls">
+      <strong>W / Up</strong> &mdash; pitch down (dive)<br>
+      <strong>S / Down</strong> &mdash; pitch up (climb)<br>
+      <strong>A / Left</strong> &mdash; roll left<br>
+      <strong>D / Right</strong> &mdash; roll right<br>
+      <br>
+      Collect golden rings to score.<br>
+      Don't crash into the ground!
+    </div>
+    <button id="play-btn">TAKE OFF</button>
+  </div>
+
+  <div id="gameover-overlay" class="overlay hidden">
+    <h1>CRASHED</h1>
+    <div class="score-display" id="final-score">Rings: 0</div>
+    <div class="score-display" id="best-score">Best: 0</div>
+    <button id="restart-btn">FLY AGAIN</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

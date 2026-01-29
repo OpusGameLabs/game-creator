@@ -1,12 +1,12 @@
 ---
-description: Add a new feature to an existing game following the architecture patterns
+description: Add a new gameplay feature to your game — just describe what you want
 disable-model-invocation: true
 argument-hint: "[feature-description]"
 ---
 
 # Add Feature
 
-Add a new feature to the current game project following the established architecture patterns.
+Add a new feature to your game. Just describe what you want in plain English — for example, "add a double-jump power-up" or "add a high score leaderboard" — and the feature will be built following your game's existing patterns.
 
 ## Instructions
 
@@ -19,10 +19,17 @@ The user wants to add: $ARGUMENTS
 - Read `src/core/EventBus.js` for existing events
 - Read `src/core/GameState.js` for existing state
 - Read `src/core/Game.js` (or GameConfig.js) for existing system wiring
+- Read existing scene and gameplay files to understand what's already built
 
 ### Step 2: Plan the feature
 
-Determine what's needed:
+Before writing code, explain the plan in plain English:
+
+1. **What it does**: Describe the feature from the player's perspective
+2. **How it works**: List the new files, events, and settings that will be created
+3. **What it touches**: List existing files that need small changes to wire in the feature
+
+Then determine what's needed technically:
 - New module file(s) and where they go in the directory structure
 - New events to add to the Events enum
 - New constants to add to Constants.js
@@ -42,6 +49,21 @@ Follow these rules strictly:
 
 ### Step 4: Verify
 
+- Run `npm run build` to confirm no errors
 - Confirm the feature integrates without breaking existing systems
 - Check that no circular dependencies were introduced
 - Ensure event listeners are properly cleaned up if applicable
+- Summarize what was added in plain English
+
+## Output
+
+Tell the user:
+1. What the feature does (from the player's perspective)
+2. What files were created or changed
+3. How to test it — "Run `npm run dev` and try [specific action]"
+
+## Tips
+
+> You can run this command as many times as you want to keep adding features. Each one builds on the last.
+>
+> When you're happy with the gameplay, run `/game-creator:design-game` to polish the visuals, `/game-creator:add-audio` for music and sound effects, or `/game-creator:review-game` for a full quality check.
