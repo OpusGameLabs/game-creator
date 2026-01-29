@@ -14,6 +14,15 @@ export const BIRD_CONFIG = {
   tiltDownAngle: 70,
   size: 20,
   color: 0xf5d742,
+  // Squash/stretch
+  flapSquashX: 1.3,
+  flapSquashY: 0.7,
+  squashDuration: 80,
+  stretchMaxX: 0.85,
+  stretchMaxY: 1.2,
+  // Death
+  deathSpinSpeed: 720,
+  deathFallVelocity: 400,
 };
 
 export const PIPE_CONFIG = {
@@ -27,6 +36,26 @@ export const PIPE_CONFIG = {
   capColor: 0x5a9a23,
   capHeight: 20,
   capExtraWidth: 6,
+};
+
+export const DIFFICULTY_CONFIG = {
+  // Score thresholds where difficulty increases
+  startScore: 0,
+  maxScore: 40,
+  // Gap shrinks from 150 to 110
+  gapStart: 150,
+  gapEnd: 110,
+  // Speed increases from 180 to 260
+  speedStart: 180,
+  speedEnd: 260,
+  // Spawn interval decreases from 1600 to 1200
+  intervalStart: 1600,
+  intervalEnd: 1200,
+  // Sky shifts to sunset (top color)
+  skyStartTop: 0x4ec0ca,
+  skyEndTop: 0xe8845a,
+  skyStartBottom: 0xc3e8f0,
+  skyEndBottom: 0xf0c878,
 };
 
 export const GROUND_CONFIG = {
@@ -46,6 +75,27 @@ export const SKY_CONFIG = {
   cloudMaxY: 280,
 };
 
+export const PARALLAX_CONFIG = {
+  // Far mountains — slowest layer
+  farColor: 0x7ab5c4,
+  farAlpha: 0.5,
+  farSpeed: 12,
+  farBaseY: 380,
+  farPeakMin: 60,
+  farPeakMax: 110,
+  farSegmentWidth: 80,
+  // Near hills — medium layer
+  nearColor: 0x8ec63f,
+  nearAlpha: 0.4,
+  nearSpeed: 40,
+  nearBaseY: 440,
+  nearPeakMin: 30,
+  nearPeakMax: 60,
+  nearSegmentWidth: 60,
+  // Ground scroll
+  groundScrollSpeed: 180,
+};
+
 export const PARTICLES_CONFIG = {
   scoreBurstCount: 8,
   scoreBurstColor: 0xfce878,
@@ -59,6 +109,13 @@ export const PARTICLES_CONFIG = {
   deathBurstColor: 0xffffff,
   deathBurstSpeed: 100,
   deathBurstDuration: 500,
+};
+
+export const MEDAL_CONFIG = {
+  bronze: { threshold: 5, color: 0xcd7f32, label: 'BRONZE' },
+  silver: { threshold: 15, color: 0xc0c0c0, label: 'SILVER' },
+  gold: { threshold: 25, color: 0xffd700, label: 'GOLD' },
+  platinum: { threshold: 40, color: 0xe5e4e2, label: 'PLATINUM' },
 };
 
 export const TRANSITION_CONFIG = {

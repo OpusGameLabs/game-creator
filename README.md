@@ -88,7 +88,8 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 
 | Command | Description |
 |---------|-------------|
-| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review |
+| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review, deploy |
+| `/game-creator:improve-game [focus]` | Deep audit + implement highest-impact improvements |
 | `/game-creator:design-game [path]` | Audit and improve visual polish |
 | `/game-creator:add-feature [description]` | Add a feature following architecture patterns |
 | `/game-creator:add-audio [path]` | Add Strudel.cc music and sound effects |

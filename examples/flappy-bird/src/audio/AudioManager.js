@@ -5,48 +5,50 @@ class AudioManager {
     this.initialized = false;
     this.muted = false;
     this.currentBGM = null;
+    this._initPromise = null;
   }
 
-  init() {
+  async init() {
     if (this.initialized) return;
-    try {
-      initStrudel();
-      this.initialized = true;
-      console.log('[Audio] Strudel initialized');
-    } catch (e) {
-      console.warn('[Audio] Strudel init failed:', e);
-    }
+    if (this._initPromise) return this._initPromise;
+    this._initPromise = (async () => {
+      try {
+        await initStrudel();
+        this.initialized = true;
+        console.log('[Audio] Strudel initialized');
+      } catch (e) {
+        console.warn('[Audio] Strudel init failed:', e);
+      }
+    })();
+    return this._initPromise;
   }
 
-  playBGM(patternFn) {
-    if (!this.initialized || this.muted) return;
+  async playBGM(patternFn) {
+    if (this.muted) return;
+    // Wait for Strudel to finish initializing
+    if (this._initPromise) await this._initPromise;
+    if (!this.initialized) return;
     // Stop any existing patterns first
     try { hush(); } catch (e) { /* noop */ }
     this.currentBGM = null;
     // Give Strudel's scheduler a tick to process the hush
-    setTimeout(() => {
-      try {
-        this.currentBGM = patternFn();
-        console.log('[Audio] BGM started');
-      } catch (e) {
-        console.warn('[Audio] BGM error:', e);
-      }
-    }, 100);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        try {
+          this.currentBGM = patternFn();
+          console.log('[Audio] BGM started');
+        } catch (e) {
+          console.warn('[Audio] BGM error:', e);
+        }
+        resolve();
+      }, 100);
+    });
   }
 
   stopBGM() {
     if (!this.initialized) return;
     try { hush(); } catch (e) { /* noop */ }
     this.currentBGM = null;
-  }
-
-  playSFX(patternFn) {
-    if (!this.initialized || this.muted) return;
-    try {
-      patternFn();
-    } catch (e) {
-      console.warn('[Audio] SFX error:', e);
-    }
   }
 
   toggleMute() {

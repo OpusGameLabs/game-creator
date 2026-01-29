@@ -19,7 +19,9 @@ test.describe('Performance', () => {
       return g && g.isBooted && g.canvas;
     }, null, { timeout: 10000 });
 
-    // Navigate to game: Space (menu → game), wait, Space (get ready → play)
+    // Navigate to game: Space (init audio), Space (menu → game), wait, Space (get ready → play)
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Space');
     await page.waitForFunction(() => {
       const scenes = window.__GAME__.scene.getScenes(true);

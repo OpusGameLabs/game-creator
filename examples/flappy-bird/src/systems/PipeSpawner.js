@@ -1,4 +1,5 @@
 import { PIPE_CONFIG, GAME_CONFIG } from '../core/Constants.js';
+import { gameState } from '../core/GameState.js';
 import Pipe from '../entities/Pipe.js';
 
 export default class PipeSpawner {
@@ -9,19 +10,26 @@ export default class PipeSpawner {
   }
 
   start() {
-    this.timer = this.scene.time.addEvent({
-      delay: PIPE_CONFIG.spawnInterval,
-      callback: this.spawnPipe,
-      callbackScope: this,
-      loop: true,
-    });
+    this.scheduleNext();
 
     // Spawn first pipe sooner
     this.scene.time.delayedCall(800, () => this.spawnPipe());
   }
 
+  scheduleNext() {
+    const interval = gameState.getCurrentInterval();
+    this.timer = this.scene.time.delayedCall(interval, () => {
+      this.spawnPipe();
+      if (!gameState.gameOver) {
+        this.scheduleNext();
+      }
+    });
+  }
+
   spawnPipe() {
-    const pipe = new Pipe(this.scene, GAME_CONFIG.width + PIPE_CONFIG.width);
+    const gap = gameState.getCurrentGap();
+    const speed = gameState.getCurrentSpeed();
+    const pipe = new Pipe(this.scene, GAME_CONFIG.width + PIPE_CONFIG.width, gap, speed);
     this.pipes.push(pipe);
   }
 

@@ -19,6 +19,7 @@ export default class Bird extends Phaser.GameObjects.Container {
     this.alive = true;
     this.wingTimer = 0;
     this.wingUp = true;
+    this.squashTimer = 0;
   }
 
   createGraphics() {
@@ -59,17 +60,29 @@ export default class Bird extends Phaser.GameObjects.Container {
     if (!this.alive) return;
     this.body.setVelocityY(BIRD_CONFIG.flapVelocity);
     eventBus.emit(Events.BIRD_FLAP);
+
+    // Squash on flap — quick wide+short then bounce back
+    this.squashTimer = BIRD_CONFIG.squashDuration;
+    this.setScale(BIRD_CONFIG.flapSquashX, BIRD_CONFIG.flapSquashY);
   }
 
   die() {
     this.alive = false;
+    // Reset scale
+    this.setScale(1, 1);
+    // Death spin + fall
+    this.scene.tweens.add({
+      targets: this,
+      angle: this.angle + BIRD_CONFIG.deathSpinSpeed,
+      duration: 1000,
+      ease: 'Cubic.easeOut',
+    });
+    this.body.setVelocityY(BIRD_CONFIG.deathFallVelocity);
+    this.body.allowGravity = true;
   }
 
   update(time, delta) {
-    if (!this.alive) {
-      this.angle = BIRD_CONFIG.tiltDownAngle;
-      return;
-    }
+    if (!this.alive) return;
 
     // Tilt based on velocity
     const vy = this.body.velocity.y;
@@ -82,6 +95,31 @@ export default class Bird extends Phaser.GameObjects.Container {
         BIRD_CONFIG.tiltDownAngle
       );
       this.angle = tilt;
+    }
+
+    // Squash recovery — lerp back to 1,1
+    if (this.squashTimer > 0) {
+      this.squashTimer -= delta;
+      if (this.squashTimer <= 0) {
+        this.scene.tweens.add({
+          targets: this,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 60,
+          ease: 'Back.easeOut',
+        });
+      }
+    } else {
+      // Stretch on fast fall — subtle elongation
+      const fallT = Math.abs(vy) / BIRD_CONFIG.maxVelocity;
+      if (fallT > 0.3) {
+        const t = (fallT - 0.3) / 0.7;
+        this.scaleX = Phaser.Math.Linear(1, BIRD_CONFIG.stretchMaxX, t);
+        this.scaleY = Phaser.Math.Linear(1, BIRD_CONFIG.stretchMaxY, t);
+      } else {
+        this.scaleX = 1;
+        this.scaleY = 1;
+      }
     }
 
     // Wing flap animation

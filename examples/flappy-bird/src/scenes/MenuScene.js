@@ -22,8 +22,8 @@ export default class MenuScene extends Phaser.Scene {
     this.background = new Background(this);
     this.background.create();
 
-    // Title
-    this.add.text(centerX, centerY - 120, 'FLAPPY', {
+    // Title — drops in from above with bounce
+    const titleFlappy = this.add.text(centerX, -60, 'FLAPPY', {
       fontSize: '52px',
       fontFamily: 'Arial Black, Arial',
       color: COLORS.scoreText,
@@ -31,7 +31,7 @@ export default class MenuScene extends Phaser.Scene {
       strokeThickness: 6,
     }).setOrigin(0.5).setDepth(20);
 
-    this.add.text(centerX, centerY - 65, 'BIRD', {
+    const titleBird = this.add.text(centerX, -60, 'BIRD', {
       fontSize: '52px',
       fontFamily: 'Arial Black, Arial',
       color: COLORS.scoreText,
@@ -39,55 +39,101 @@ export default class MenuScene extends Phaser.Scene {
       strokeThickness: 6,
     }).setOrigin(0.5).setDepth(20);
 
-    // Bird preview
-    const birdGfx = this.add.graphics().setDepth(20);
-    birdGfx.fillStyle(COLORS.bird, 1);
-    birdGfx.fillEllipse(centerX, centerY + 10, 40, 32);
-    birdGfx.fillStyle(COLORS.birdWing, 1);
-    birdGfx.fillEllipse(centerX - 2, centerY + 12, 20, 14);
-    birdGfx.fillStyle(COLORS.birdEye, 1);
-    birdGfx.fillCircle(centerX + 8, centerY + 6, 6);
-    birdGfx.fillStyle(COLORS.birdPupil, 1);
-    birdGfx.fillCircle(centerX + 10, centerY + 6, 3);
-    birdGfx.fillStyle(COLORS.birdBeak, 1);
-    birdGfx.fillTriangle(centerX + 12, centerY + 10, centerX + 24, centerY + 13, centerX + 12, centerY + 16);
-
-    // Bob animation
+    // Bounce-in title animation
     this.tweens.add({
-      targets: birdGfx,
-      y: -10,
-      duration: 600,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
+      targets: titleFlappy,
+      y: centerY - 120,
+      duration: 700,
+      ease: 'Bounce.easeOut',
+      delay: 100,
     });
 
-    // Instructions
+    this.tweens.add({
+      targets: titleBird,
+      y: centerY - 65,
+      duration: 700,
+      ease: 'Bounce.easeOut',
+      delay: 250,
+    });
+
+    // Bird preview — flies in from the left
+    const birdGfx = this.add.graphics().setDepth(20);
+    birdGfx.fillStyle(COLORS.bird, 1);
+    birdGfx.fillEllipse(0, 0, 40, 32);
+    birdGfx.fillStyle(COLORS.birdWing, 1);
+    birdGfx.fillEllipse(-2, 2, 20, 14);
+    birdGfx.fillStyle(COLORS.birdEye, 1);
+    birdGfx.fillCircle(8, -4, 6);
+    birdGfx.fillStyle(COLORS.birdPupil, 1);
+    birdGfx.fillCircle(10, -4, 3);
+    birdGfx.fillStyle(COLORS.birdBeak, 1);
+    birdGfx.fillTriangle(12, 0, 24, 3, 12, 6);
+
+    birdGfx.setPosition(-50, centerY + 10);
+
+    // Fly in from left
+    this.tweens.add({
+      targets: birdGfx,
+      x: centerX,
+      duration: 600,
+      ease: 'Cubic.easeOut',
+      delay: 500,
+      onComplete: () => {
+        // Bob animation after landing
+        this.tweens.add({
+          targets: birdGfx,
+          y: centerY,
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      },
+    });
+
+    // Instructions — fade in after bird arrives
     const tapText = this.add.text(centerX, centerY + 80, 'TAP OR PRESS SPACE', {
       fontSize: '20px',
       fontFamily: 'Arial',
       color: COLORS.scoreText,
       stroke: COLORS.textStroke,
       strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(20);
+    }).setOrigin(0.5).setDepth(20).setAlpha(0);
 
     this.tweens.add({
       targets: tapText,
-      alpha: 0.3,
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
+      alpha: 1,
+      duration: 400,
+      delay: 900,
+      onComplete: () => {
+        // Pulse after appearing
+        this.tweens.add({
+          targets: tapText,
+          alpha: 0.3,
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+        });
+      },
     });
 
-    // Best score
+    // Best score — slide up from bottom
     if (gameState.bestScore > 0) {
-      this.add.text(centerX, centerY + 130, `BEST: ${gameState.bestScore}`, {
+      const bestText = this.add.text(centerX, GAME_CONFIG.height + 30, `BEST: ${gameState.bestScore}`, {
         fontSize: '18px',
         fontFamily: 'Arial',
         color: COLORS.scoreText,
         stroke: COLORS.textStroke,
         strokeThickness: 3,
       }).setOrigin(0.5).setDepth(20);
+
+      this.tweens.add({
+        targets: bestText,
+        y: centerY + 130,
+        duration: 500,
+        ease: 'Back.easeOut',
+        delay: 1100,
+      });
     }
 
     // Input — first tap inits audio + plays menu music, second tap starts game
@@ -108,6 +154,7 @@ export default class MenuScene extends Phaser.Scene {
       eventBus.emit(Events.MUSIC_MENU);
       return;
     }
+    eventBus.emit(Events.SFX_BUTTON_CLICK);
     this.startGame();
   }
 

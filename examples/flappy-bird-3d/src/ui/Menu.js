@@ -1,5 +1,6 @@
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
+import { buttonClickSfx } from '../audio/sfx.js';
 
 export class Menu {
   constructor() {
@@ -11,13 +12,16 @@ export class Menu {
     this.bestScoreEl = document.getElementById('best-score');
 
     this.playBtn.addEventListener('click', () => {
+      buttonClickSfx();
       this.menuOverlay.classList.add('hidden');
       eventBus.emit(Events.AUDIO_INIT);
       eventBus.emit(Events.GAME_START);
     });
 
     this.restartBtn.addEventListener('click', () => {
+      buttonClickSfx();
       this.gameoverOverlay.classList.add('hidden');
+      eventBus.emit(Events.MUSIC_STOP);
       eventBus.emit(Events.GAME_RESTART);
     });
 

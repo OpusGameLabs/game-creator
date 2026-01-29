@@ -2,19 +2,22 @@ import Phaser from 'phaser';
 import { PIPE_CONFIG, GAME_CONFIG, GROUND_CONFIG, COLORS } from '../core/Constants.js';
 
 export default class Pipe extends Phaser.GameObjects.Container {
-  constructor(scene, x) {
+  constructor(scene, x, gapSize, speed) {
     super(scene, x, 0);
 
     this.scored = false;
 
+    const gap = gapSize || PIPE_CONFIG.gapSize;
+    const pipeSpeed = speed || PIPE_CONFIG.speed;
+
     const playableHeight = GAME_CONFIG.height - GROUND_CONFIG.height;
     const gapY = Phaser.Math.Between(
-      PIPE_CONFIG.minTopHeight + PIPE_CONFIG.gapSize / 2,
-      playableHeight - PIPE_CONFIG.minTopHeight - PIPE_CONFIG.gapSize / 2
+      PIPE_CONFIG.minTopHeight + gap / 2,
+      playableHeight - PIPE_CONFIG.minTopHeight - gap / 2
     );
 
-    const topPipeHeight = gapY - PIPE_CONFIG.gapSize / 2;
-    const bottomPipeY = gapY + PIPE_CONFIG.gapSize / 2;
+    const topPipeHeight = gapY - gap / 2;
+    const bottomPipeY = gapY + gap / 2;
     const bottomPipeHeight = playableHeight - bottomPipeY;
 
     // Top pipe
@@ -31,7 +34,7 @@ export default class Pipe extends Phaser.GameObjects.Container {
     scene.physics.add.existing(this);
 
     this.body.allowGravity = false;
-    this.body.setVelocityX(-PIPE_CONFIG.speed);
+    this.body.setVelocityX(-pipeSpeed);
     this.body.setImmovable(true);
 
     // Physics bodies for individual pipes (for collision)
@@ -41,7 +44,7 @@ export default class Pipe extends Phaser.GameObjects.Container {
     this.bottomZone = scene.add.zone(x, bottomPipeY + bottomPipeHeight / 2, PIPE_CONFIG.width, bottomPipeHeight);
     scene.physics.add.existing(this.bottomZone, true);
 
-    this.scoreZone = scene.add.zone(x + PIPE_CONFIG.width / 2, gapY, 4, PIPE_CONFIG.gapSize);
+    this.scoreZone = scene.add.zone(x + PIPE_CONFIG.width / 2, gapY, 4, gap);
     scene.physics.add.existing(this.scoreZone, true);
   }
 

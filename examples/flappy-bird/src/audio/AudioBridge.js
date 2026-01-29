@@ -39,4 +39,8 @@ export function initAudioBridge() {
   eventBus.on(Events.BIRD_DIED, () => {
     deathSfx();
   });
+
+  eventBus.on(Events.SFX_BUTTON_CLICK, () => {
+    buttonClickSfx();
+  });
 }

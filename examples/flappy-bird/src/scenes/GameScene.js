@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
-import { GAME_CONFIG, GROUND_CONFIG, BIRD_CONFIG, COLORS, TRANSITION_CONFIG } from '../core/Constants.js';
+import { GAME_CONFIG, GROUND_CONFIG, BIRD_CONFIG, COLORS, TRANSITION_CONFIG, DIFFICULTY_CONFIG } from '../core/Constants.js';
 import Bird from '../entities/Bird.js';
 import PipeSpawner from '../systems/PipeSpawner.js';
 import ScoreSystem from '../systems/ScoreSystem.js';
@@ -54,10 +54,11 @@ export default class GameScene extends Phaser.Scene {
       }),
     );
 
-    // Emit score particles when scoring
+    // Emit score particles when scoring + update sky color
     this.unsubscribers.push(
       eventBus.on(Events.BIRD_PASSED_PIPE, () => {
         eventBus.emit(Events.PARTICLES_SCORE, { x: this.bird.x + 20, y: this.bird.y - 10 });
+        this.updateSkyGradient();
       }),
     );
 
@@ -255,12 +256,49 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  updateSkyGradient() {
+    const t = gameState.getDifficulty();
+    if (t <= 0) return;
+    const bg = this.background;
+    if (!bg || !bg.skyGfx) return;
+
+    const groundY = GAME_CONFIG.height - GROUND_CONFIG.height;
+    const sTopR = (DIFFICULTY_CONFIG.skyStartTop >> 16) & 0xff;
+    const sTopG = (DIFFICULTY_CONFIG.skyStartTop >> 8) & 0xff;
+    const sTopB = DIFFICULTY_CONFIG.skyStartTop & 0xff;
+    const eTopR = (DIFFICULTY_CONFIG.skyEndTop >> 16) & 0xff;
+    const eTopG = (DIFFICULTY_CONFIG.skyEndTop >> 8) & 0xff;
+    const eTopB = DIFFICULTY_CONFIG.skyEndTop & 0xff;
+    const sBotR = (DIFFICULTY_CONFIG.skyStartBottom >> 16) & 0xff;
+    const sBotG = (DIFFICULTY_CONFIG.skyStartBottom >> 8) & 0xff;
+    const sBotB = DIFFICULTY_CONFIG.skyStartBottom & 0xff;
+    const eBotR = (DIFFICULTY_CONFIG.skyEndBottom >> 16) & 0xff;
+    const eBotG = (DIFFICULTY_CONFIG.skyEndBottom >> 8) & 0xff;
+    const eBotB = DIFFICULTY_CONFIG.skyEndBottom & 0xff;
+
+    const topR = Math.round(sTopR + (eTopR - sTopR) * t);
+    const topG = Math.round(sTopG + (eTopG - sTopG) * t);
+    const topB = Math.round(sTopB + (eTopB - sTopB) * t);
+    const botR = Math.round(sBotR + (eBotR - sBotR) * t);
+    const botG = Math.round(sBotG + (eBotG - sBotG) * t);
+    const botB = Math.round(sBotB + (eBotB - sBotB) * t);
+
+    bg.skyGfx.clear();
+    for (let y = 0; y < groundY; y++) {
+      const yt = y / groundY;
+      const r = Math.round(topR + (botR - topR) * yt);
+      const g = Math.round(topG + (botG - topG) * yt);
+      const b = Math.round(topB + (botB - topB) * yt);
+      bg.skyGfx.fillStyle(Phaser.Display.Color.GetColor(r, g, b), 1);
+      bg.skyGfx.fillRect(0, y, GAME_CONFIG.width, 1);
+    }
+  }
+
   shutdown() {
     this.unsubscribers.forEach(unsub => unsub());
     this.pipeSpawner.destroy();
     this.scoreSystem.destroy();
     this.particles.destroy();
     this.background.destroy();
-    eventBus.clear();
   }
 }

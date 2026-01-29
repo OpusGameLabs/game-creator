@@ -27,6 +27,7 @@ export const Events = {
   MUSIC_GAMEPLAY: 'music:gameplay',
   MUSIC_GAMEOVER: 'music:gameover',
   MUSIC_STOP: 'music:stop',
+  SFX_BUTTON_CLICK: 'audio:sfx:buttonClick',
 };
 
 class EventBus {

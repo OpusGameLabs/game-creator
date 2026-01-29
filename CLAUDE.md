@@ -22,7 +22,8 @@ templates/
   phaser-2d/               # Runnable 2D starter project (Phaser 3)
   threejs-3d/              # Runnable 3D starter project (Three.js)
 commands/
-  make-game.md             # Full pipeline: scaffold → design → audio → QA → review
+  make-game.md             # Full pipeline: scaffold → design → audio → QA → review → deploy
+  improve-game.md          # Holistic audit + implement highest-impact improvements
   design-game.md           # Visual design audit + improvements
   add-feature.md           # Add feature following patterns
   add-audio.md             # Add Strudel.cc audio

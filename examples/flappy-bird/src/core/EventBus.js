@@ -49,4 +49,5 @@ export const Events = {
   MUSIC_GAMEPLAY: 'audio:music:gameplay',
   MUSIC_GAMEOVER: 'audio:music:gameover',
   MUSIC_STOP: 'audio:music:stop',
+  SFX_BUTTON_CLICK: 'audio:sfx:buttonClick',
 };

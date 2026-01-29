@@ -21,11 +21,16 @@ export const test = base.extend({
 
 /**
  * Helper: navigate from MenuScene to active gameplay.
- * Press Space to leave menu (triggers fade), wait for GameScene,
- * then press Space again to dismiss "GET READY" and start playing.
+ * Press Space once to init audio (browser autoplay policy), then again
+ * to leave menu (triggers fade), wait for GameScene,
+ * then press Space once more to dismiss "GET READY" and start playing.
  */
 export async function startPlaying(page) {
-  // Press Space to leave menu
+  // First Space: init audio + play menu music (browser autoplay policy)
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(200);
+
+  // Second Space: leave menu (triggers fade to GameScene)
   await page.keyboard.press('Space');
 
   // Wait for GameScene to be active (after fade transition)
@@ -35,7 +40,7 @@ export async function startPlaying(page) {
   }, null, { timeout: 5000 });
   await page.waitForTimeout(400);
 
-  // Press Space again to dismiss GET READY and start playing
+  // Third Space: dismiss GET READY and start playing
   await page.keyboard.press('Space');
 
   // Wait for started state

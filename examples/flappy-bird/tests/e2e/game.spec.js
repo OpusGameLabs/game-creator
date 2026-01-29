@@ -15,6 +15,10 @@ test.describe('Game Boot & Scene Flow', () => {
   });
 
   test('menu transitions to game scene on space', async ({ gamePage }) => {
+    // First press: init audio (browser autoplay policy)
+    await gamePage.keyboard.press('Space');
+    await gamePage.waitForTimeout(200);
+    // Second press: start game
     await gamePage.keyboard.press('Space');
 
     await gamePage.waitForFunction(() => {
@@ -30,6 +34,10 @@ test.describe('Game Boot & Scene Flow', () => {
 
   test('menu transitions to game scene on click', async ({ gamePage }) => {
     const canvas = gamePage.locator('canvas');
+    // First click: init audio (browser autoplay policy)
+    await canvas.click({ position: { x: 200, y: 300 } });
+    await gamePage.waitForTimeout(200);
+    // Second click: start game
     await canvas.click({ position: { x: 200, y: 300 } });
 
     await gamePage.waitForFunction(() => {
