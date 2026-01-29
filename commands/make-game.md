@@ -1,12 +1,12 @@
 ---
-description: Full guided pipeline — scaffold, design, add audio, test, and review a game from scratch
+description: Full guided pipeline — scaffold, design, audio, test, review, and deploy a game from scratch
 disable-model-invocation: true
 argument-hint: "[2d|3d] [game-name]"
 ---
 
 # Make Game (Full Pipeline)
 
-Build a complete browser game from scratch, step by step. This command walks you through the entire pipeline — from an empty folder to a polished, tested, reviewed game. No game development experience needed.
+Build a complete browser game from scratch, step by step. This command walks you through the entire pipeline — from an empty folder to a deployed, live game. No game development experience needed.
 
 **What you'll get:**
 1. A fully scaffolded game project with clean architecture
@@ -14,6 +14,8 @@ Build a complete browser game from scratch, step by step. This command walks you
 3. Chiptune music and retro sound effects (no audio files needed)
 4. Automated tests that catch bugs when you make changes
 5. An architecture review with a quality score and improvement tips
+6. Live deployment to GitHub Pages with a public URL
+7. Future changes auto-deploy on `git push`
 
 ## Instructions
 
@@ -105,7 +107,7 @@ Load the game-qa skill. Then:
 > - `npm run test:headed` — watch the browser run the tests
 > - `npm run test:ui` — interactive dashboard
 >
-> **Final step: architecture review.** I'll check your code structure, performance patterns, and give you a quality score with specific improvements. Ready?
+> **Next step: architecture review.** I'll check your code structure, performance patterns, and give you a quality score with specific improvements. Ready?
 
 **Wait for user confirmation before proceeding.**
 
@@ -126,6 +128,136 @@ Load the game-qa skill. Then:
 6. Top Recommendations (plain English)
 7. What's Working Well
 
+**Tell the user:**
+> Your game passed architecture review! Here's the summary: [key scores]
+>
+> **Final step: deploy to the web.** I'll help you set up GitHub Pages so your game gets a public URL. Future changes auto-deploy when you push. Ready?
+
+**Wait for user confirmation before proceeding.**
+
+### Step 6: Deploy to GitHub Pages
+
+Load the game-deploy skill. Then:
+
+**This step walks the user through deployment interactively. Don't skip the auth checks — guide them through setup if anything is missing.**
+
+#### 6a. Check prerequisites
+
+Run `gh auth status` to check if the GitHub CLI is installed and authenticated.
+
+**If `gh` is not found**, tell the user:
+> You need the GitHub CLI to deploy. Install it with:
+> - **macOS**: `brew install gh`
+> - **Linux**: `sudo apt install gh` or see https://cli.github.com
+>
+> Once installed, run `gh auth login` and follow the prompts, then tell me when you're ready.
+
+**Wait for the user to confirm.**
+
+**If `gh` is not authenticated**, tell the user:
+> You need to log in to GitHub. Run this command and follow the prompts:
+> ```
+> gh auth login
+> ```
+> Choose "GitHub.com", "HTTPS", and authenticate via browser. Tell me when you're done.
+
+**Wait for the user to confirm.** Then re-run `gh auth status` to verify.
+
+#### 6b. Build the game
+
+```bash
+npm run build
+```
+
+Verify `dist/` exists and contains `index.html` and assets. If the build fails, fix the errors before proceeding.
+
+#### 6c. Set up the Vite base path
+
+Read `vite.config.js`. The `base` option must match the GitHub Pages URL pattern `/<repo-name>/`. If it's not set or wrong, update it:
+
+```js
+export default defineConfig({
+  base: '/<game-name>/',
+  // ... rest of config
+});
+```
+
+Rebuild after changing the base path.
+
+#### 6d. Create the GitHub repo and push
+
+Check if the project already has a git remote. If not:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+gh repo create <game-name> --public --source=. --push
+```
+
+If it already has a remote, just make sure all changes are committed and pushed.
+
+#### 6e. Deploy with gh-pages
+
+```bash
+npm install -D gh-pages
+npx gh-pages -d dist
+```
+
+This pushes the `dist/` folder to a `gh-pages` branch on GitHub.
+
+#### 6f. Enable GitHub Pages
+
+```bash
+GITHUB_USER=$(gh api user --jq '.login')
+gh api repos/$GITHUB_USER/<game-name>/pages -X POST --input - <<< '{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}'
+```
+
+If Pages is already enabled, this may return an error — that's fine, skip it.
+
+#### 6g. Get the live URL and verify
+
+```bash
+GITHUB_USER=$(gh api user --jq '.login')
+GAME_URL="https://$GITHUB_USER.github.io/<game-name>/"
+echo $GAME_URL
+```
+
+Wait ~30 seconds for the first deploy to propagate, then verify:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" "$GAME_URL"
+```
+
+If it returns 404, wait another minute and retry — GitHub Pages can take 1-2 minutes on first deploy.
+
+#### 6h. Add deploy script
+
+Add a `deploy` script to `package.json` so future deploys are one command:
+
+```json
+{
+  "scripts": {
+    "deploy": "npm run build && npx gh-pages -d dist"
+  }
+}
+```
+
+**Tell the user:**
+> Your game is live! 🎮
+>
+> **URL**: `https://<username>.github.io/<game-name>/`
+>
+> **How auto-deploy works**: Whenever you make changes, just run:
+> ```
+> npm run deploy
+> ```
+> Or if you're working with me, I'll commit your changes and run deploy for you.
+>
+> **Share your game** — send that URL to anyone and they can play instantly in their browser.
+>
+> Want to monetize your game with Play.fun? I can help you set that up with the `/game-creator:playdotfun` skill.
+
 ### Pipeline Complete!
 
 Tell the user:
@@ -136,8 +268,10 @@ Tell the user:
 > - **Music and SFX** — chiptune background music and retro sound effects
 > - **Automated tests** — safety net for future changes
 > - **Quality review** — scored and prioritized improvements
+> - **Live on the web** — deployed to GitHub Pages with a public URL
 >
 > **What's next?**
 > - Add new gameplay features: `/game-creator:add-feature [describe what you want]`
-> - Deploy to the web: `npm run build` then host `dist/` on GitHub Pages, Vercel, Netlify, or itch.io
-> - Keep iterating! Run any step again anytime: `/design-game`, `/add-audio`, `/qa-game`, `/review-game`
+> - Monetize with Play.fun: `/game-creator:playdotfun`
+> - Keep iterating! Run any step again anytime: `/game-creator:design-game`, `/game-creator:add-audio`, `/game-creator:qa-game`, `/game-creator:review-game`
+> - Redeploy after changes: `npm run deploy`
