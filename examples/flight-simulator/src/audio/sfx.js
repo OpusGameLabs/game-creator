@@ -58,46 +58,19 @@ function playNotes(notes, type, noteDuration, gap, gain = 0.3, filterFreq = 4000
   });
 }
 
-function playPitchSweep(startFreq, endFreq, type, duration, gain = 0.3, filterFreq = 4000) {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  const osc = ctx.createOscillator();
-  osc.type = type;
-  osc.frequency.setValueAtTime(startFreq, now);
-  osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
-
-  const gainNode = ctx.createGain();
-  gainNode.gain.setValueAtTime(gain, now);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(filterFreq, now);
-
-  osc.connect(filter).connect(gainNode).connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + duration);
-}
-
 // --- SFX ---
 
-// Flap — quick upward pitch sweep
-export function flapSfx() {
-  playPitchSweep(261.63, 2093, 'square', 0.1, 0.2, 3000); // C4 → C7
+// Ring collect — bright ascending two-tone chime
+export function ringCollectSfx() {
+  playNotes([659.25, 987.77], 'square', 0.12, 0.07, 0.3, 5000); // E5, B5
 }
 
-// Score — bright two-tone chime
-export function scoreSfx() {
-  playNotes([659.25, 987.77], 'square', 0.1, 0.07, 0.3, 4000); // E5, B5
-}
-
-// Death — descending crushed tones
-export function deathSfx() {
-  playNotes([392, 329.63, 261.63, 220], 'square', 0.18, 0.1, 0.25, 2000); // G4 E4 C4 A3
+// Crash / death — descending crushed tones
+export function crashSfx() {
+  playNotes([392, 329.63, 261.63, 220, 174.61], 'square', 0.2, 0.1, 0.25, 2000); // G4 E4 C4 A3 F3
 }
 
 // Button click — short pop
-export function buttonClickSfx() {
+export function clickSfx() {
   playTone(523.25, 'sine', 0.08, 0.2, 5000); // C5
 }

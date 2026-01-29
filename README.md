@@ -10,10 +10,10 @@ An opinionated Claude Code plugin for building browser games. Scaffolds, designs
 # Install the plugin inside of claude
 /plugin marketplace add OpusGameLabs/game-creator
 
-# Scaffold a new 2D game
-/game-creator:new-game 2d my-game
+# Build a complete 2D game (scaffold → design → audio → test → review)
+/game-creator:make-game 2d my-game
 
-# Polish the visuals
+# Or run individual steps:
 /game-creator:design-game
 
 # Add chiptune music and sound effects
@@ -88,7 +88,7 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 
 | Command | Description |
 |---------|-------------|
-| `/game-creator:new-game [2d\|3d] [name]` | Scaffold a complete game project |
+| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review |
 | `/game-creator:design-game [path]` | Audit and improve visual polish |
 | `/game-creator:add-feature [description]` | Add a feature following architecture patterns |
 | `/game-creator:add-audio [path]` | Add Strudel.cc music and sound effects |
@@ -119,6 +119,15 @@ npm run dev        # http://localhost:3000
 npm run test       # run all 15 Playwright tests
 npm run build      # production build
 ```
+
+## Templates
+
+The `/make-game` command copies a runnable starter project from `templates/` instead of generating files from scratch. Both templates include all dependencies pre-configured, EventBus/GameState/Constants architecture, and procedural graphics (no asset files needed).
+
+| Template | Engine | Contents |
+|----------|--------|----------|
+| `phaser-2d` | Phaser 3 | 5 scenes (Boot, Menu, Game, UI, GameOver), Player entity, ScoreSystem, arcade physics |
+| `threejs-3d` | Three.js | Game orchestrator, Player mesh, LevelBuilder (ground + fog + lighting), HTML overlays for menus, InputSystem |
 
 ## Tech Stack
 

@@ -6,7 +6,7 @@ argument-hint: "[path-to-game]"
 
 # Design Game
 
-Run a UI/UX design pass on an existing game to improve visuals, atmosphere, and game feel.
+Run a UI/UX design pass on an existing game to improve visuals, atmosphere, and game feel. No design experience needed — this command analyzes your game and applies proven visual patterns.
 
 ## Instructions
 
@@ -37,7 +37,7 @@ Score each area 1-5 and present as a table:
 | Game Feel / Juice | | |
 | Menu & Game Over | | |
 
-Then list the top improvements ranked by visual impact.
+Then list the top improvements ranked by visual impact, with a plain-English description of what each one does (e.g., "Add a sky gradient so the background looks like a real sky instead of a flat color").
 
 ### Step 3: Implement
 
@@ -52,5 +52,12 @@ Ask the user which improvements they want, or implement all if they say so. Foll
 ### Step 4: Verify
 
 - Run `npm run build` to confirm no errors
-- Summarize all changes made
-- Recommend `/game-creator:review-game` to verify architecture compliance
+- Summarize all changes made in plain English
+
+## Next Step
+
+Tell the user:
+
+> Your game looks much better now! Next, run `/game-creator:add-audio` to add chiptune background music and retro sound effects — all procedurally generated, no audio files needed.
+>
+> **Pipeline progress:** ~~/make-game~~ → ~~/design-game~~ → `/add-audio` → `/qa-game` → `/review-game`

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: monospace; }
+    canvas { display: block; }
+
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: #fff;
+      font-size: 24px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 20;
+      color: #fff;
+    }
+    .overlay.hidden { display: none; }
+
+    .overlay h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .overlay p {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #aaa;
+    }
+    .overlay .score-display {
+      font-size: 28px;
+      margin: 10px 0;
+    }
+    .overlay button {
+      margin-top: 30px;
+      padding: 12px 40px;
+      font-size: 20px;
+      font-family: monospace;
+      font-weight: bold;
+      color: #fff;
+      background: #44aaff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .overlay button:hover { background: #66ccff; }
+  </style>
+</head>
+<body>
+  <div id="hud">Score: 0</div>
+
+  <div id="menu-overlay" class="overlay">
+    <h1>MY GAME</h1>
+    <p>Use WASD or Arrow Keys to move</p>
+    <button id="play-btn">PLAY</button>
+  </div>
+
+  <div id="gameover-overlay" class="overlay hidden">
+    <h1>GAME OVER</h1>
+    <div class="score-display" id="final-score">Score: 0</div>
+    <div class="score-display" id="best-score" style="font-size:20px;color:#aaa;">Best: 0</div>
+    <button id="restart-btn">RESTART</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

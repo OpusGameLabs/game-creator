@@ -6,7 +6,7 @@ argument-hint: "[path-to-game]"
 
 # Review Game
 
-Analyze an existing game codebase and provide a structured review.
+Analyze an existing game codebase and provide a structured review. This is the final step in the pipeline — it checks everything is wired up correctly and gives you a quality score.
 
 ## Instructions
 
@@ -62,5 +62,21 @@ Provide a structured report with:
 3. **Performance Score** (out of 5 checks)
 4. **Code Quality Score** (out of 4 checks)
 5. **Monetization Readiness** (out of 4 checks)
-6. **Top Recommendations** - Prioritized list of improvements
+6. **Top Recommendations** - Prioritized list of improvements with plain-English explanations
 7. **What's Working Well** - Positive findings
+
+## Next Step
+
+Tell the user:
+
+> Your game has been through the full pipeline! Here's what you have:
+> - Scaffolded architecture (`/make-game`)
+> - Visual polish (`/design-game`)
+> - Music and sound effects (`/add-audio`)
+> - Automated tests (`/qa-game`)
+> - Architecture review (`/review-game`)
+>
+> **What's next?**
+> - Add new gameplay features with `/game-creator:add-feature [description]`
+> - Deploy to the web — run `npm run build` then host the `dist/` folder on GitHub Pages, Vercel, Netlify, or itch.io
+> - Keep iterating! Run `/design-game`, `/add-audio`, or `/review-game` again anytime after making changes.

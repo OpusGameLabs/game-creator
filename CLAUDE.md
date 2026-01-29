@@ -18,8 +18,11 @@ skills/
   game-qa/SKILL.md         # Playwright testing (gameplay, visual, perf)
   game-architecture/SKILL.md  # Reference architecture patterns
   game-deploy/SKILL.md     # Deployment (GitHub Pages, Vercel, etc.)
+templates/
+  phaser-2d/               # Runnable 2D starter project (Phaser 3)
+  threejs-3d/              # Runnable 3D starter project (Three.js)
 commands/
-  new-game.md              # Scaffold a game project
+  make-game.md             # Full pipeline: scaffold → design → audio → QA → review
   design-game.md           # Visual design audit + improvements
   add-feature.md           # Add feature following patterns
   add-audio.md             # Add Strudel.cc audio
