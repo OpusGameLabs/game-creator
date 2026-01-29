@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Creator — Claude Code Plugin for Browser Games</title>
+  <meta name="description" content="Build, polish, test, and deploy browser games with a single Claude Code plugin. No game dev experience needed." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06080f;
+      --bg-raised: #0d1117;
+      --bg-card: #111827;
+      --border: #1e293b;
+      --border-hover: #38bdf8;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent: #38bdf8;
+      --accent2: #a78bfa;
+      --green: #4ade80;
+      --orange: #fb923c;
+      --pink: #f472b6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === NAV === */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(6,8,15,0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(30,41,59,0.5);
+    }
+    .nav-logo {
+      font-weight: 800; font-size: 18px; color: #fff;
+      text-decoration: none; letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-gh {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text); text-decoration: none; font-size: 13px; font-weight: 600;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .nav-gh:hover { border-color: var(--accent); background: rgba(56,189,248,0.08); }
+    .nav-gh svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* === HERO === */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 160px 24px 100px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(56,189,248,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 30% 20%, rgba(167,139,250,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 70% 20%, rgba(244,114,182,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
+      color: var(--accent); font-size: 13px; font-weight: 600;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 900; letter-spacing: -2px; line-height: 1.05;
+      margin-bottom: 20px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent), var(--accent2), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-muted); max-width: 640px; margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 10px;
+      font-size: 15px; font-weight: 700; text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      color: #fff; box-shadow: 0 4px 24px rgba(56,189,248,0.3);
+    }
+    .btn-primary:hover { box-shadow: 0 8px 32px rgba(56,189,248,0.45); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { border-color: var(--text-muted); }
+    .hero-code {
+      margin: 48px auto 0; max-width: 520px; text-align: left;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      color: var(--text-muted); line-height: 1.8;
+    }
+    .hero-code .cmd { color: var(--green); }
+    .hero-code .arg { color: var(--orange); }
+    .hero-code .comment { color: var(--text-dim); }
+
+    /* === SECTION === */
+    section {
+      max-width: 1140px; margin: 0 auto;
+      padding: 100px 24px 0;
+    }
+    .section-label {
+      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800; letter-spacing: -1px; margin-bottom: 16px;
+    }
+    .section-desc {
+      color: var(--text-muted); font-size: 17px; max-width: 600px; margin-bottom: 48px;
+    }
+
+    /* === PIPELINE === */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 0;
+      margin-bottom: 0;
+      position: relative;
+    }
+    .pipe-step {
+      position: relative;
+      text-align: center;
+      padding: 28px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-raised);
+    }
+    .pipe-step:first-child { border-radius: 12px 0 0 12px; }
+    .pipe-step:last-child { border-radius: 0 12px 12px 0; }
+    .pipe-step:not(:last-child)::after {
+      content: '';
+      position: absolute; right: -8px; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px;
+      border-right: 2px solid var(--border); border-top: 2px solid var(--border);
+      transform: translateY(-50%) rotate(45deg);
+      background: var(--bg); z-index: 1;
+    }
+    .pipe-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; font-size: 20px;
+    }
+    .pipe-step:nth-child(1) .pipe-icon { background: rgba(56,189,248,0.15); }
+    .pipe-step:nth-child(2) .pipe-icon { background: rgba(167,139,250,0.15); }
+    .pipe-step:nth-child(3) .pipe-icon { background: rgba(251,146,60,0.15); }
+    .pipe-step:nth-child(4) .pipe-icon { background: rgba(74,222,128,0.15); }
+    .pipe-step:nth-child(5) .pipe-icon { background: rgba(244,114,182,0.15); }
+    .pipe-step:nth-child(6) .pipe-icon { background: rgba(56,189,248,0.15); }
+    .pipe-name {
+      font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px;
+    }
+    .pipe-desc {
+      font-size: 11px; color: var(--text-dim); line-height: 1.4;
+    }
+
+    /* === FEATURES === */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .feat {
+      padding: 28px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: border-color 0.25s;
+    }
+    .feat:hover { border-color: rgba(56,189,248,0.3); }
+    .feat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 16px;
+    }
+    .feat h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+    .feat p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+    /* === GAMES === */
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-hover);
+      box-shadow: 0 12px 40px rgba(56,189,248,0.1);
+    }
+    .card-thumb {
+      width: 100%; height: 180px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px; position: relative;
+      overflow: hidden;
+    }
+    .card-thumb::before {
+      content: '';
+      position: absolute; inset: 0;
+    }
+    .card:nth-child(1) .card-thumb::before {
+      background: linear-gradient(135deg, #0f172a, #1e3a5a);
+    }
+    .card:nth-child(2) .card-thumb::before {
+      background: linear-gradient(135deg, #1a0f2e, #2d1b4e);
+    }
+    .card:nth-child(3) .card-thumb::before {
+      background: linear-gradient(135deg, #1a1a0a, #2e3a1a);
+    }
+    .card-thumb span { position: relative; z-index: 1; }
+    .card-body { padding: 22px; }
+    .card-body h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 100px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+      margin-bottom: 12px; text-transform: uppercase;
+    }
+    .badge-2d { background: rgba(74,222,128,0.12); color: var(--green); }
+    .badge-3d { background: rgba(56,189,248,0.12); color: var(--accent); }
+    .card-body p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 18px; }
+    .play-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      color: #fff; font-weight: 700; font-size: 13px; text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(56,189,248,0.25);
+    }
+    .play-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 6px 24px rgba(56,189,248,0.4);
+    }
+
+    /* === TECH STACK === */
+    .stack {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;
+    }
+    .stack-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 14px; font-weight: 600; color: #fff;
+    }
+    .stack-item .dim { color: var(--text-dim); font-weight: 400; margin-left: 4px; }
+
+    /* === CTA === */
+    .cta {
+      text-align: center;
+      padding: 100px 24px 120px;
+      position: relative;
+    }
+    .cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(56,189,248,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800; letter-spacing: -1px; margin-bottom: 16px;
+    }
+    .cta p { color: var(--text-muted); font-size: 17px; margin-bottom: 32px; }
+    .cta-code {
+      display: inline-block;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 28px;
+      font-family: 'JetBrains Mono', monospace; font-size: 15px;
+      color: var(--green); margin-bottom: 32px;
+    }
+
+    /* === FOOTER === */
+    footer {
+      text-align: center; padding: 32px 24px;
+      color: var(--text-dim); font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      .hero { padding: 130px 16px 60px; }
+      .pipeline { grid-template-columns: 1fr 1fr; }
+      .pipe-step:nth-child(3) { border-radius: 0; }
+      .pipe-step:last-child { border-radius: 0 0 12px 12px; }
+      .pipe-step:first-child { border-radius: 12px 0 0 0; }
+      .pipe-step:nth-child(2) { border-radius: 0 12px 0 0; }
+      .pipe-step:not(:last-child)::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">game<span>-creator</span></a>
+    <div class="nav-links">
+      <a href="#pipeline">Pipeline</a>
+      <a href="#features">Features</a>
+      <a href="#games">Games</a>
+      <a href="#stack">Stack</a>
+    </div>
+    <a class="nav-gh" href="https://github.com/OpusGameLabs/game-creator" target="_blank">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">Claude Code Plugin</div>
+    <h1>Build browser games<br/><span class="gradient">with one command</span></h1>
+    <p class="hero-sub">
+      Scaffold, design, add music, test, review, and deploy 2D and 3D games.
+      No game development experience needed.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#games">Play the demos</a>
+      <a class="btn btn-secondary" href="https://github.com/OpusGameLabs/game-creator" target="_blank">View on GitHub</a>
+    </div>
+    <div class="hero-code">
+      <span class="comment"># Install the plugin</span><br/>
+      <span class="cmd">/plugin</span> marketplace add <span class="arg">OpusGameLabs/game-creator</span><br/><br/>
+      <span class="comment"># Build a complete game from scratch</span><br/>
+      <span class="cmd">/game-creator:make-game</span> <span class="arg">3d flappy-bird</span>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <section id="pipeline">
+    <div class="section-label">Pipeline</div>
+    <div class="section-title">Six steps from idea to live URL</div>
+    <p class="section-desc">
+      The <code>/make-game</code> command walks you through the entire process.
+      Each step confirms before proceeding.
+    </p>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-icon">1</div>
+        <div class="pipe-name">Scaffold</div>
+        <div class="pipe-desc">Copy template, install deps, start dev server</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">2</div>
+        <div class="pipe-name">Design</div>
+        <div class="pipe-desc">Sky gradients, particles, transitions, juice</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">3</div>
+        <div class="pipe-name">Audio</div>
+        <div class="pipe-desc">Chiptune BGM + retro SFX, no audio files</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">4</div>
+        <div class="pipe-name">Test</div>
+        <div class="pipe-desc">Playwright gameplay, visual, and perf tests</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">5</div>
+        <div class="pipe-name">Review</div>
+        <div class="pipe-desc">Architecture score and improvement tips</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">6</div>
+        <div class="pipe-name">Deploy</div>
+        <div class="pipe-desc">GitHub Pages with auto-deploy on push</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything you need to ship a game</div>
+    <p class="section-desc">
+      Seven skills, six commands, and four autonomous agents handle the hard parts so you can focus on the idea.
+    </p>
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(56,189,248,0.12);">&#x1F3AE;</div>
+        <h3>2D + 3D Engines</h3>
+        <p>Phaser 3 for 2D side-scrollers, platformers, and arcade games. Three.js for 3D environments with WebGL rendering. Both use the same architecture patterns.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(167,139,250,0.12);">&#x1F3A8;</div>
+        <h3>Visual Design System</h3>
+        <p>Automated visual polish: gradient skies, particle effects, screen shake, squash/stretch, transitions, parallax, and menu animations. Scores each area 1-5 and fixes them.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(251,146,60,0.12);">&#x1F3B5;</div>
+        <h3>Procedural Audio</h3>
+        <p>Chiptune background music and retro sound effects generated in the browser with Strudel.cc. No audio files needed. BGM for every scene, SFX for every action.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(74,222,128,0.12);">&#x1F9EA;</div>
+        <h3>Automated Testing</h3>
+        <p>Playwright tests for gameplay verification, visual regression screenshots, performance budgets, and accessibility audits. Run headless or watch in the browser.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(244,114,182,0.12);">&#x1F3D7;</div>
+        <h3>Clean Architecture</h3>
+        <p>EventBus pub/sub for decoupled modules. Centralized GameState. Every magic number in Constants.js. No circular dependencies. Same patterns for 2D and 3D.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(56,189,248,0.12);">&#x1F680;</div>
+        <h3>One-Command Deploy</h3>
+        <p>Guided GitHub Pages setup with auth walkthrough. Sets base paths, builds, deploys. Future changes auto-deploy with <code>npm run deploy</code>.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(167,139,250,0.12);">&#x1F916;</div>
+        <h3>Autonomous Agents</h3>
+        <p>Four agents handle complex workflows: end-to-end game creation, test execution and failure fixing, architecture review, and deployment automation.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:rgba(251,146,60,0.12);">&#x1F4B0;</div>
+        <h3>Monetization Ready</h3>
+        <p>Scoring system, session tracking, and Play.fun integration built into the architecture. Deploy and register your game URL to start earning.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAMES -->
+  <section id="games">
+    <div class="section-label">Example Games</div>
+    <div class="section-title">Built with the plugin, playable now</div>
+    <p class="section-desc">
+      Every game below was created using the <code>/make-game</code> pipeline. All graphics are procedural &mdash; no image or audio files.
+    </p>
+    <div class="games">
+      <div class="card">
+        <div class="card-thumb"><span>&#x1F426;</span></div>
+        <div class="card-body">
+          <span class="badge badge-2d">Phaser 2D</span>
+          <h2>Flappy Bird</h2>
+          <p>Classic side-scroller with parallax clouds, chiptune BGM, retro SFX, and scene-based architecture. Tap to flap.</p>
+          <a class="play-btn" href="flappy-bird/">PLAY &#x2192;</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-thumb"><span>&#x2708;&#xFE0F;</span></div>
+        <div class="card-body">
+          <span class="badge badge-3d">Three.js 3D</span>
+          <h2>Flight Simulator</h2>
+          <p>Fly through rings in a 3D sky with exhaust particles, speed lines, and procedural audio. WASD to steer.</p>
+          <a class="play-btn" href="flight-simulator/">PLAY &#x2192;</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-thumb"><span>&#x1F425;</span></div>
+        <div class="card-body">
+          <span class="badge badge-3d">Three.js 3D</span>
+          <h2>Flappy Bird 3D</h2>
+          <p>Flappy Bird reimagined in 3D with cylinder pipes, gradient sky, particles, camera shake, and chiptune music. Space to flap.</p>
+          <a class="play-btn" href="flappy-bird-3d/">PLAY &#x2192;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section id="stack">
+    <div class="section-label">Tech Stack</div>
+    <div class="section-title">Production-grade foundations</div>
+    <p class="section-desc">
+      Batteries included. Every dependency is configured and wired up automatically.
+    </p>
+    <div class="stack">
+      <div class="stack-item">Phaser 3 <span class="dim">2D Engine</span></div>
+      <div class="stack-item">Three.js <span class="dim">3D Engine</span></div>
+      <div class="stack-item">Strudel.cc <span class="dim">Procedural Audio</span></div>
+      <div class="stack-item">Vite <span class="dim">Build Tool</span></div>
+      <div class="stack-item">Playwright <span class="dim">Testing</span></div>
+      <div class="stack-item">axe-core <span class="dim">Accessibility</span></div>
+      <div class="stack-item">GitHub Pages <span class="dim">Hosting</span></div>
+      <div class="stack-item">ES Modules <span class="dim">JavaScript</span></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>Start building in seconds</h2>
+    <p>Install the plugin, run one command, and follow the prompts.</p>
+    <div class="cta-code">/plugin marketplace add OpusGameLabs/game-creator</div>
+    <br/><br/>
+    <a class="btn btn-primary" href="https://github.com/OpusGameLabs/game-creator" target="_blank">Get the plugin</a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    Built by <a href="https://github.com/OpusGameLabs">OpusGameLabs</a> &middot; Powered by <a href="https://claude.ai">Claude Code</a> &middot; <a href="https://github.com/OpusGameLabs/game-creator">Source on GitHub</a>
+  </footer>
+
+</body>
+</html>
