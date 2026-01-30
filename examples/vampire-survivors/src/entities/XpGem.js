@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 import { XP, PLAYER } from '../core/Constants.js';
+import { renderPixelArt } from '../core/PixelRenderer.js';
+import { GEM_SMALL, GEM_BIG } from '../sprites/items.js';
+import { PALETTE } from '../sprites/palette.js';
 
 export class XpGem {
   constructor(scene, x, y, amount) {
@@ -8,23 +11,9 @@ export class XpGem {
     this.collected = false;
 
     const isBig = amount >= 3;
-    const color = isBig ? XP.GEM_COLOR_BIG : XP.GEM_COLOR;
-    const size = isBig ? XP.GEM_SIZE + 2 : XP.GEM_SIZE;
-
     const texKey = `gem-${isBig ? 'big' : 'small'}`;
-    if (!scene.textures.exists(texKey)) {
-      const gfx = scene.add.graphics();
-      // Diamond shape
-      gfx.fillStyle(color, 1);
-      gfx.fillRect(size, 0, size, size);
-      gfx.fillRect(0, size, size, size);
-      gfx.fillRect(size, size * 2, size, size);
-      gfx.fillRect(size * 2, size, size, size);
-      gfx.fillStyle(0xffffff, 0.4);
-      gfx.fillRect(size, 0, size / 2, size / 2);
-      gfx.generateTexture(texKey, size * 3, size * 3);
-      gfx.destroy();
-    }
+    const pixels = isBig ? GEM_BIG : GEM_SMALL;
+    renderPixelArt(scene, pixels, PALETTE, texKey, 2);
 
     this.sprite = scene.physics.add.sprite(x, y, texKey);
     this.sprite.body.setAllowGravity(false);

@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 import { WEAPONS, PLAYER } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
+import { renderPixelArt } from '../core/PixelRenderer.js';
+import { MAGIC_BOLT, FIREBALL } from '../sprites/projectiles.js';
+import { PALETTE } from '../sprites/palette.js';
 
 export class WeaponSystem {
   constructor(scene) {
@@ -175,18 +178,19 @@ export class WeaponSystem {
     const dy = nearest.sprite.y - py;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    // Create projectile
-    const projGfx = this.scene.add.circle(px, py, cfg.size, cfg.color, 1);
-    projGfx.setDepth(15);
-    const projBody = this.scene.physics.add.existing(projGfx);
-    projGfx.body.setAllowGravity(false);
-    projGfx.body.setVelocity(
+    // Create pixel art projectile
+    renderPixelArt(this.scene, MAGIC_BOLT, PALETTE, 'proj-magic-bolt', 2);
+    const projSprite = this.scene.add.sprite(px, py, 'proj-magic-bolt');
+    projSprite.setDepth(15);
+    this.scene.physics.add.existing(projSprite);
+    projSprite.body.setAllowGravity(false);
+    projSprite.body.setVelocity(
       (dx / dist) * cfg.speed,
       (dy / dist) * cfg.speed
     );
 
     this.projectiles.push({
-      sprite: projGfx,
+      sprite: projSprite,
       weaponKey: 'MAGIC_WAND',
       damage: cfg.damage,
       size: cfg.size,
@@ -238,17 +242,18 @@ export class WeaponSystem {
     const dy = nearest.sprite.y - py;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const projGfx = this.scene.add.circle(px, py, cfg.size, cfg.color, 1);
-    projGfx.setDepth(15);
-    this.scene.physics.add.existing(projGfx);
-    projGfx.body.setAllowGravity(false);
-    projGfx.body.setVelocity(
+    renderPixelArt(this.scene, FIREBALL, PALETTE, 'proj-fireball', 2);
+    const fbSprite = this.scene.add.sprite(px, py, 'proj-fireball');
+    fbSprite.setDepth(15);
+    this.scene.physics.add.existing(fbSprite);
+    fbSprite.body.setAllowGravity(false);
+    fbSprite.body.setVelocity(
       (dx / dist) * cfg.speed,
       (dy / dist) * cfg.speed
     );
 
     this.projectiles.push({
-      sprite: projGfx,
+      sprite: fbSprite,
       weaponKey: 'FIREBALL',
       damage: cfg.damage,
       size: cfg.size,
