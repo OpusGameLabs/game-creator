@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { ENEMY, WAVE } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
+import { renderSpriteSheet } from '../core/PixelRenderer.js';
+import { ENEMY_SPRITES } from '../sprites/enemies.js';
+import { PALETTE } from '../sprites/palette.js';
 
 export class Enemy {
   constructor(scene, x, y, typeKey, hpScale) {
@@ -15,22 +18,30 @@ export class Enemy {
     this.alive = true;
     this.damageFlashTime = 0;
 
-    // Generate texture if not cached
+    // Generate pixel art spritesheet if not cached
     const texKey = `enemy-${typeKey}`;
-    if (!scene.textures.exists(texKey)) {
-      const gfx = scene.add.graphics();
-      gfx.fillStyle(cfg.color, 1);
-      gfx.fillCircle(cfg.size, cfg.size, cfg.size);
-      // Eyes
-      gfx.fillStyle(0xff0000, 1);
-      gfx.fillCircle(cfg.size - 4, cfg.size - 4, 2);
-      gfx.fillCircle(cfg.size + 4, cfg.size - 4, 2);
-      gfx.generateTexture(texKey, cfg.size * 2, cfg.size * 2);
-      gfx.destroy();
+    const spriteData = ENEMY_SPRITES[typeKey];
+    const scale = 2;
+    renderSpriteSheet(scene, spriteData.frames, PALETTE, texKey, scale);
+
+    const animKey = `${typeKey}-anim`;
+    if (!scene.anims.exists(animKey)) {
+      scene.anims.create({
+        key: animKey,
+        frames: scene.anims.generateFrameNumbers(texKey, { start: 0, end: spriteData.frames.length - 1 }),
+        frameRate: spriteData.animRate,
+        repeat: -1,
+      });
     }
 
-    this.sprite = scene.physics.add.sprite(x, y, texKey);
-    this.sprite.setCircle(cfg.size);
+    this.sprite = scene.physics.add.sprite(x, y, texKey, 0);
+    this.sprite.play(animKey);
+    const bodySize = spriteData.frames[0][0].length * scale * 0.7;
+    this.sprite.body.setSize(bodySize, bodySize);
+    this.sprite.body.setOffset(
+      (this.sprite.width - bodySize) / 2,
+      (this.sprite.height - bodySize) / 2
+    );
     this.sprite.body.setAllowGravity(false);
     this.sprite.setDepth(5);
     this.sprite.setData('enemy', this);

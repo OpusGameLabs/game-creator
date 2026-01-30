@@ -2,25 +2,32 @@ import Phaser from 'phaser';
 import { PLAYER, GAME } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
+import { renderSpriteSheet } from '../core/PixelRenderer.js';
+import { PLAYER_FRAMES } from '../sprites/player.js';
+import { PALETTE } from '../sprites/palette.js';
 
 export class Player {
   constructor(scene) {
     this.scene = scene;
     this.invulnerable = false;
 
-    // Generate texture
-    const gfx = scene.add.graphics();
-    // Body circle
-    gfx.fillStyle(PLAYER.COLOR, 1);
-    gfx.fillCircle(PLAYER.SIZE, PLAYER.SIZE, PLAYER.SIZE);
-    // Lighter inner
-    gfx.fillStyle(PLAYER.COLOR_LIGHT, 1);
-    gfx.fillCircle(PLAYER.SIZE - 3, PLAYER.SIZE - 3, PLAYER.SIZE * 0.5);
-    gfx.generateTexture('player', PLAYER.SIZE * 2, PLAYER.SIZE * 2);
-    gfx.destroy();
+    // Generate pixel art spritesheet
+    const scale = 2;
+    renderSpriteSheet(scene, PLAYER_FRAMES, PALETTE, 'player-sheet', scale);
 
-    this.sprite = scene.physics.add.sprite(GAME.WORLD_WIDTH / 2, GAME.WORLD_HEIGHT / 2, 'player');
-    this.sprite.setCircle(PLAYER.SIZE);
+    if (!scene.anims.exists('player-walk')) {
+      scene.anims.create({
+        key: 'player-walk',
+        frames: scene.anims.generateFrameNumbers('player-sheet', { start: 0, end: 3 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
+
+    this.sprite = scene.physics.add.sprite(GAME.WORLD_WIDTH / 2, GAME.WORLD_HEIGHT / 2, 'player-sheet', 0);
+    const bodySize = 16 * scale;
+    this.sprite.body.setSize(bodySize, bodySize);
+    this.sprite.body.setOffset((this.sprite.width - bodySize) / 2, (this.sprite.height - bodySize) / 2);
     this.sprite.setDepth(10);
     this.sprite.body.setCollideWorldBounds(true);
 
@@ -55,6 +62,16 @@ export class Player {
     // Flip sprite based on direction
     if (vx < 0) this.sprite.setFlipX(true);
     else if (vx > 0) this.sprite.setFlipX(false);
+
+    // Play walk animation when moving, idle when still
+    if (vx !== 0 || vy !== 0) {
+      if (!this.sprite.anims.isPlaying || this.sprite.anims.currentAnim?.key !== 'player-walk') {
+        this.sprite.play('player-walk');
+      }
+    } else {
+      this.sprite.stop();
+      this.sprite.setFrame(0);
+    }
   }
 
   takeDamage(amount) {
