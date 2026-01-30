@@ -48,15 +48,13 @@ Then scaffold the project by copying the starter template:
 > - `src/core/EventBus.js` — how parts of the game talk to each other
 > - `src/core/GameState.js` — tracks score, lives, etc.
 >
-> **Asset style choice:** By default, game entities use simple geometric shapes (circles, rectangles). I can upgrade them to pixel art sprites — recognizable 16x16 characters with walk animations. Which style do you want?
-> - **Geometric shapes** (default) — fast, minimal, abstract
-> - **Pixel art sprites** — recognizable characters, enemies, and items with optional animation
+> **Next up: pixel art.** I'll create custom pixel art sprites for every character, enemy, item, and background tile — all generated as code, no image files needed. Then I'll add visual polish on top.
 
-**Wait for user response.** If they choose pixel art, proceed to Step 1.5. Otherwise skip to Step 2.
+**Wait for user confirmation before proceeding.**
 
-### Step 1.5: Add pixel art sprites (`/add-assets`)
+### Step 1.5: Add pixel art sprites and backgrounds (`/add-assets`)
 
-Only run this step if the user chose pixel art sprites.
+**For 2D games, always run this step.** For 3D games, skip to Step 2.
 
 Load the game-assets skill. Then:
 
@@ -66,17 +64,19 @@ Load the game-assets skill. Then:
 4. Create `src/core/PixelRenderer.js` — the `renderPixelArt()` + `renderSpriteSheet()` utilities
 5. Create `src/sprites/palette.js` with the chosen palette
 6. Create sprite data files (`player.js`, `enemies.js`, `items.js`, `projectiles.js`) with pixel matrices
-7. Update entity constructors to use pixel art instead of geometric shapes
-8. Add Phaser animations for entities with multiple frames
-9. Adjust physics bodies for new sprite dimensions
-10. Run `npm run build` to confirm no errors
+7. Create `src/sprites/tiles.js` with background tiles (ground variants, decorative elements)
+8. Create or update the background system to use tiled pixel art instead of flat colors/grids
+9. Update entity constructors to use pixel art instead of geometric shapes
+10. Add Phaser animations for entities with multiple frames
+11. Adjust physics bodies for new sprite dimensions
+12. Run `npm run build` to confirm no errors
 
 **Tell the user:**
-> Your game entities now have pixel art sprites! Each character, enemy, and item has a distinct visual identity. Here's what was created:
+> Your game now has pixel art sprites and backgrounds! Every character, enemy, item, and background tile has a distinct visual identity. Here's what was created:
 > - `src/core/PixelRenderer.js` — rendering engine
-> - `src/sprites/` — all sprite data and palettes
+> - `src/sprites/` — all sprite data, palettes, and background tiles
 >
-> **Next up: visual polish.** I'll add gradients, particles, screen transitions, and effects. Ready?
+> **Next up: visual polish.** I'll add particles, screen transitions, and juice effects. Ready?
 
 **Wait for user confirmation before proceeding.**
 

@@ -7,6 +7,9 @@ import { XpGem } from '../entities/XpGem.js';
 import { EnemySpawner } from '../systems/EnemySpawner.js';
 import { WeaponSystem } from '../systems/WeaponSystem.js';
 import { ParticleSystem } from '../systems/Particles.js';
+import { renderPixelArt } from '../core/PixelRenderer.js';
+import { GROUND_BASE, GROUND_VAR1, GROUND_VAR2, DECORATIONS } from '../sprites/tiles.js';
+import { PALETTE } from '../sprites/palette.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -57,22 +60,55 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawArena() {
-    const gfx = this.add.graphics();
-    gfx.setDepth(0);
+    // Render tile textures (only once — renderPixelArt skips if key exists)
+    const scale = 2;
+    renderPixelArt(this, GROUND_BASE, PALETTE, 'tile-ground-0', scale);
+    renderPixelArt(this, GROUND_VAR1, PALETTE, 'tile-ground-1', scale);
+    renderPixelArt(this, GROUND_VAR2, PALETTE, 'tile-ground-2', scale);
 
-    // Ground
-    gfx.fillStyle(COLORS.GROUND, 1);
-    gfx.fillRect(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
+    // Tile the world with randomized ground variants
+    const tileSize = 16 * scale; // 32px
+    const tileKeys = ['tile-ground-0', 'tile-ground-1', 'tile-ground-2'];
+    for (let y = 0; y < GAME.WORLD_HEIGHT; y += tileSize) {
+      for (let x = 0; x < GAME.WORLD_WIDTH; x += tileSize) {
+        // 70% base, 20% var1, 10% var2
+        const r = Math.random();
+        const key = r < 0.7 ? tileKeys[0] : r < 0.9 ? tileKeys[1] : tileKeys[2];
+        this.add.image(x + tileSize / 2, y + tileSize / 2, key).setDepth(-10);
+      }
+    }
 
-    // Grid lines
-    gfx.lineStyle(1, COLORS.GRID_LINE, 0.3);
-    const gridSize = 80;
-    for (let x = 0; x <= GAME.WORLD_WIDTH; x += gridSize) {
-      gfx.lineBetween(x, 0, x, GAME.WORLD_HEIGHT);
+    // Render decoration textures
+    DECORATIONS.forEach((deco, i) => {
+      renderPixelArt(this, deco.pixels, PALETTE, `deco-${i}`, scale);
+    });
+
+    // Scatter decorative elements across the world
+    const totalDecoWeight = DECORATIONS.reduce((sum, d) => sum + d.weight, 0);
+    const decoCount = 60;
+    for (let i = 0; i < decoCount; i++) {
+      // Weighted random selection
+      let roll = Math.random() * totalDecoWeight;
+      let decoIdx = 0;
+      for (let d = 0; d < DECORATIONS.length; d++) {
+        roll -= DECORATIONS[d].weight;
+        if (roll <= 0) { decoIdx = d; break; }
+      }
+
+      const dx = Phaser.Math.Between(80, GAME.WORLD_WIDTH - 80);
+      const dy = Phaser.Math.Between(80, GAME.WORLD_HEIGHT - 80);
+      const deco = this.add.image(dx, dy, `deco-${decoIdx}`);
+      deco.setDepth(-5);
+      deco.setAlpha(0.4 + Math.random() * 0.35);
     }
-    for (let y = 0; y <= GAME.WORLD_HEIGHT; y += gridSize) {
-      gfx.lineBetween(0, y, GAME.WORLD_WIDTH, y);
-    }
+
+    // Subtle vignette border around the world edges
+    const borderGfx = this.add.graphics();
+    borderGfx.setDepth(-3);
+    borderGfx.lineStyle(4, 0x0d0520, 0.8);
+    borderGfx.strokeRect(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
+    borderGfx.lineStyle(8, 0x0d0520, 0.4);
+    borderGfx.strokeRect(-4, -4, GAME.WORLD_WIDTH + 8, GAME.WORLD_HEIGHT + 8);
   }
 
   update(time, delta) {

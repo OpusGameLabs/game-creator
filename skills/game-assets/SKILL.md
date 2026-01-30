@@ -382,6 +382,137 @@ export const MAGIC_BOLT = [
 ];
 ```
 
+### Background Tile (Ground, Floor, Terrain)
+
+Key features: Seamless tiling, subtle variation between tiles, low contrast so entities stand out. Use 16x16 tiles at scale 2 (32x32px each).
+
+```js
+// sprites/tiles.js — background tile variants
+
+// Ground tile — base terrain (dark earth / stone)
+export const GROUND_BASE = [
+  [2,2,2,1,2,2,2,2,2,2,1,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,1,2,2,2,2,2,2,2,1,2],
+  [2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2],
+  [2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2],
+  [2,2,1,2,2,2,2,2,2,2,2,2,2,1,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+];
+
+// Variant tiles — alternate with GROUND_BASE for variety
+export const GROUND_VAR1 = [ /* same size, different speckle pattern */ ];
+export const GROUND_VAR2 = [ /* ... */ ];
+```
+
+#### Decorative Elements (8x8 to 16x16)
+
+Small props scattered on the ground at random positions. Not tiles — placed once during scene creation.
+
+```js
+// Gravestone — 8x12
+export const GRAVESTONE = [
+  [0,0,1,1,1,1,0,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,8,8,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [0,1,18,18,18,18,1,0],
+  [1,18,18,18,18,18,18,1],
+  [1,18,18,18,18,18,18,1],
+  [1,1,1,1,1,1,1,1],
+];
+
+// Bone pile — 8x6
+export const BONE_PILE = [
+  [0,0,8,0,0,8,0,0],
+  [0,8,8,8,8,8,8,0],
+  [8,18,8,8,8,18,8,8],
+  [0,8,8,8,8,8,8,0],
+  [0,8,18,8,8,18,8,0],
+  [0,0,8,8,8,8,0,0],
+];
+
+// Torch — 6x12 (flickering tip animated via tween tint, not extra frame)
+export const TORCH = [
+  [0,0,4,4,0,0],
+  [0,4,12,12,4,0],
+  [0,0,4,4,0,0],
+  [0,0,1,1,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,19,19,0,0],
+  [0,0,1,1,0,0],
+];
+```
+
+#### Tiled Background Rendering
+
+Use `renderPixelArt()` to create tile textures, then fill the world with `tileSprite`:
+
+```js
+// In the game scene's create():
+import { renderPixelArt } from '../core/PixelRenderer.js';
+import { GROUND_BASE, GROUND_VAR1, GROUND_VAR2 } from '../sprites/tiles.js';
+import { PALETTE } from '../sprites/palette.js';
+
+// Render tile textures
+renderPixelArt(scene, GROUND_BASE, PALETTE, 'tile-ground-0', 2);
+renderPixelArt(scene, GROUND_VAR1, PALETTE, 'tile-ground-1', 2);
+renderPixelArt(scene, GROUND_VAR2, PALETTE, 'tile-ground-2', 2);
+
+// Option A: TileSprite for infinite seamless ground
+const bg = scene.add.tileSprite(0, 0, WORLD_WIDTH, WORLD_HEIGHT, 'tile-ground-0');
+bg.setOrigin(0, 0);
+bg.setDepth(-10);
+
+// Option B: Random tile grid for variety (better visual result)
+const tileSize = 32; // 16px * scale 2
+for (let y = 0; y < WORLD_HEIGHT; y += tileSize) {
+  for (let x = 0; x < WORLD_WIDTH; x += tileSize) {
+    const variant = Math.random() < 0.7 ? 'tile-ground-0'
+                  : Math.random() < 0.5 ? 'tile-ground-1'
+                  : 'tile-ground-2';
+    scene.add.image(x + tileSize / 2, y + tileSize / 2, variant).setDepth(-10);
+  }
+}
+
+// Scatter decorative elements
+const decorTypes = ['deco-gravestone', 'deco-bones', 'deco-torch'];
+for (let i = 0; i < 40; i++) {
+  const dx = Phaser.Math.Between(100, WORLD_WIDTH - 100);
+  const dy = Phaser.Math.Between(100, WORLD_HEIGHT - 100);
+  const type = Phaser.Utils.Array.GetRandom(decorTypes);
+  const deco = scene.add.image(dx, dy, type);
+  deco.setDepth(-5);
+  deco.setAlpha(0.6 + Math.random() * 0.4);
+}
+```
+
+### Background Design Rules
+
+1. **Low contrast** — background tiles should be 2-3 shades of the same dark color. Entities must pop against the background.
+2. **Subtle variation** — use 2-3 tile variants with different speckle patterns. Random placement breaks repetition.
+3. **Decorative props** — scatter 20-50 small decorations across the world. Low alpha (0.5-0.8) keeps them subtle.
+4. **Match the theme** — gothic games: gravestones, bones, dead trees. Sci-fi: metal panels, pipes, lights. Nature: grass tufts, flowers, rocks.
+5. **Depth layering** — tiles at depth -10, decorations at -5, entities at 5-15. Never let background compete with gameplay.
+
 ## Integration Pattern
 
 ### Replacing fillCircle Entities
@@ -563,7 +694,7 @@ When invoked, follow this process:
 - Read all entity files to find `generateTexture()` or `fillCircle` calls
 - List every entity that currently uses geometric shapes
 
-### Step 2: Plan the sprites
+### Step 2: Plan the sprites and backgrounds
 
 Present a table of planned sprites:
 
@@ -573,6 +704,9 @@ Present a table of planned sprites:
 | Bat | Flying | 16x16 | 2 (wings up/down) | Purple bat with red eyes |
 | Zombie | Ground | 16x16 | 2 (shamble) | Green-skinned, arms forward |
 | XP Gem | Item | 8x8 | 1 (static + bob tween) | Golden diamond |
+| Ground | Tile | 16x16 | 3 variants | Dark earth with speckle variations |
+| Gravestone | Decoration | 8x12 | 1 | Stone marker with cross |
+| Bones | Decoration | 8x6 | 1 | Scattered bone pile |
 
 Choose the appropriate palette for the game's theme.
 
@@ -581,9 +715,11 @@ Choose the appropriate palette for the game's theme.
 1. Create `src/core/PixelRenderer.js` with `renderPixelArt()` and `renderSpriteSheet()`
 2. Create `src/sprites/palette.js` with the chosen palette
 3. Create sprite data files in `src/sprites/` — one per entity category
-4. Update entity constructors to use `renderPixelArt()` / `renderSpriteSheet()` instead of `fillCircle()` + `generateTexture()`
-5. Add animations where appropriate (walk cycles, wing flaps)
-6. Verify physics bodies still align (adjust `setCircle()` / `setSize()` if sprite dimensions changed)
+4. Create `src/sprites/tiles.js` with background tile variants and decorative elements
+5. Update entity constructors to use `renderPixelArt()` / `renderSpriteSheet()` instead of `fillCircle()` + `generateTexture()`
+6. Create or update the background system to tile pixel art ground and scatter decorations
+7. Add animations where appropriate (walk cycles, wing flaps)
+8. Verify physics bodies still align (adjust `setCircle()` / `setSize()` if sprite dimensions changed)
 
 ### Step 4: Verify
 
@@ -604,5 +740,9 @@ When adding pixel art to a game, verify:
 - [ ] Physics bodies adjusted for new sprite dimensions
 - [ ] Animations created for entities with multiple frames
 - [ ] Static entities (items, pickups) use Phaser bob tweens for life
+- [ ] Background uses tiled pixel art — not flat solid color or Graphics grid lines
+- [ ] 2-3 ground tile variants for visual variety
+- [ ] Decorative elements scattered at low alpha (gravestones, bones, props)
+- [ ] Background depth set below entities (depth -10 for tiles, -5 for decorations)
 - [ ] Build succeeds with no errors
 - [ ] Sprite scale matches game's visual style (scale 2 for retro, scale 1 for tiny)
