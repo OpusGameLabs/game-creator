@@ -1,0 +1,25 @@
+import { test as base, expect } from '@playwright/test';
+
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    await page.goto('/');
+    // Wait for Phaser to boot and canvas to render
+    await page.waitForFunction(() => {
+      return window.__GAME__ && window.__GAME__.scene?.scenes?.length > 0;
+    }, { timeout: 15000 });
+    // Small extra wait for scene rendering
+    await page.waitForTimeout(500);
+    await use(page);
+  },
+});
+
+export async function startPlaying(page) {
+  // First tap — audio init
+  await page.click('canvas');
+  await page.waitForTimeout(300);
+  // Second tap — start game
+  await page.click('canvas');
+  await page.waitForTimeout(500);
+}
+
+export { expect };

@@ -1,26 +1,23 @@
 {
   "name": "flappy-bird",
   "version": "1.0.0",
-  "description": "Flappy Bird clone built with Phaser 3",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "npx playwright test",
-    "test:ui": "npx playwright test --ui",
     "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
     "test:update-snapshots": "npx playwright test --update-snapshots"
   },
-  "license": "ISC",
   "dependencies": {
-    "@strudel/web": "^1.3.0",
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "@strudel/web": "^1.3.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.11.0",
+    "vite": "^7.3.1",
     "@playwright/test": "^1.58.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "@axe-core/playwright": "^4.11.0"
   }
 }

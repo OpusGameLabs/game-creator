@@ -128,6 +128,8 @@ See [patterns.md](patterns.md) for implementations.
 - **Deep container nesting** — Containers disable render batching for children. Keep hierarchy flat.
 - **Not cleaning up** — Remove event listeners and timers in `shutdown()` to prevent memory leaks.
 - **Hardcoded values** — Every number belongs in `Constants.ts`. No magic numbers in game logic.
+- **Unwired physics colliders** — Creating a static body with `physics.add.existing(obj, true)` does nothing on its own. You MUST call `physics.add.collider(bodyA, bodyB, callback)` to connect two bodies. Every static collider (ground, walls, platforms) needs an explicit collider or overlap call wiring it to the entities that should interact with it.
+- **Invisible interactive objects under other display objects** — Never set `setAlpha(0)` on an interactive game object and layer a Graphics or other display object on top. The top object intercepts pointer events, making the interactive element unreachable. Instead, use `setFillStyle()` / `setFillStyle(hoverColor)` directly on the interactive object for hover states, or use `setInteractive()` on the topmost visual element itself.
 
 ## Examples
 

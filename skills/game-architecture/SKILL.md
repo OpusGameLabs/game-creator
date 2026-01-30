@@ -207,3 +207,8 @@ Boot/Load -> Main Menu -> Gameplay <-> Pause Menu
 ```
 
 Manage this through `gameState.game.menuState` which tracks the current flow state.
+
+## Common Architecture Pitfalls
+
+- **Unwired physics bodies** — Creating a static physics body (e.g., ground, wall) without wiring it to other bodies via `physics.add.collider()` or `physics.add.overlap()` has no gameplay effect. Every boundary or obstacle needs explicit collision wiring to the entities it should interact with. After creating any static body, immediately add the collider call.
+- **Interactive elements blocked by overlapping display objects** — When building UI (buttons, menus), the topmost display object in the scene list receives pointer events. Never hide the interactive element behind a decorative layer. Either make the visual element itself interactive, or ensure nothing is rendered on top of the hit area.

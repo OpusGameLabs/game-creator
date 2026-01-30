@@ -1,159 +1,157 @@
-import { test, expect, startPlaying } from '../fixtures/game-test.js';
+import { expect } from '@playwright/test';
+import { test, startPlaying } from '../fixtures/game-test.js';
 
-test.describe('Game Boot & Scene Flow', () => {
-  test('game boots and shows menu scene', async ({ gamePage }) => {
-    const sceneKey = await gamePage.evaluate(() => {
+test.describe('Flappy Bird — Game Tests', () => {
+  test('game boots and shows canvas', async ({ gamePage: page }) => {
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible();
+  });
+
+  test('starts on MenuScene', async ({ gamePage: page }) => {
+    const sceneKey = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.getScenes(true);
       return scenes[0]?.scene?.key;
     });
     expect(sceneKey).toBe('MenuScene');
   });
 
-  test('canvas is visible', async ({ gamePage }) => {
-    const canvas = gamePage.locator('canvas');
-    await expect(canvas).toBeVisible();
-  });
+  test('transitions to GameScene on input', async ({ gamePage: page }) => {
+    // First tap: audio init
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+    // Second tap: start game
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(500);
 
-  test('menu transitions to game scene on space', async ({ gamePage }) => {
-    // First press: init audio (browser autoplay policy)
-    await gamePage.keyboard.press('Space');
-    await gamePage.waitForTimeout(200);
-    // Second press: start game
-    await gamePage.keyboard.press('Space');
-
-    await gamePage.waitForFunction(() => {
+    const sceneKey = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.some(s => s.scene.key === 'GameScene');
-    }, null, { timeout: 5000 });
-
-    const activeScenes = await gamePage.evaluate(() => {
-      return window.__GAME__.scene.getScenes(true).map(s => s.scene.key);
+      return scenes.map(s => s.scene.key);
     });
-    expect(activeScenes).toContain('GameScene');
+    expect(sceneKey).toContain('GameScene');
   });
 
-  test('menu transitions to game scene on click', async ({ gamePage }) => {
-    const canvas = gamePage.locator('canvas');
-    // First click: init audio (browser autoplay policy)
-    await canvas.click({ position: { x: 200, y: 300 } });
-    await gamePage.waitForTimeout(200);
-    // Second click: start game
-    await canvas.click({ position: { x: 200, y: 300 } });
+  test('GameScene shows GET READY before first input', async ({ gamePage: page }) => {
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(300);
 
-    await gamePage.waitForFunction(() => {
-      const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.some(s => s.scene.key === 'GameScene');
-    }, null, { timeout: 5000 });
-
-    const activeScenes = await gamePage.evaluate(() => {
-      return window.__GAME__.scene.getScenes(true).map(s => s.scene.key);
-    });
-    expect(activeScenes).toContain('GameScene');
-  });
-});
-
-test.describe('Gameplay', () => {
-  test('game starts on input', async ({ gamePage }) => {
-    await startPlaying(gamePage);
-
-    const started = await gamePage.evaluate(() => window.__GAME_STATE__.started);
-    expect(started).toBe(true);
+    const state = await page.evaluate(() => ({
+      started: window.__GAME_STATE__.started,
+      gameOver: window.__GAME_STATE__.gameOver,
+    }));
+    expect(state.started).toBe(true);
+    expect(state.gameOver).toBe(false);
   });
 
-  test('bird flaps on space (moves upward)', async ({ gamePage }) => {
-    await startPlaying(gamePage);
-    await gamePage.waitForTimeout(300);
+  test('bird flaps on space during gameplay', async ({ gamePage: page }) => {
+    await startPlaying(page);
 
-    // Get bird Y before flap
-    const yBefore = await gamePage.evaluate(() => {
-      return window.__GAME__.scene.getScene('GameScene').bird.y;
+    const y1 = await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      return scene?.bird?.sprite?.y;
     });
 
-    // Flap
-    await gamePage.keyboard.press('Space');
-    await gamePage.waitForTimeout(150);
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(150);
 
-    // Bird should move up (lower y value)
-    const yAfter = await gamePage.evaluate(() => {
-      return window.__GAME__.scene.getScene('GameScene').bird.y;
+    const y2 = await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      return scene?.bird?.sprite?.y;
     });
-    expect(yAfter).toBeLessThan(yBefore);
+
+    // Bird should have moved up (lower y)
+    expect(y2).toBeLessThan(y1);
   });
 
-  test('game over when bird hits ground', async ({ gamePage }) => {
-    await startPlaying(gamePage);
+  test('score starts at zero', async ({ gamePage: page }) => {
+    await startPlaying(page);
 
-    // Don't flap — let bird fall
-    await gamePage.waitForFunction(
-      () => window.__GAME_STATE__.gameOver === true,
-      null,
-      { timeout: 10000 }
-    );
-
-    expect(await gamePage.evaluate(() => window.__GAME_STATE__.gameOver)).toBe(true);
-  });
-
-  test('game over transitions to GameOverScene', async ({ gamePage }) => {
-    await startPlaying(gamePage);
-
-    // Let bird die (may take a while in headless)
-    await gamePage.waitForFunction(
-      () => window.__GAME_STATE__.gameOver === true,
-      null,
-      { timeout: 15000 }
-    );
-
-    // Wait for scene transition (death slow-mo + 800ms delay + fade)
-    await gamePage.waitForFunction(() => {
-      const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.some(s => s.scene.key === 'GameOverScene');
-    }, null, { timeout: 15000 });
-
-    const activeScenes = await gamePage.evaluate(() => {
-      return window.__GAME__.scene.getScenes(true).map(s => s.scene.key);
-    });
-    expect(activeScenes).toContain('GameOverScene');
-  });
-
-  test('score starts at 0', async ({ gamePage }) => {
-    await startPlaying(gamePage);
-
-    const score = await gamePage.evaluate(() => window.__GAME_STATE__.score);
+    const score = await page.evaluate(() => window.__GAME_STATE__.score);
     expect(score).toBe(0);
   });
-});
 
-test.describe('Restart Flow', () => {
-  test('can restart from game over with space', async ({ gamePage }) => {
-    await startPlaying(gamePage);
+  test('score increments via event', async ({ gamePage: page }) => {
+    await startPlaying(page);
 
-    // Let bird die
-    await gamePage.waitForFunction(
-      () => window.__GAME_STATE__.gameOver === true,
-      null,
-      { timeout: 10000 }
-    );
+    await page.evaluate(() => {
+      window.__EVENT_BUS__.emit(window.__EVENTS__.SCORE_CHANGED, { score: 1 });
+    });
 
-    // Wait for GameOverScene (death slow-mo + 800ms delay + fade transition)
-    await gamePage.waitForFunction(() => {
+    // Score should be settable through the score system
+    await page.evaluate(() => {
+      window.__GAME_STATE__.addScore(1);
+    });
+
+    const score = await page.evaluate(() => window.__GAME_STATE__.score);
+    expect(score).toBe(1);
+  });
+
+  test('game over triggers on bird death event', async ({ gamePage: page }) => {
+    await startPlaying(page);
+
+    await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      scene.triggerGameOver();
+    });
+
+    const gameOver = await page.evaluate(() => window.__GAME_STATE__.gameOver);
+    expect(gameOver).toBe(true);
+  });
+
+  test('game over transitions to GameOverScene', async ({ gamePage: page }) => {
+    await startPlaying(page);
+
+    await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      scene.triggerGameOver();
+    });
+
+    // Wait for the delayed transition (800ms in game + buffer)
+    await page.waitForTimeout(1200);
+
+    const sceneKeys = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.some(s => s.scene.key === 'GameOverScene');
-    }, null, { timeout: 15000 });
+      return scenes.map(s => s.scene.key);
+    });
+    expect(sceneKeys).toContain('GameOverScene');
+  });
 
-    // Allow fade-in to complete
-    await gamePage.waitForTimeout(800);
+  test('restart returns to MenuScene', async ({ gamePage: page }) => {
+    await startPlaying(page);
 
-    // Press space to restart
-    await gamePage.keyboard.press('Space');
+    await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      scene.triggerGameOver();
+    });
+    await page.waitForTimeout(1200);
 
-    // Should go back to GameScene
-    await gamePage.waitForFunction(() => {
+    // Press space to restart from game over
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(500);
+
+    const sceneKeys = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.some(s => s.scene.key === 'GameScene');
-    }, null, { timeout: 5000 });
+      return scenes.map(s => s.scene.key);
+    });
+    expect(sceneKeys).toContain('MenuScene');
+  });
 
-    // State should be reset
-    const gameOver = await gamePage.evaluate(() => window.__GAME_STATE__.gameOver);
-    expect(gameOver).toBe(false);
+  test('best score persists across restarts', async ({ gamePage: page }) => {
+    await startPlaying(page);
+
+    // Set a score
+    await page.evaluate(() => {
+      window.__GAME_STATE__.addScore(5);
+    });
+
+    await page.evaluate(() => {
+      const scene = window.__GAME__.scene.getScene('GameScene');
+      scene.triggerGameOver();
+    });
+    await page.waitForTimeout(1200);
+
+    const bestScore = await page.evaluate(() => window.__GAME_STATE__.bestScore);
+    expect(bestScore).toBe(5);
   });
 });

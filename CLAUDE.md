@@ -13,6 +13,7 @@ This is **game-creator**, a Claude Code plugin for building browser games. It pr
 skills/
   phaser/SKILL.md          # 2D game patterns (Phaser 3, scene-based, multi-file)
   threejs-game/SKILL.md    # 3D game patterns (Three.js, event-driven)
+  game-assets/SKILL.md     # Pixel art sprites (code-only, no external files)
   game-designer/SKILL.md   # Visual polish (gradients, particles, juice, transitions)
   game-audio/SKILL.md      # Procedural audio (Strudel.cc BGM + SFX)
   game-qa/SKILL.md         # Playwright testing (gameplay, visual, perf)
@@ -22,10 +23,11 @@ templates/
   phaser-2d/               # Runnable 2D starter project (Phaser 3)
   threejs-3d/              # Runnable 3D starter project (Three.js)
 commands/
-  make-game.md             # Full pipeline: scaffold → design → audio → QA → review → deploy
+  make-game.md             # Full pipeline: scaffold → assets → design → audio → QA → review → deploy
   improve-game.md          # Holistic audit + implement highest-impact improvements
   design-game.md           # Visual design audit + improvements
   add-feature.md           # Add feature following patterns
+  add-assets.md            # Replace shapes with pixel art sprites
   add-audio.md             # Add Strudel.cc audio
   qa-game.md               # Add Playwright tests
   review-game.md           # Architecture review

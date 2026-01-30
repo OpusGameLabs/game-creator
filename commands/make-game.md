@@ -10,12 +10,13 @@ Build a complete browser game from scratch, step by step. This command walks you
 
 **What you'll get:**
 1. A fully scaffolded game project with clean architecture
-2. Visual polish — gradients, particles, transitions, juice
-3. Chiptune music and retro sound effects (no audio files needed)
-4. Automated tests that catch bugs when you make changes
-5. An architecture review with a quality score and improvement tips
-6. Live deployment to GitHub Pages with a public URL
-7. Future changes auto-deploy on `git push`
+2. Pixel art sprites — recognizable characters, enemies, and items (optional, replaces geometric shapes)
+3. Visual polish — gradients, particles, transitions, juice
+4. Chiptune music and retro sound effects (no audio files needed)
+5. Automated tests that catch bugs when you make changes
+6. An architecture review with a quality score and improvement tips
+7. Live deployment to GitHub Pages with a public URL
+8. Future changes auto-deploy on `git push`
 
 ## Instructions
 
@@ -37,8 +38,9 @@ Then scaffold the project by copying the starter template:
    - 3D: copy `templates/threejs-3d/` → `<game-name>/`
 3. Update `package.json` — set `"name"` to the game name
 4. Update `<title>` in `index.html` to a human-readable version of the game name
-5. Run `npm install` in the new project directory
-6. Start the dev server with `npm run dev` and confirm it works
+5. **Verify Node.js/npm availability**: Run `node --version && npm --version` to confirm Node.js and npm are installed and accessible. If they fail (e.g., nvm lazy-loading), try sourcing nvm: `export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"` then retry. If Node.js is not installed at all, tell the user they need to install it before continuing.
+6. Run `npm install` in the new project directory
+7. Start the dev server in the background with `npm run dev` and confirm it responds. Keep it running throughout the pipeline so you (and the user) can test at any point. Note the port number for later steps.
 
 **Tell the user:**
 > Your game is scaffolded and running! Here's how it's organized:
@@ -46,7 +48,35 @@ Then scaffold the project by copying the starter template:
 > - `src/core/EventBus.js` — how parts of the game talk to each other
 > - `src/core/GameState.js` — tracks score, lives, etc.
 >
-> **Next up: visual polish.** I'll add gradients, particles, screen transitions, and effects that make the game feel alive. Ready?
+> **Asset style choice:** By default, game entities use simple geometric shapes (circles, rectangles). I can upgrade them to pixel art sprites — recognizable 16x16 characters with walk animations. Which style do you want?
+> - **Geometric shapes** (default) — fast, minimal, abstract
+> - **Pixel art sprites** — recognizable characters, enemies, and items with optional animation
+
+**Wait for user response.** If they choose pixel art, proceed to Step 1.5. Otherwise skip to Step 2.
+
+### Step 1.5: Add pixel art sprites (`/add-assets`)
+
+Only run this step if the user chose pixel art sprites.
+
+Load the game-assets skill. Then:
+
+1. Read all entity files (`src/entities/`) to find `generateTexture()` / `fillCircle()` calls
+2. Choose the palette that matches the game's theme (DARK, BRIGHT, or RETRO)
+3. Present the sprite plan table (entity, archetype, grid size, frame count)
+4. Create `src/core/PixelRenderer.js` — the `renderPixelArt()` + `renderSpriteSheet()` utilities
+5. Create `src/sprites/palette.js` with the chosen palette
+6. Create sprite data files (`player.js`, `enemies.js`, `items.js`, `projectiles.js`) with pixel matrices
+7. Update entity constructors to use pixel art instead of geometric shapes
+8. Add Phaser animations for entities with multiple frames
+9. Adjust physics bodies for new sprite dimensions
+10. Run `npm run build` to confirm no errors
+
+**Tell the user:**
+> Your game entities now have pixel art sprites! Each character, enemy, and item has a distinct visual identity. Here's what was created:
+> - `src/core/PixelRenderer.js` — rendering engine
+> - `src/sprites/` — all sprite data and palettes
+>
+> **Next up: visual polish.** I'll add gradients, particles, screen transitions, and effects. Ready?
 
 **Wait for user confirmation before proceeding.**
 
@@ -264,6 +294,7 @@ Tell the user:
 
 > Your game has been through the full pipeline! Here's what you have:
 > - **Scaffolded architecture** — clean, modular code structure
+> - **Pixel art sprites** — recognizable characters (if chosen) or clean geometric shapes
 > - **Visual polish** — gradients, particles, transitions, juice
 > - **Music and SFX** — chiptune background music and retro sound effects
 > - **Automated tests** — safety net for future changes
@@ -272,6 +303,7 @@ Tell the user:
 >
 > **What's next?**
 > - Add new gameplay features: `/game-creator:add-feature [describe what you want]`
+> - Upgrade to pixel art (if using shapes): `/game-creator:add-assets`
 > - Monetize with Play.fun: `/game-creator:playdotfun`
 > - Keep iterating! Run any step again anytime: `/game-creator:design-game`, `/game-creator:add-audio`, `/game-creator:qa-game`, `/game-creator:review-game`
 > - Redeploy after changes: `npm run deploy`

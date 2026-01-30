@@ -289,6 +289,11 @@ ground.lineBetween(0, groundY, width, groundY);
 - **Game flow** (scene order, win/lose conditions) — don't restructure
 - **Spawn timing or difficulty curves** — gameplay balance, not visual
 
+## Common Visual Bugs to Avoid
+
+- **Layered invisible buttons** — Never use `setAlpha(0)` on an interactive element with a Graphics or Sprite drawn on top for visual styling. The top layer intercepts pointer events. Instead, apply visual changes (fill color, scale tweens) directly to the interactive element itself via `setFillStyle()`.
+- **Decorative colliders** — When adding visual elements that need physics (ground, walls, boundaries), verify they are wired to entities with `physics.add.collider()` or `physics.add.overlap()`. A static body that exists but isn't connected to anything is invisible and has no gameplay effect.
+
 ## Using Playwright MCP for Visual Inspection
 
 If the Playwright MCP is available (`claude mcp add playwright npx '@playwright/mcp@latest'`), use it for a real visual audit:

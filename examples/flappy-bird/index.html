@@ -2,39 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flappy Bird</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(ellipse at 50% 30%, #87ceeb 0%, #4ec0ca 40%, #2a7a8a 80%, #1a4a5a 100%);
-    }
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #game-container {
-      width: 100%;
-      height: 100%;
-    }
-    /* Subtle vignette overlay */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%);
-      pointer-events: none;
-      z-index: 9999;
-    }
-    canvas { border-radius: 4px; }
+    body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+    #game-container { width: 400px; height: 600px; }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
-  <script type="module" src="/src/main.ts"></script>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
