@@ -1,18 +1,18 @@
 // SFX use the Web Audio API directly for true one-shot playback.
 // Strudel's .play() loops patterns continuously, which is wrong for SFX.
 
-let audioCtx = null;
+let audioCtx: AudioContext | null = null;
 
-function getCtx() {
+function getCtx(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   return audioCtx;
 }
 
 // --- Helpers ---
 
-function playTone(freq, type, duration, gain = 0.3, filterFreq = 4000) {
+function playTone(freq: number, type: OscillatorType, duration: number, gain: number = 0.3, filterFreq: number = 4000): void {
   const ctx = getCtx();
   const now = ctx.currentTime;
 
@@ -33,7 +33,7 @@ function playTone(freq, type, duration, gain = 0.3, filterFreq = 4000) {
   osc.stop(now + duration);
 }
 
-function playNotes(notes, type, noteDuration, gap, gain = 0.3, filterFreq = 4000) {
+function playNotes(notes: number[], type: OscillatorType, noteDuration: number, gap: number, gain: number = 0.3, filterFreq: number = 4000): void {
   const ctx = getCtx();
   const now = ctx.currentTime;
 
@@ -58,7 +58,7 @@ function playNotes(notes, type, noteDuration, gap, gain = 0.3, filterFreq = 4000
   });
 }
 
-function playPitchSweep(startFreq, endFreq, type, duration, gain = 0.3, filterFreq = 4000) {
+function playPitchSweep(startFreq: number, endFreq: number, type: OscillatorType, duration: number, gain: number = 0.3, filterFreq: number = 4000): void {
   const ctx = getCtx();
   const now = ctx.currentTime;
 
@@ -82,22 +82,22 @@ function playPitchSweep(startFreq, endFreq, type, duration, gain = 0.3, filterFr
 
 // --- SFX ---
 
-// Flap — quick upward pitch sweep
-export function flapSfx() {
-  playPitchSweep(261.63, 2093, 'square', 0.1, 0.2, 3000); // C4 → C7
+// Flap -- quick upward pitch sweep
+export function flapSfx(): void {
+  playPitchSweep(261.63, 2093, 'square', 0.1, 0.2, 3000); // C4 -> C7
 }
 
-// Score — bright two-tone chime
-export function scoreSfx() {
+// Score -- bright two-tone chime
+export function scoreSfx(): void {
   playNotes([659.25, 987.77], 'square', 0.1, 0.07, 0.3, 4000); // E5, B5
 }
 
-// Death — descending crushed tones
-export function deathSfx() {
+// Death -- descending crushed tones
+export function deathSfx(): void {
   playNotes([392, 329.63, 261.63, 220], 'square', 0.18, 0.1, 0.25, 2000); // G4 E4 C4 A3
 }
 
-// Button click — short pop
-export function buttonClickSfx() {
+// Button click -- short pop
+export function buttonClickSfx(): void {
   playTone(523.25, 'sine', 0.08, 0.2, 5000); // C5
 }

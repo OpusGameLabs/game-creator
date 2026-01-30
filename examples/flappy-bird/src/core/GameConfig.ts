@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG } from './Constants.js';
-import BootScene from '../scenes/BootScene.js';
-import MenuScene from '../scenes/MenuScene.js';
-import GameScene from '../scenes/GameScene.js';
-import UIScene from '../scenes/UIScene.js';
-import GameOverScene from '../scenes/GameOverScene.js';
+import { GAME_CONFIG } from './Constants';
+import BootScene from '../scenes/BootScene';
+import MenuScene from '../scenes/MenuScene';
+import GameScene from '../scenes/GameScene';
+import UIScene from '../scenes/UIScene';
+import GameOverScene from '../scenes/GameOverScene';
 
-const config = {
+const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   width: GAME_CONFIG.width,
   height: GAME_CONFIG.height,
@@ -15,7 +15,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: GAME_CONFIG.gravity },
+      gravity: { x: 0, y: GAME_CONFIG.gravity },
       debug: false,
     },
   },

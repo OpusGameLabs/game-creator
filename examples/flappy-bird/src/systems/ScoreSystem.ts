@@ -1,19 +1,21 @@
-import { eventBus, Events } from '../core/EventBus.js';
-import { gameState } from '../core/GameState.js';
+import { eventBus, Events } from '../core/EventBus';
+import { gameState } from '../core/GameState';
 
 export default class ScoreSystem {
+  private unsub: (() => void) | null;
+
   constructor() {
     this.unsub = null;
   }
 
-  start() {
+  start(): void {
     this.unsub = eventBus.on(Events.BIRD_PASSED_PIPE, () => {
       gameState.addScore();
       eventBus.emit(Events.SCORE_CHANGED, { score: gameState.score });
     });
   }
 
-  destroy() {
+  destroy(): void {
     if (this.unsub) this.unsub();
   }
 }

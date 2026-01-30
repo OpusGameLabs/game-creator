@@ -1,8 +1,17 @@
 import Phaser from 'phaser';
-import { PIPE_CONFIG, GAME_CONFIG, GROUND_CONFIG, COLORS } from '../core/Constants.js';
+import { PIPE_CONFIG, GAME_CONFIG, GROUND_CONFIG, COLORS } from '../core/Constants';
 
 export default class Pipe extends Phaser.GameObjects.Container {
-  constructor(scene, x, gapSize, speed) {
+  declare body: Phaser.Physics.Arcade.Body;
+
+  scored: boolean;
+  topZone: Phaser.GameObjects.Zone;
+  bottomZone: Phaser.GameObjects.Zone;
+  scoreZone: Phaser.GameObjects.Zone;
+  private topPipe: Phaser.GameObjects.Graphics;
+  private bottomPipe: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Phaser.Scene, x: number, gapSize?: number, speed?: number) {
     super(scene, x, 0);
 
     this.scored = false;
@@ -48,7 +57,7 @@ export default class Pipe extends Phaser.GameObjects.Container {
     scene.physics.add.existing(this.scoreZone, true);
   }
 
-  createPipeGraphics(height, isTop) {
+  private createPipeGraphics(height: number, isTop: boolean): Phaser.GameObjects.Graphics {
     const gfx = this.scene.add.graphics();
     const w = PIPE_CONFIG.width;
     const capH = PIPE_CONFIG.capHeight;
@@ -73,18 +82,18 @@ export default class Pipe extends Phaser.GameObjects.Container {
     return gfx;
   }
 
-  update() {
+  update(): void {
     // Move collision zones along with the container
     this.topZone.x = this.x;
     this.bottomZone.x = this.x;
     this.scoreZone.x = this.x + PIPE_CONFIG.width / 2;
   }
 
-  isOffScreen() {
+  isOffScreen(): boolean {
     return this.x < -PIPE_CONFIG.width;
   }
 
-  destroy() {
+  destroy(): void {
     this.topZone.destroy();
     this.bottomZone.destroy();
     this.scoreZone.destroy();

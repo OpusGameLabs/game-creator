@@ -1,9 +1,18 @@
 import Phaser from 'phaser';
-import { BIRD_CONFIG, COLORS } from '../core/Constants.js';
-import { eventBus, Events } from '../core/EventBus.js';
+import { BIRD_CONFIG, COLORS } from '../core/Constants';
+import { eventBus, Events } from '../core/EventBus';
 
 export default class Bird extends Phaser.GameObjects.Container {
-  constructor(scene, x, y) {
+  declare body: Phaser.Physics.Arcade.Body;
+
+  private alive: boolean;
+  private wingTimer: number;
+  private wingUp: boolean;
+  private squashTimer: number;
+  private bodyGfx!: Phaser.GameObjects.Graphics;
+  private wingGfx!: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
     this.createGraphics();
@@ -22,7 +31,7 @@ export default class Bird extends Phaser.GameObjects.Container {
     this.squashTimer = 0;
   }
 
-  createGraphics() {
+  private createGraphics(): void {
     const s = BIRD_CONFIG.size;
 
     // Body
@@ -52,11 +61,11 @@ export default class Bird extends Phaser.GameObjects.Container {
     this.add(beakGfx);
   }
 
-  enableGravity() {
+  enableGravity(): void {
     this.body.allowGravity = true;
   }
 
-  flap() {
+  flap(): void {
     if (!this.alive) return;
     this.body.setVelocityY(BIRD_CONFIG.flapVelocity);
     eventBus.emit(Events.BIRD_FLAP);
@@ -66,7 +75,7 @@ export default class Bird extends Phaser.GameObjects.Container {
     this.setScale(BIRD_CONFIG.flapSquashX, BIRD_CONFIG.flapSquashY);
   }
 
-  die() {
+  die(): void {
     this.alive = false;
     // Reset scale
     this.setScale(1, 1);
@@ -81,7 +90,7 @@ export default class Bird extends Phaser.GameObjects.Container {
     this.body.allowGravity = true;
   }
 
-  update(time, delta) {
+  update(time: number, delta: number): void {
     if (!this.alive) return;
 
     // Tilt based on velocity

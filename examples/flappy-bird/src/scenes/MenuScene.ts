@@ -1,15 +1,18 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG, COLORS, TRANSITION_CONFIG } from '../core/Constants.js';
-import { gameState } from '../core/GameState.js';
-import { eventBus, Events } from '../core/EventBus.js';
-import Background from '../systems/Background.js';
+import { GAME_CONFIG, COLORS, TRANSITION_CONFIG } from '../core/Constants';
+import { gameState } from '../core/GameState';
+import { eventBus, Events } from '../core/EventBus';
+import Background from '../systems/Background';
 
 export default class MenuScene extends Phaser.Scene {
+  private background!: Background;
+  private audioStarted: boolean = false;
+
   constructor() {
     super('MenuScene');
   }
 
-  create() {
+  create(): void {
     gameState.reset();
 
     const centerX = GAME_CONFIG.width / 2;
@@ -139,14 +142,14 @@ export default class MenuScene extends Phaser.Scene {
     // Input — first tap inits audio + plays menu music, second tap starts game
     this.audioStarted = false;
     this.input.on('pointerdown', () => this.handleInput());
-    this.input.keyboard.on('keydown-SPACE', () => this.handleInput());
+    this.input.keyboard!.on('keydown-SPACE', () => this.handleInput());
   }
 
-  update(time, delta) {
+  update(_time: number, delta: number): void {
     this.background.update(delta);
   }
 
-  handleInput() {
+  handleInput(): void {
     if (!this.audioStarted) {
       // First interaction: init audio and start menu music (browser autoplay policy)
       this.audioStarted = true;
@@ -158,7 +161,7 @@ export default class MenuScene extends Phaser.Scene {
     this.startGame();
   }
 
-  startGame() {
+  startGame(): void {
     eventBus.emit(Events.MUSIC_STOP);
     this.cameras.main.fadeOut(TRANSITION_CONFIG.fadeDuration, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -166,7 +169,7 @@ export default class MenuScene extends Phaser.Scene {
     });
   }
 
-  shutdown() {
+  shutdown(): void {
     this.background.destroy();
   }
 }

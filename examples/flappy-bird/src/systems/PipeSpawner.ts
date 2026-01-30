@@ -1,22 +1,26 @@
-import { PIPE_CONFIG, GAME_CONFIG } from '../core/Constants.js';
-import { gameState } from '../core/GameState.js';
-import Pipe from '../entities/Pipe.js';
+import { PIPE_CONFIG, GAME_CONFIG } from '../core/Constants';
+import { gameState } from '../core/GameState';
+import Pipe from '../entities/Pipe';
 
 export default class PipeSpawner {
-  constructor(scene) {
+  private scene: Phaser.Scene;
+  pipes: Pipe[];
+  private timer: Phaser.Time.TimerEvent | null;
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.pipes = [];
     this.timer = null;
   }
 
-  start() {
+  start(): void {
     this.scheduleNext();
 
     // Spawn first pipe sooner
     this.scene.time.delayedCall(800, () => this.spawnPipe());
   }
 
-  scheduleNext() {
+  private scheduleNext(): void {
     const interval = gameState.getCurrentInterval();
     this.timer = this.scene.time.delayedCall(interval, () => {
       this.spawnPipe();
@@ -26,14 +30,14 @@ export default class PipeSpawner {
     });
   }
 
-  spawnPipe() {
+  private spawnPipe(): void {
     const gap = gameState.getCurrentGap();
     const speed = gameState.getCurrentSpeed();
     const pipe = new Pipe(this.scene, GAME_CONFIG.width + PIPE_CONFIG.width, gap, speed);
     this.pipes.push(pipe);
   }
 
-  update() {
+  update(): void {
     for (let i = this.pipes.length - 1; i >= 0; i--) {
       const pipe = this.pipes[i];
       pipe.update();
@@ -45,7 +49,7 @@ export default class PipeSpawner {
     }
   }
 
-  stop() {
+  stop(): void {
     if (this.timer) {
       this.timer.remove();
       this.timer = null;
@@ -56,10 +60,10 @@ export default class PipeSpawner {
     });
   }
 
-  getCollisionZones() {
-    const tops = [];
-    const bottoms = [];
-    const scores = [];
+  getCollisionZones(): { tops: Phaser.GameObjects.Zone[]; bottoms: Phaser.GameObjects.Zone[]; scores: Phaser.GameObjects.Zone[] } {
+    const tops: Phaser.GameObjects.Zone[] = [];
+    const bottoms: Phaser.GameObjects.Zone[] = [];
+    const scores: Phaser.GameObjects.Zone[] = [];
     this.pipes.forEach(pipe => {
       tops.push(pipe.topZone);
       bottoms.push(pipe.bottomZone);
@@ -68,7 +72,7 @@ export default class PipeSpawner {
     return { tops, bottoms, scores };
   }
 
-  destroy() {
+  destroy(): void {
     this.stop();
     this.pipes.forEach(pipe => pipe.destroy());
     this.pipes = [];

@@ -1,22 +1,26 @@
+type EventCallback = (data?: any) => void;
+
 class EventBus {
+  private listeners: Map<string, Set<EventCallback>>;
+
   constructor() {
     this.listeners = new Map();
   }
 
-  on(event, callback) {
+  on(event: string, callback: EventCallback): () => void {
     if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event).add(callback);
+    this.listeners.get(event)!.add(callback);
     return () => this.off(event, callback);
   }
 
-  emit(event, data) {
+  emit(event: string, data?: unknown): void {
     const cbs = this.listeners.get(event);
     if (cbs) cbs.forEach(cb => {
       try { cb(data); } catch (e) { console.error(`EventBus error [${event}]:`, e); }
     });
   }
 
-  off(event, callback) {
+  off(event: string, callback: EventCallback): void {
     const cbs = this.listeners.get(event);
     if (cbs) {
       cbs.delete(callback);
@@ -24,7 +28,7 @@ class EventBus {
     }
   }
 
-  clear(event) {
+  clear(event?: string): void {
     event ? this.listeners.delete(event) : this.listeners.clear();
   }
 }
@@ -50,4 +54,4 @@ export const Events = {
   MUSIC_GAMEOVER: 'audio:music:gameover',
   MUSIC_STOP: 'audio:music:stop',
   SFX_BUTTON_CLICK: 'audio:sfx:buttonClick',
-};
+} as const;

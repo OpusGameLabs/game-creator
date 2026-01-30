@@ -5,7 +5,7 @@ export default class BootScene extends Phaser.Scene {
     super('BootScene');
   }
 
-  create() {
+  create(): void {
     // No external assets to load - using procedural graphics
     this.scene.start('MenuScene');
   }

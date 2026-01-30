@@ -1,19 +1,32 @@
 import Phaser from 'phaser';
-import { eventBus, Events } from '../core/EventBus.js';
-import { gameState } from '../core/GameState.js';
-import { GAME_CONFIG, GROUND_CONFIG, BIRD_CONFIG, COLORS, TRANSITION_CONFIG, DIFFICULTY_CONFIG } from '../core/Constants.js';
-import Bird from '../entities/Bird.js';
-import PipeSpawner from '../systems/PipeSpawner.js';
-import ScoreSystem from '../systems/ScoreSystem.js';
-import Background from '../systems/Background.js';
-import Particles from '../systems/Particles.js';
+import { eventBus, Events } from '../core/EventBus';
+import { gameState } from '../core/GameState';
+import { GAME_CONFIG, GROUND_CONFIG, BIRD_CONFIG, COLORS, TRANSITION_CONFIG, DIFFICULTY_CONFIG } from '../core/Constants';
+import Bird from '../entities/Bird';
+import PipeSpawner from '../systems/PipeSpawner';
+import ScoreSystem from '../systems/ScoreSystem';
+import Background from '../systems/Background';
+import Particles from '../systems/Particles';
 
 export default class GameScene extends Phaser.Scene {
+  private unsubscribers: Array<() => void> = [];
+  private background!: Background;
+  private ground!: Phaser.GameObjects.Zone;
+  private bird!: Bird;
+  private pipeSpawner!: PipeSpawner;
+  private scoreSystem!: ScoreSystem;
+  private particles!: Particles;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
+  private collisionActive: boolean = false;
+  private ready: boolean = false;
+  private getReadyText?: Phaser.GameObjects.Text;
+  private tapText?: Phaser.GameObjects.Text;
+
   constructor() {
     super('GameScene');
   }
 
-  create() {
+  create(): void {
     gameState.reset();
     this.unsubscribers = [];
 
@@ -64,7 +77,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Input
     this.input.on('pointerdown', () => this.handleInput());
-    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     // Collision check timer
     this.collisionActive = false;
@@ -74,7 +87,7 @@ export default class GameScene extends Phaser.Scene {
     this.showGetReady();
   }
 
-  showGetReady() {
+  showGetReady(): void {
     const centerX = GAME_CONFIG.width / 2;
     const centerY = GAME_CONFIG.height / 2 - 50;
 
@@ -113,7 +126,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  startPlaying() {
+  startPlaying(): void {
     this.ready = true;
     gameState.started = true;
 
@@ -138,7 +151,7 @@ export default class GameScene extends Phaser.Scene {
     this.collisionActive = true;
   }
 
-  handleInput() {
+  handleInput(): void {
     if (gameState.gameOver) return;
 
     if (!this.ready) {
@@ -149,7 +162,7 @@ export default class GameScene extends Phaser.Scene {
     this.bird.flap();
   }
 
-  update(time, delta) {
+  update(time: number, delta: number): void {
     if (gameState.gameOver) return;
 
     // Space key
@@ -184,12 +197,12 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  checkCollisions() {
-    const birdBounds = this.bird.body;
-    const birdLeft = this.bird.x + birdBounds.offset.x;
-    const birdRight = birdLeft + birdBounds.width;
-    const birdTop = this.bird.y + birdBounds.offset.y;
-    const birdBottom = birdTop + birdBounds.height;
+  checkCollisions(): void {
+    const birdBody = this.bird.body as Phaser.Physics.Arcade.Body;
+    const birdLeft = this.bird.x + birdBody.offset.x;
+    const birdRight = birdLeft + birdBody.width;
+    const birdTop = this.bird.y + birdBody.offset.y;
+    const birdBottom = birdTop + birdBody.height;
 
     for (const pipe of this.pipeSpawner.pipes) {
       // Check score zone
@@ -219,11 +232,11 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  rectsOverlap(l1, t1, r1, b1, l2, t2, r2, b2) {
+  rectsOverlap(l1: number, t1: number, r1: number, b1: number, l2: number, t2: number, r2: number, b2: number): boolean {
     return l1 < r2 && r1 > l2 && t1 < b2 && b1 > t2;
   }
 
-  handleGameOver() {
+  handleGameOver(): void {
     if (gameState.gameOver) return;
     gameState.gameOver = true;
 
@@ -256,7 +269,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  updateSkyGradient() {
+  updateSkyGradient(): void {
     const t = gameState.getDifficulty();
     if (t <= 0) return;
     const bg = this.background;
@@ -294,7 +307,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  shutdown() {
+  shutdown(): void {
     this.unsubscribers.forEach(unsub => unsub());
     this.pipeSpawner.destroy();
     this.scoreSystem.destroy();

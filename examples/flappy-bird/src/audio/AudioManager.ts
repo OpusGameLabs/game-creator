@@ -1,6 +1,12 @@
+// @ts-ignore -- @strudel/web has no type declarations
 import { initStrudel, hush } from '@strudel/web';
 
 class AudioManager {
+  private initialized: boolean;
+  private muted: boolean;
+  private currentBGM: any;
+  private _initPromise: Promise<void> | null;
+
   constructor() {
     this.initialized = false;
     this.muted = false;
@@ -8,7 +14,7 @@ class AudioManager {
     this._initPromise = null;
   }
 
-  async init() {
+  async init(): Promise<void> {
     if (this.initialized) return;
     if (this._initPromise) return this._initPromise;
     this._initPromise = (async () => {
@@ -23,13 +29,13 @@ class AudioManager {
     return this._initPromise;
   }
 
-  async playBGM(patternFn) {
+  async playBGM(patternFn: () => any): Promise<void> {
     if (this.muted) return;
     // Wait for Strudel to finish initializing
     if (this._initPromise) await this._initPromise;
     if (!this.initialized) return;
     // Stop any existing patterns first
-    try { hush(); } catch (e) { /* noop */ }
+    try { hush(); } catch (_e) { /* noop */ }
     this.currentBGM = null;
     // Give Strudel's scheduler a tick to process the hush
     return new Promise((resolve) => {
@@ -45,13 +51,13 @@ class AudioManager {
     });
   }
 
-  stopBGM() {
+  stopBGM(): void {
     if (!this.initialized) return;
-    try { hush(); } catch (e) { /* noop */ }
+    try { hush(); } catch (_e) { /* noop */ }
     this.currentBGM = null;
   }
 
-  toggleMute() {
+  toggleMute(): boolean {
     this.muted = !this.muted;
     if (this.muted) {
       this.stopBGM();

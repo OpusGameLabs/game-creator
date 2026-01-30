@@ -1,15 +1,23 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG, COLORS, TRANSITION_CONFIG, MEDAL_CONFIG } from '../core/Constants.js';
-import { gameState } from '../core/GameState.js';
-import { eventBus, Events } from '../core/EventBus.js';
-import Background from '../systems/Background.js';
+import { GAME_CONFIG, COLORS, TRANSITION_CONFIG, MEDAL_CONFIG } from '../core/Constants';
+import { gameState } from '../core/GameState';
+import { eventBus, Events } from '../core/EventBus';
+import Background from '../systems/Background';
+
+interface MedalInfo {
+  readonly threshold: number;
+  readonly color: number;
+  readonly label: string;
+}
 
 export default class GameOverScene extends Phaser.Scene {
+  private background!: Background;
+
   constructor() {
     super('GameOverScene');
   }
 
-  create() {
+  create(): void {
     const centerX = GAME_CONFIG.width / 2;
     const centerY = GAME_CONFIG.height / 2;
 
@@ -200,7 +208,7 @@ export default class GameOverScene extends Phaser.Scene {
     });
 
     // Also space to restart
-    this.input.keyboard.on('keydown-SPACE', () => {
+    this.input.keyboard!.on('keydown-SPACE', () => {
       eventBus.emit(Events.SFX_BUTTON_CLICK);
       this.restartGame();
     });
@@ -218,7 +226,7 @@ export default class GameOverScene extends Phaser.Scene {
     });
   }
 
-  getMedal(score) {
+  getMedal(score: number): MedalInfo | null {
     const { platinum, gold, silver, bronze } = MEDAL_CONFIG;
     if (score >= platinum.threshold) return platinum;
     if (score >= gold.threshold) return gold;
@@ -227,7 +235,7 @@ export default class GameOverScene extends Phaser.Scene {
     return null;
   }
 
-  drawStar(gfx, cx, cy, points, outerR, innerR) {
+  drawStar(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, points: number, outerR: number, innerR: number): void {
     const step = Math.PI / points;
     gfx.beginPath();
     for (let i = 0; i < points * 2; i++) {
@@ -242,11 +250,11 @@ export default class GameOverScene extends Phaser.Scene {
     gfx.fillPath();
   }
 
-  update(time, delta) {
+  update(_time: number, delta: number): void {
     this.background.update(delta);
   }
 
-  restartGame() {
+  restartGame(): void {
     eventBus.emit(Events.MUSIC_STOP);
     this.cameras.main.fadeOut(TRANSITION_CONFIG.fadeDuration, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -254,7 +262,7 @@ export default class GameOverScene extends Phaser.Scene {
     });
   }
 
-  shutdown() {
+  shutdown(): void {
     this.background.destroy();
   }
 }

@@ -1,5 +1,17 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG, GROUND_CONFIG, SKY_CONFIG, PARALLAX_CONFIG, COLORS } from '../core/Constants.js';
+import { GAME_CONFIG, GROUND_CONFIG, SKY_CONFIG, PARALLAX_CONFIG, COLORS } from '../core/Constants';
+
+interface CloudData {
+  gfx: Phaser.GameObjects.Graphics;
+  speed: number;
+  scale: number;
+}
+
+interface MountainStrip {
+  gfxA: Phaser.GameObjects.Graphics;
+  gfxB: Phaser.GameObjects.Graphics;
+  stripWidth: number;
+}
 
 /**
  * Multi-layer background with parallax scrolling:
@@ -10,13 +22,23 @@ import { GAME_CONFIG, GROUND_CONFIG, SKY_CONFIG, PARALLAX_CONFIG, COLORS } from 
  * Layer 4: Ground with grass (scrolls at pipe speed)
  */
 export default class Background {
-  constructor(scene) {
+  private scene: Phaser.Scene;
+  private clouds: CloudData[];
+  private groundOffset: number;
+  skyGfx!: Phaser.GameObjects.Graphics;
+  private farMountains!: MountainStrip;
+  private nearHills!: MountainStrip;
+  private groundGfxA!: Phaser.GameObjects.Graphics;
+  private groundGfxB!: Phaser.GameObjects.Graphics;
+  private groundY!: number;
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.clouds = [];
     this.groundOffset = 0;
   }
 
-  create() {
+  create(): void {
     const { width, height } = GAME_CONFIG;
     const groundY = height - GROUND_CONFIG.height;
 
@@ -76,9 +98,9 @@ export default class Background {
     this.groundY = groundY;
   }
 
-  createCloud(x, y, scale) {
+  private createCloud(x: number, y: number, scale: number): CloudData {
     const gfx = this.scene.add.graphics().setDepth(1);
-    const color = Phaser.Utils.Array.GetRandom(SKY_CONFIG.cloudColors);
+    const color = Phaser.Utils.Array.GetRandom(SKY_CONFIG.cloudColors as unknown as number[]);
     const alpha = SKY_CONFIG.cloudAlpha * (0.6 + scale * 0.4);
 
     gfx.fillStyle(color, alpha);
@@ -92,7 +114,15 @@ export default class Background {
     return { gfx, speed: SKY_CONFIG.cloudSpeed * scale, scale };
   }
 
-  createMountainStrip(baseY, peakMin, peakMax, segW, color, alpha, depth) {
+  private createMountainStrip(
+    baseY: number,
+    peakMin: number,
+    peakMax: number,
+    segW: number,
+    color: number,
+    alpha: number,
+    depth: number
+  ): MountainStrip {
     const { width } = GAME_CONFIG;
     // Create two strips (A + B) for seamless wrapping
     const stripWidth = width + segW * 2;
@@ -100,9 +130,9 @@ export default class Background {
     const gfxA = this.scene.add.graphics().setDepth(depth);
     const gfxB = this.scene.add.graphics().setDepth(depth);
 
-    const drawStrip = (gfx) => {
+    const drawStrip = (gfx: Phaser.GameObjects.Graphics): void => {
       gfx.fillStyle(color, alpha);
-      const points = [{ x: 0, y: baseY }];
+      const points: Array<{ x: number; y: number }> = [{ x: 0, y: baseY }];
       for (let x = 0; x <= stripWidth; x += segW) {
         const peakH = peakMin + Math.random() * (peakMax - peakMin);
         points.push({ x, y: baseY - peakH });
@@ -126,7 +156,7 @@ export default class Background {
     return { gfxA, gfxB, stripWidth };
   }
 
-  drawGroundSegment(gfx, xOffset, groundY) {
+  private drawGroundSegment(gfx: Phaser.GameObjects.Graphics, xOffset: number, groundY: number): void {
     const { width } = GAME_CONFIG;
 
     // Main ground fill
@@ -161,7 +191,7 @@ export default class Background {
     gfx.x = xOffset;
   }
 
-  update(delta) {
+  update(delta: number): void {
     const { width } = GAME_CONFIG;
     const dt = delta / 1000;
 
@@ -189,7 +219,7 @@ export default class Background {
     this.groundGfxB.x = this.groundOffset + width;
   }
 
-  scrollStrip(strip, speed, dt) {
+  private scrollStrip(strip: MountainStrip, speed: number, dt: number): void {
     strip.gfxA.x -= speed * dt;
     strip.gfxB.x -= speed * dt;
 
@@ -201,7 +231,7 @@ export default class Background {
     }
   }
 
-  destroy() {
+  destroy(): void {
     this.clouds.forEach(c => c.gfx.destroy());
     this.clouds = [];
   }

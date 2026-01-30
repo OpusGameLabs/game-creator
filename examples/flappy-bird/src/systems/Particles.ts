@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { eventBus, Events } from '../core/EventBus.js';
-import { PARTICLES_CONFIG } from '../core/Constants.js';
+import { eventBus, Events } from '../core/EventBus';
+import { PARTICLES_CONFIG } from '../core/Constants';
 
 /**
  * Tween-based particle system. Listens for particle events on EventBus
@@ -8,20 +8,23 @@ import { PARTICLES_CONFIG } from '../core/Constants.js';
  * Initialize in a scene's create() and call destroy() in shutdown().
  */
 export default class Particles {
-  constructor(scene) {
+  private scene: Phaser.Scene;
+  private unsubs: Array<() => void>;
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.unsubs = [];
   }
 
-  start() {
+  start(): void {
     this.unsubs.push(
-      eventBus.on(Events.PARTICLES_SCORE, ({ x, y }) => this.scoreBurst(x, y)),
-      eventBus.on(Events.PARTICLES_FLAP, ({ x, y }) => this.flapDust(x, y)),
-      eventBus.on(Events.PARTICLES_DEATH, ({ x, y }) => this.deathBurst(x, y)),
+      eventBus.on(Events.PARTICLES_SCORE, ({ x, y }: { x: number; y: number }) => this.scoreBurst(x, y)),
+      eventBus.on(Events.PARTICLES_FLAP, ({ x, y }: { x: number; y: number }) => this.flapDust(x, y)),
+      eventBus.on(Events.PARTICLES_DEATH, ({ x, y }: { x: number; y: number }) => this.deathBurst(x, y)),
     );
   }
 
-  scoreBurst(x, y) {
+  private scoreBurst(x: number, y: number): void {
     const cfg = PARTICLES_CONFIG;
     for (let i = 0; i < cfg.scoreBurstCount; i++) {
       const angle = (Math.PI * 2 * i) / cfg.scoreBurstCount + (Math.random() - 0.5) * 0.4;
@@ -42,7 +45,7 @@ export default class Particles {
     }
   }
 
-  flapDust(x, y) {
+  private flapDust(x: number, y: number): void {
     const cfg = PARTICLES_CONFIG;
     for (let i = 0; i < cfg.flapDustCount; i++) {
       const angle = Math.PI * 0.5 + (Math.random() - 0.5) * 1.2; // downward spread
@@ -63,7 +66,7 @@ export default class Particles {
     }
   }
 
-  deathBurst(x, y) {
+  private deathBurst(x: number, y: number): void {
     const cfg = PARTICLES_CONFIG;
     for (let i = 0; i < cfg.deathBurstCount; i++) {
       const angle = (Math.PI * 2 * i) / cfg.deathBurstCount + (Math.random() - 0.5) * 0.3;
@@ -85,7 +88,7 @@ export default class Particles {
     }
   }
 
-  destroy() {
+  destroy(): void {
     this.unsubs.forEach(unsub => unsub());
     this.unsubs = [];
   }

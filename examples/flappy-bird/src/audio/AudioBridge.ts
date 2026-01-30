@@ -1,10 +1,10 @@
 // Wires EventBus game events to AudioManager playback
-import { eventBus, Events } from '../core/EventBus.js';
-import { audioManager } from './AudioManager.js';
-import { menuTheme, gameplayBGM, gameOverTheme } from './music.js';
-import { flapSfx, scoreSfx, deathSfx, buttonClickSfx } from './sfx.js';
+import { eventBus, Events } from '../core/EventBus';
+import { audioManager } from './AudioManager';
+import { menuTheme, gameplayBGM, gameOverTheme } from './music';
+import { flapSfx, scoreSfx, deathSfx, buttonClickSfx } from './sfx';
 
-export function initAudioBridge() {
+export function initAudioBridge(): void {
   // Init audio on first user interaction
   eventBus.on(Events.AUDIO_INIT, () => {
     audioManager.init();
@@ -27,7 +27,7 @@ export function initAudioBridge() {
     audioManager.stopBGM();
   });
 
-  // SFX (Web Audio API — true one-shot, no looping)
+  // SFX (Web Audio API -- true one-shot, no looping)
   eventBus.on(Events.BIRD_FLAP, () => {
     flapSfx();
   });

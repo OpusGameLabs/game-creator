@@ -1,14 +1,17 @@
 import Phaser from 'phaser';
-import { eventBus, Events } from '../core/EventBus.js';
-import { gameState } from '../core/GameState.js';
-import { GAME_CONFIG, COLORS } from '../core/Constants.js';
+import { eventBus, Events } from '../core/EventBus';
+import { gameState } from '../core/GameState';
+import { GAME_CONFIG, COLORS } from '../core/Constants';
 
 export default class UIScene extends Phaser.Scene {
+  private scoreText!: Phaser.GameObjects.Text;
+  private unsubscribers: Array<() => void> = [];
+
   constructor() {
     super('UIScene');
   }
 
-  create() {
+  create(): void {
     const centerX = GAME_CONFIG.width / 2;
 
     this.scoreText = this.add.text(centerX, 50, '0', {
@@ -20,7 +23,7 @@ export default class UIScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(100);
 
     this.unsubscribers = [
-      eventBus.on(Events.SCORE_CHANGED, ({ score }) => {
+      eventBus.on(Events.SCORE_CHANGED, ({ score }: { score: number }) => {
         this.scoreText.setText(score.toString());
 
         // Pop animation
@@ -54,7 +57,7 @@ export default class UIScene extends Phaser.Scene {
     ];
   }
 
-  shutdown() {
+  shutdown(): void {
     this.unsubscribers.forEach(unsub => unsub());
   }
 }

@@ -3,7 +3,7 @@ export const GAME_CONFIG = {
   height: 600,
   gravity: 1200,
   backgroundColor: 0x4ec0ca,
-};
+} as const;
 
 export const BIRD_CONFIG = {
   x: 100,
@@ -23,7 +23,7 @@ export const BIRD_CONFIG = {
   // Death
   deathSpinSpeed: 720,
   deathFallVelocity: 400,
-};
+} as const;
 
 export const PIPE_CONFIG = {
   speed: 180,
@@ -36,7 +36,7 @@ export const PIPE_CONFIG = {
   capColor: 0x5a9a23,
   capHeight: 20,
   capExtraWidth: 6,
-};
+} as const;
 
 export const DIFFICULTY_CONFIG = {
   // Score thresholds where difficulty increases
@@ -56,13 +56,13 @@ export const DIFFICULTY_CONFIG = {
   skyEndTop: 0xe8845a,
   skyStartBottom: 0xc3e8f0,
   skyEndBottom: 0xf0c878,
-};
+} as const;
 
 export const GROUND_CONFIG = {
   height: 80,
   color: 0xded895,
   speed: 180,
-};
+} as const;
 
 export const SKY_CONFIG = {
   topColor: 0x4ec0ca,
@@ -70,10 +70,10 @@ export const SKY_CONFIG = {
   cloudCount: 5,
   cloudSpeed: 18,
   cloudAlpha: 0.55,
-  cloudColors: [0xffffff, 0xf0f4f5, 0xe6eef0],
+  cloudColors: [0xffffff, 0xf0f4f5, 0xe6eef0] as readonly number[],
   cloudMinY: 30,
   cloudMaxY: 280,
-};
+} as const;
 
 export const PARALLAX_CONFIG = {
   // Far mountains — slowest layer
@@ -94,7 +94,7 @@ export const PARALLAX_CONFIG = {
   nearSegmentWidth: 60,
   // Ground scroll
   groundScrollSpeed: 180,
-};
+} as const;
 
 export const PARTICLES_CONFIG = {
   scoreBurstCount: 8,
@@ -109,20 +109,20 @@ export const PARTICLES_CONFIG = {
   deathBurstColor: 0xffffff,
   deathBurstSpeed: 100,
   deathBurstDuration: 500,
-};
+} as const;
 
 export const MEDAL_CONFIG = {
   bronze: { threshold: 5, color: 0xcd7f32, label: 'BRONZE' },
   silver: { threshold: 15, color: 0xc0c0c0, label: 'SILVER' },
   gold: { threshold: 25, color: 0xffd700, label: 'GOLD' },
   platinum: { threshold: 40, color: 0xe5e4e2, label: 'PLATINUM' },
-};
+} as const;
 
 export const TRANSITION_CONFIG = {
   fadeDuration: 250,
   deathSlowMoScale: 0.25,
   deathSlowMoDuration: 500,
-};
+} as const;
 
 export const COLORS = {
   sky: 0x4ec0ca,
@@ -148,4 +148,4 @@ export const COLORS = {
   panelText: '#5a4020',
   btnFill: 0x6cbf3b,
   btnBorder: 0x4a8a28,
-};
+} as const;
