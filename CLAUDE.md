@@ -11,7 +11,7 @@ This is **game-creator**, a Claude Code plugin for building browser games. It pr
   plugin.json              # Plugin manifest (name, version, author)
   marketplace.json         # Marketplace metadata (owner: OpusGameLabs)
 skills/
-  phaser-game/SKILL.md     # 2D game patterns (Phaser 3, scene-based)
+  phaser/SKILL.md          # 2D game patterns (Phaser 3, scene-based, multi-file)
   threejs-game/SKILL.md    # 3D game patterns (Three.js, event-driven)
   game-designer/SKILL.md   # Visual polish (gradients, particles, juice, transitions)
   game-audio/SKILL.md      # Procedural audio (Strudel.cc BGM + SFX)

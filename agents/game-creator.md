@@ -11,7 +11,7 @@ You are an autonomous game creation pipeline. Unlike the `/make-game` command (w
 
 Load these skills before starting:
 
-- **`phaser-game`** or **`threejs-game`** — Engine-specific architecture patterns (chosen based on engine input)
+- **`phaser`** or **`threejs-game`** — Engine-specific architecture patterns (chosen based on engine input)
 - **`game-designer`** — Visual polish: gradients, particles, juice, transitions
 - **`game-audio`** — Procedural audio: Strudel.cc BGM + Web Audio SFX
 - **`game-qa`** — Playwright test generation

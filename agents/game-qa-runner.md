@@ -13,7 +13,7 @@ Load these skills for context:
 
 - **`game-qa`** — Test patterns, fixture conventions, assertion strategies
 - **`game-architecture`** — Architecture patterns to understand what correct behavior looks like
-- **`phaser-game`** or **`threejs-game`** — Engine-specific patterns (detected from `package.json`)
+- **`phaser`** or **`threejs-game`** — Engine-specific patterns (detected from `package.json`)
 
 ## Input
 
