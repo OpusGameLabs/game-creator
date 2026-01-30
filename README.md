@@ -76,7 +76,7 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 
 | Skill | Purpose |
 |-------|---------|
-| `phaser-game` | 2D game architecture with Phaser 3 (scene-based, arcade physics) |
+| `phaser` | 2D game architecture with Phaser 3 (scene-based, arcade physics, TypeScript) |
 | `threejs-game` | 3D game architecture with Three.js (event-driven, modular systems) |
 | `game-designer` | Visual polish — sky gradients, particles, screen shake, transitions, juice |
 | `game-audio` | Procedural audio with Strudel.cc — chiptune BGM, retro SFX |
