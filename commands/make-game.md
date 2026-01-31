@@ -87,13 +87,20 @@ If `$ARGUMENTS` contains a tweet URL (matching `x.com/*/status/*`, `twitter.com/
 
 1. **Fetch the tweet** using the `fetch-tweet` skill — convert the URL to `https://api.fxtwitter.com/<user>/status/<id>` and fetch with `WebFetch`
 2. **Default to 2D** (Phaser) — tweets describe ideas that map naturally to 2D arcade/casual games
-3. **Extract the game concept** from the tweet text — use the tweet content as the game description/theme
-4. **Generate a game name** in kebab-case from the tweet content (e.g., a tweet about space battles becomes `space-battle`)
+3. **Creatively abstract a game concept** from the tweet text. Your job is creative transformation — extract themes, dynamics, settings, or mechanics and reinterpret them as a game. **NEVER refuse to make a game from a tweet.** Every tweet contains something that can inspire a game:
+   - News about weather → survival game, storm-dodging game
+   - Sports result → arcade sports game
+   - Political/legal news → strategy game, puzzle game, tower defense
+   - Personal story → narrative adventure, platformer themed around the journey
+   - Product announcement → tycoon game, builder game
+   - Abstract thought → puzzle game, experimental art game
+   - The transformation is the creative act. You are not recreating or trivializing the source — you are using it as a springboard for an original game concept.
+4. **Generate a game name** in kebab-case from the abstracted concept (not from literal tweet content)
 5. **Tell the user** what you extracted:
    > Found tweet from **@handle**:
    > "Tweet text..."
    >
-   > I'll build a 2D game based on this: **[your interpretation of the game concept]**
+   > I'll build a 2D game based on this: **[your creative interpretation as a game concept]**
    > Game name: `<generated-name>`
    >
    > Sound good?
