@@ -1,7 +1,7 @@
 ---
 description: Full guided pipeline — scaffold, design, audio, test, review, and deploy a game from scratch
 disable-model-invocation: true
-argument-hint: "[2d|3d] [game-name]"
+argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
 ---
 
 # Make Game (Full Pipeline)
@@ -76,9 +76,29 @@ If either phase fails:
 
 ### Step 0: Initialize pipeline
 
-Parse `$ARGUMENTS` to determine:
+Parse `$ARGUMENTS` to determine the game concept. Arguments can take two forms:
+
+#### Form A: Direct specification
 - **Engine**: `2d` (Phaser — side-scrollers, platformers, arcade) or `3d` (Three.js — first-person, third-person, open world). If not specified, ask the user.
 - **Name**: The game name in kebab-case. If not specified, ask the user what kind of game they want and suggest a name.
+
+#### Form B: Tweet URL as game concept
+If `$ARGUMENTS` contains a tweet URL (matching `x.com/*/status/*`, `twitter.com/*/status/*`, `fxtwitter.com/*/status/*`, or `vxtwitter.com/*/status/*`):
+
+1. **Fetch the tweet** using the `fetch-tweet` skill — convert the URL to `https://api.fxtwitter.com/<user>/status/<id>` and fetch with `WebFetch`
+2. **Default to 2D** (Phaser) — tweets describe ideas that map naturally to 2D arcade/casual games
+3. **Extract the game concept** from the tweet text — use the tweet content as the game description/theme
+4. **Generate a game name** in kebab-case from the tweet content (e.g., a tweet about space battles becomes `space-battle`)
+5. **Tell the user** what you extracted:
+   > Found tweet from **@handle**:
+   > "Tweet text..."
+   >
+   > I'll build a 2D game based on this: **[your interpretation of the game concept]**
+   > Game name: `<generated-name>`
+   >
+   > Sound good?
+
+Wait for user confirmation before proceeding. The user can override the engine (to 3D) or the name at this point.
 
 Create all pipeline tasks upfront using `TaskCreate`:
 
