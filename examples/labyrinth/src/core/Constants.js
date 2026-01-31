@@ -132,9 +132,9 @@ export const LIVES = {
 // Gyroscope input
 // ---------------------------------------------------------------------------
 export const GYRO = {
-  DEADZONE: 2,          // degrees of tilt ignored
-  MAX_TILT: 30,         // degrees for full -1..1 range
-  SMOOTHING: 0.25,      // EMA factor (0 = no change, 1 = instant)
+  DEADZONE: 1,          // degrees of tilt ignored
+  MAX_TILT: 18,         // degrees for full -1..1 range
+  SMOOTHING: 0.45,      // EMA factor (0 = no change, 1 = instant)
 };
 
 // ---------------------------------------------------------------------------
