@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALL } from '../core/Constants.js';
+import { BALL, VFX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 
 export class Ball {
@@ -10,16 +10,29 @@ export class Ball {
     this.vx = 0;
     this.vz = 0;
 
+    // Current speed (for trail effects)
+    this.speed = 0;
+
     // Mesh -- metallic marble sphere
     const geometry = new THREE.SphereGeometry(BALL.RADIUS, 24, 24);
     const material = new THREE.MeshStandardMaterial({
       color: BALL.COLOR,
       metalness: BALL.METALNESS,
       roughness: BALL.ROUGHNESS,
+      envMapIntensity: 1.0,
     });
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.castShadow = true;
     this.mesh.position.set(0, BALL.RADIUS, 0);
+
+    // Subtle point light underneath the ball for a glow effect
+    this.light = new THREE.PointLight(
+      VFX.BALL_LIGHT_COLOR,
+      VFX.BALL_LIGHT_INTENSITY,
+      VFX.BALL_LIGHT_DISTANCE
+    );
+    this.light.position.set(0, BALL.RADIUS * 0.5, 0);
+    this.mesh.add(this.light); // attach to mesh so it moves with the ball
 
     this.scene.add(this.mesh);
   }
@@ -37,13 +50,11 @@ export class Ball {
    * Main update: apply input forces, friction, move, then let Game handle collisions.
    */
   update(delta, input) {
-    // Apply input as acceleration
+    // Apply input as acceleration (analog: moveX/moveZ are -1..1)
     const accel = BALL.SPEED;
 
-    if (input.forward) this.vz -= accel * delta;
-    if (input.backward) this.vz += accel * delta;
-    if (input.left) this.vx -= accel * delta;
-    if (input.right) this.vx += accel * delta;
+    this.vx += input.moveX * accel * delta;
+    this.vz += input.moveZ * accel * delta;
 
     // Clamp velocity
     const speed = Math.sqrt(this.vx * this.vx + this.vz * this.vz);
@@ -65,12 +76,21 @@ export class Ball {
     this.mesh.position.x += this.vx * delta;
     this.mesh.position.z += this.vz * delta;
 
+    // Store speed for trail effects
+    this.speed = speed;
+
     // Rolling animation -- rotate based on movement direction
     if (speed > 0.05) {
       const rollSpeed = speed * delta * 3;
       // Roll axis is perpendicular to movement direction
       const axis = new THREE.Vector3(-this.vz, 0, this.vx).normalize();
       this.mesh.rotateOnWorldAxis(axis, rollSpeed);
+    }
+
+    // Pulse ball light intensity based on speed
+    if (this.light) {
+      const speedFactor = Math.min(speed / BALL.MAX_VELOCITY, 1.0);
+      this.light.intensity = VFX.BALL_LIGHT_INTENSITY * (0.6 + speedFactor * 0.8);
     }
 
     // Emit position for camera following
@@ -124,6 +144,11 @@ export class Ball {
   }
 
   destroy() {
+    if (this.light) {
+      this.mesh.remove(this.light);
+      this.light.dispose();
+      this.light = null;
+    }
     this.mesh.geometry.dispose();
     this.mesh.material.dispose();
     this.scene.remove(this.mesh);

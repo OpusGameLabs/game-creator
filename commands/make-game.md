@@ -211,6 +211,7 @@ Launch a `Task` subagent with these instructions:
 > - Wire up EventBus events, GameState fields, and Constants values
 > - Ensure all modules communicate only through EventBus
 > - All magic numbers go in Constants.js
+> - **Mobile-first input**: Choose the best mobile input scheme for the game concept (tap zones, virtual joystick, gyroscope tilt, swipe). Implement touch + keyboard from the start — never keyboard-only. Use the unified analog InputSystem pattern (moveX/moveZ) so game logic is input-source-agnostic.
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 
@@ -221,6 +222,7 @@ Launch a `Task` subagent with these instructions:
 > - `src/core/Constants.js` — all game settings (speed, colors, sizes)
 > - `src/core/EventBus.js` — how parts of the game talk to each other
 > - `src/core/GameState.js` — tracks score, lives, etc.
+> - **Mobile controls are built in** — works on phone (touch/tilt) and desktop (keyboard)
 >
 > **Next up: pixel art.** I'll create custom pixel art sprites for every character, enemy, item, and background tile — all generated as code, no image files needed. Then I'll add visual polish on top.
 

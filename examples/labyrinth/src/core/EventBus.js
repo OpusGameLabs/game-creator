@@ -26,6 +26,16 @@ export const Events = {
   MENU_SHOW: 'menu:show',
   MENU_HIDE: 'menu:hide',
 
+  // Input
+  INPUT_MODE_CHANGED: 'input:modeChanged',
+  INPUT_GYRO_PERMISSION: 'input:gyroPermission',
+
+  // Visual effects
+  VFX_GEM_SPARKLE: 'vfx:gemSparkle',
+  VFX_SCREEN_FLASH: 'vfx:screenFlash',
+  VFX_LEVEL_FADE_OUT: 'vfx:levelFadeOut',
+  VFX_LEVEL_FADE_IN: 'vfx:levelFadeIn',
+
   // Audio (used by /add-audio)
   AUDIO_INIT: 'audio:init',
   MUSIC_MENU: 'music:menu',

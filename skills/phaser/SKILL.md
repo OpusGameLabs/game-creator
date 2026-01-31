@@ -117,6 +117,57 @@ See [assets-and-performance.md](assets-and-performance.md) for full optimization
 
 See [patterns.md](patterns.md) for implementations.
 
+## Mobile Input Strategy (60/40 Rule)
+
+All games MUST work on desktop AND mobile unless explicitly specified otherwise. Focus 60% mobile / 40% desktop for tradeoffs. Pick the best mobile input for each game concept:
+
+| Game Type | Primary Mobile Input | Desktop Input |
+|-----------|---------------------|---------------|
+| Platformer | Tap left/right half + tap-to-jump | Arrow keys / WASD |
+| Runner/endless | Tap / swipe up to jump | Space / Up arrow |
+| Puzzle/match | Tap targets (44px min) | Click |
+| Shooter | Virtual joystick + tap-to-fire | Mouse + WASD |
+| Top-down | Virtual joystick | Arrow keys / WASD |
+
+### Implementation Pattern
+
+Abstract input into an `inputState` object so game logic is source-agnostic:
+
+```typescript
+// In Scene update():
+const isMobile = this.sys.game.device.os.android ||
+  this.sys.game.device.os.iOS || this.sys.game.device.os.iPad;
+
+let left = false, right = false, jump = false;
+
+// Keyboard
+left = this.cursors.left.isDown || this.wasd.left.isDown;
+right = this.cursors.right.isDown || this.wasd.right.isDown;
+jump = Phaser.Input.Keyboard.JustDown(this.spaceKey);
+
+// Touch (merge with keyboard)
+if (isMobile) {
+  // Left half tap = left, right half = right, or use tap zones
+  this.input.on('pointerdown', (p) => {
+    if (p.x < this.scale.width / 2) left = true;
+    else right = true;
+  });
+}
+
+this.player.update({ left, right, jump });
+```
+
+### Responsive Canvas Config
+
+```typescript
+scale: {
+  mode: Phaser.Scale.FIT,
+  autoCenter: Phaser.Scale.CENTER_BOTH,
+  width: 800,
+  height: 600,
+},
+```
+
 ## Anti-Patterns (Avoid These)
 
 - **Bloated `update()` methods** — Don't put all game logic in one giant update with nested conditionals. Delegate to objects and systems.

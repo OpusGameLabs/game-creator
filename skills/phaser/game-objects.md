@@ -52,6 +52,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 }
 ```
 
+### Mobile-Friendly Input Pattern
+
+Instead of having the Player read keyboard input directly (via `this.cursors`), have the Scene build an `inputState` object from all sources (keyboard + touch + gamepad) and pass it to `player.update()`. This keeps Player input-source-agnostic:
+
+```typescript
+// In Scene update():
+const inputState = {
+  left: this.cursors.left.isDown || this.touchLeft,
+  right: this.cursors.right.isDown || this.touchRight,
+  jump: Phaser.Input.Keyboard.JustDown(this.spaceKey) || this.touchJump,
+};
+this.player.update(time, delta, inputState);
+
+// In Player.update():
+update(_time: number, _delta: number, input: InputState) {
+  if (input.left) {
+    this.setVelocityX(-this.speed);
+    this.setFlipX(true);
+  } else if (input.right) {
+    this.setVelocityX(this.speed);
+    this.setFlipX(false);
+  } else {
+    this.setVelocityX(0);
+  }
+  if (input.jump && this.body!.blocked.down) {
+    this.setVelocityY(-400);
+  }
+}
+```
+
 ## Registering with GameObjectFactory
 
 Register custom objects so they can be created with `this.add.player(...)`:

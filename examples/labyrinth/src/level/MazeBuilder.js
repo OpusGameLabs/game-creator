@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MAZE, HOLES, GEMS, EXIT, COLORS, LEVELS } from '../core/Constants.js';
+import { MAZE, HOLES, GEMS, EXIT, COLORS, LEVELS, VFX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 
 // Directions: top, right, bottom, left
@@ -21,7 +21,9 @@ export class MazeBuilder {
     this.gems = [];
     this.holes = [];
     this.exitMesh = null;
+    this.exitLight = null;
     this.exitPosition = null;
+    this.gemLights = [];
     this.grid = null;
     this.width = 0;
     this.height = 0;
@@ -136,20 +138,45 @@ export class MazeBuilder {
   update(delta) {
     this.time += delta;
 
-    // Animate gems
-    for (const gem of this.gems) {
+    // Animate gems and their point lights
+    for (let i = 0; i < this.gems.length; i++) {
+      const gem = this.gems[i];
       if (!gem.userData.collected) {
         gem.rotation.y += GEMS.ROTATION_SPEED * delta;
         gem.position.y =
           GEMS.FLOAT_Y + Math.sin(this.time * GEMS.BOB_SPEED + gem.userData.phase) * GEMS.BOB_HEIGHT;
+
+        // Pulse emissive intensity subtly
+        const pulse = 0.4 + Math.sin(this.time * 3.0 + gem.userData.phase) * 0.3;
+        gem.material.emissiveIntensity = pulse;
       }
     }
 
-    // Animate exit
+    // Animate clouds (drift slowly)
+    for (const mesh of this.meshes) {
+      if (mesh.userData && mesh.userData.isCloud) {
+        mesh.position.x += mesh.userData.driftX * delta;
+        mesh.position.z += mesh.userData.driftZ * delta;
+      }
+    }
+
+    // Animate exit -- rotation, bobbing, and pulsing glow
     if (this.exitMesh) {
       this.exitMesh.rotation.y += EXIT.ROTATION_SPEED * delta;
       this.exitMesh.position.y =
         EXIT.FLOAT_Y + Math.sin(this.time * EXIT.BOB_SPEED) * EXIT.BOB_HEIGHT;
+
+      // Pulse emissive intensity
+      const exitPulse = VFX.EXIT_PULSE_MIN +
+        (Math.sin(this.time * VFX.EXIT_PULSE_SPEED) * 0.5 + 0.5) *
+        (VFX.EXIT_PULSE_MAX - VFX.EXIT_PULSE_MIN);
+      this.exitMesh.material.emissiveIntensity = exitPulse;
+
+      // Pulse the exit light
+      if (this.exitLight) {
+        this.exitLight.intensity = VFX.EXIT_LIGHT_INTENSITY * (0.6 + exitPulse * 0.4);
+        this.exitLight.position.y = this.exitMesh.position.y + 0.5;
+      }
     }
   }
 
@@ -234,12 +261,20 @@ export class MazeBuilder {
    */
   destroy() {
     for (const mesh of this.meshes) {
-      if (mesh.geometry) mesh.geometry.dispose();
-      if (mesh.material) {
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach(m => m.dispose());
-        } else {
-          mesh.material.dispose();
+      // Handle groups (clouds) — dispose children
+      if (mesh.isGroup) {
+        mesh.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      } else {
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) {
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach(m => m.dispose());
+          } else {
+            mesh.material.dispose();
+          }
         }
       }
       this.scene.remove(mesh);
@@ -247,8 +282,10 @@ export class MazeBuilder {
     this.meshes = [];
     this.gems = [];
     this.holes = [];
+    this.gemLights = [];
     this.wallBoxes = [];
     this.exitMesh = null;
+    this.exitLight = null;
     this.exitPosition = null;
     this.grid = null;
     this.time = 0;
@@ -361,14 +398,63 @@ export class MazeBuilder {
   // ---------------------------------------------------------------------------
 
   _buildFloor() {
-    const totalW = this.width * MAZE.CELL_SIZE + MAZE.WALL_THICKNESS * 2;
-    const totalH = this.height * MAZE.CELL_SIZE + MAZE.WALL_THICKNESS * 2;
+    const totalW = this.width * MAZE.CELL_SIZE;
+    const totalH = this.height * MAZE.CELL_SIZE;
+
+    // Create a procedural arcade carpet texture
+    const texSize = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = texSize;
+    canvas.height = texSize;
+    const ctx = canvas.getContext('2d');
+
+    // Base color — deep red
+    ctx.fillStyle = '#3a1a1a';
+    ctx.fillRect(0, 0, texSize, texSize);
+
+    // Draw arcade carpet diamond/star pattern
+    const patternSize = 32;
+    for (let y = 0; y < texSize; y += patternSize) {
+      for (let x = 0; x < texSize; x += patternSize) {
+        const isOffset = ((x / patternSize) + (y / patternSize)) % 2 === 0;
+        if (isOffset) {
+          // Diamond shape
+          ctx.fillStyle = '#4e2a2a';
+          ctx.beginPath();
+          ctx.moveTo(x + patternSize / 2, y);
+          ctx.lineTo(x + patternSize, y + patternSize / 2);
+          ctx.lineTo(x + patternSize / 2, y + patternSize);
+          ctx.lineTo(x, y + patternSize / 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // Small center dot
+        ctx.fillStyle = '#5e3a3a';
+        ctx.beginPath();
+        ctx.arc(x + patternSize / 2, y + patternSize / 2, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Subtle noise/grain overlay
+    for (let i = 0; i < 3000; i++) {
+      const rx = Math.random() * texSize;
+      const ry = Math.random() * texSize;
+      const brightness = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)';
+      ctx.fillStyle = brightness;
+      ctx.fillRect(rx, ry, 1, 1);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(totalW / 4, totalH / 4);
 
     const geometry = new THREE.PlaneGeometry(totalW, totalH);
     const material = new THREE.MeshStandardMaterial({
-      color: MAZE.FLOOR_COLOR,
-      roughness: 0.9,
-      metalness: 0.1,
+      map: texture,
+      roughness: 0.85,
+      metalness: 0.05,
     });
     const floor = new THREE.Mesh(geometry, material);
     floor.rotation.x = -Math.PI / 2;
@@ -379,10 +465,60 @@ export class MazeBuilder {
   }
 
   _buildWalls() {
+    // Create a subtle procedural wall texture
+    const wallTexCanvas = document.createElement('canvas');
+    wallTexCanvas.width = 64;
+    wallTexCanvas.height = 128;
+    const wctx = wallTexCanvas.getContext('2d');
+
+    // Base wall color — blue-gray
+    wctx.fillStyle = '#556677';
+    wctx.fillRect(0, 0, 64, 128);
+
+    // Horizontal brick lines
+    wctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    wctx.lineWidth = 1;
+    for (let y = 0; y < 128; y += 16) {
+      wctx.beginPath();
+      wctx.moveTo(0, y);
+      wctx.lineTo(64, y);
+      wctx.stroke();
+    }
+    // Vertical offset brick lines
+    for (let y = 0; y < 128; y += 32) {
+      const xOff = (y / 32) % 2 === 0 ? 0 : 32;
+      wctx.beginPath();
+      wctx.moveTo(xOff, y);
+      wctx.lineTo(xOff, y + 16);
+      wctx.stroke();
+      wctx.beginPath();
+      wctx.moveTo(xOff + 32, y + 16);
+      wctx.lineTo(xOff + 32, y + 32);
+      wctx.stroke();
+    }
+
+    // Light gradient at top of texture
+    const topGrad = wctx.createLinearGradient(0, 0, 0, 20);
+    topGrad.addColorStop(0, 'rgba(255,255,255,0.12)');
+    topGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    wctx.fillStyle = topGrad;
+    wctx.fillRect(0, 0, 64, 20);
+
+    const wallTexture = new THREE.CanvasTexture(wallTexCanvas);
+    wallTexture.wrapS = THREE.RepeatWrapping;
+    wallTexture.wrapT = THREE.RepeatWrapping;
+
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: MAZE.WALL_COLOR,
-      roughness: 0.7,
-      metalness: 0.2,
+      map: wallTexture,
+      roughness: 0.75,
+      metalness: 0.15,
+    });
+
+    // Top cap material — lighter color
+    const capMaterial = new THREE.MeshStandardMaterial({
+      color: MAZE.WALL_TOP_COLOR,
+      roughness: 0.5,
+      metalness: 0.3,
     });
 
     const totalW = this.width * MAZE.CELL_SIZE;
@@ -404,7 +540,7 @@ export class MazeBuilder {
           this._addWall(
             cx + cs / 2, wh / 2, cz,
             cs + wt, wh, wt,
-            wallMaterial
+            wallMaterial, capMaterial
           );
         }
 
@@ -413,7 +549,7 @@ export class MazeBuilder {
           this._addWall(
             cx, wh / 2, cz + cs / 2,
             wt, wh, cs + wt,
-            wallMaterial
+            wallMaterial, capMaterial
           );
         }
 
@@ -422,7 +558,7 @@ export class MazeBuilder {
           this._addWall(
             cx + cs, wh / 2, cz + cs / 2,
             wt, wh, cs + wt,
-            wallMaterial
+            wallMaterial, capMaterial
           );
         }
 
@@ -431,21 +567,31 @@ export class MazeBuilder {
           this._addWall(
             cx + cs / 2, wh / 2, cz + cs,
             cs + wt, wh, wt,
-            wallMaterial
+            wallMaterial, capMaterial
           );
         }
       }
     }
   }
 
-  _addWall(x, y, z, sx, sy, sz, material) {
+  _addWall(x, y, z, sx, sy, sz, wallMaterial, capMaterial) {
+    // Wall body
     const geometry = new THREE.BoxGeometry(sx, sy, sz);
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, wallMaterial);
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     this.scene.add(mesh);
     this.meshes.push(mesh);
+
+    // Top cap — thin lighter strip on top of wall
+    const capHeight = 0.06;
+    const capGeometry = new THREE.BoxGeometry(sx + 0.02, capHeight, sz + 0.02);
+    const cap = new THREE.Mesh(capGeometry, capMaterial);
+    cap.position.set(x, sy + capHeight / 2, z);
+    cap.receiveShadow = true;
+    this.scene.add(cap);
+    this.meshes.push(cap);
 
     // Store AABB for collision
     this.wallBoxes.push({
@@ -480,6 +626,63 @@ export class MazeBuilder {
 
     // Fog
     this.scene.fog = new THREE.Fog(COLORS.FOG_COLOR, COLORS.FOG_NEAR, COLORS.FOG_FAR);
+
+    // Clouds — flat translucent planes scattered at height
+    this._buildClouds();
+  }
+
+  _buildClouds() {
+    const cloudCount = 18;
+    const mazeHalf = Math.max(this.width, this.height) * MAZE.CELL_SIZE * 0.5;
+    // Minimum distance from center — well outside the maze edges
+    const minDist = mazeHalf + 6;
+
+    for (let i = 0; i < cloudCount; i++) {
+      const group = new THREE.Group();
+
+      // Each cloud is 6-12 overlapping soft spheres for a volumetric look
+      const puffCount = 6 + Math.floor(Math.random() * 7);
+      const cloudWidth = 2 + Math.random() * 4;
+
+      for (let p = 0; p < puffCount; p++) {
+        const r = 0.6 + Math.random() * 1.2;
+        const geometry = new THREE.SphereGeometry(r, 10, 8);
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.25 + Math.random() * 0.2,
+          depthWrite: false,
+        });
+        const puff = new THREE.Mesh(geometry, mat);
+
+        // Spread puffs in an elongated horizontal cluster
+        puff.position.set(
+          (Math.random() - 0.5) * cloudWidth * 2,
+          (Math.random() - 0.3) * r * 0.8,
+          (Math.random() - 0.5) * cloudWidth * 0.6
+        );
+        // Squash vertically for a flatter cloud shape
+        puff.scale.y = 0.4 + Math.random() * 0.2;
+
+        group.add(puff);
+      }
+
+      // Place well outside the maze boundary
+      const angle = Math.random() * Math.PI * 2;
+      const dist = minDist + Math.random() * mazeHalf * 1.2;
+      group.position.set(
+        Math.cos(angle) * dist,
+        -2 + Math.random() * 1.5,
+        Math.sin(angle) * dist
+      );
+
+      group.userData.driftX = (Math.random() - 0.5) * 0.3;
+      group.userData.driftZ = (Math.random() - 0.5) * 0.15;
+      group.userData.isCloud = true;
+
+      this.scene.add(group);
+      this.meshes.push(group);
+    }
   }
 
   _buildGem(pos) {
@@ -499,6 +702,7 @@ export class MazeBuilder {
     this.scene.add(gem);
     this.meshes.push(gem);
     this.gems.push(gem);
+    this.gemLights.push(null);
   }
 
   _buildHole(pos) {
@@ -513,6 +717,22 @@ export class MazeBuilder {
     hole.position.set(pos.x, 0.01, pos.z);
     this.scene.add(hole);
     this.meshes.push(hole);
+
+    // Edge ring around the hole for visibility
+    const ringGeometry = new THREE.RingGeometry(HOLES.RADIUS - 0.04, HOLES.RADIUS + 0.04, 24);
+    const ringMaterial = new THREE.MeshStandardMaterial({
+      color: 0x331111,
+      emissive: 0x440000,
+      emissiveIntensity: 0.4,
+      roughness: 0.8,
+      metalness: 0.1,
+      side: THREE.DoubleSide,
+    });
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(pos.x, 0.02, pos.z);
+    this.scene.add(ring);
+    this.meshes.push(ring);
 
     // Store hole position for collision
     this.holes.push({ x: pos.x, z: pos.z });
@@ -535,11 +755,33 @@ export class MazeBuilder {
     this.scene.add(this.exitMesh);
     this.meshes.push(this.exitMesh);
 
-    // Add a point light at the exit for a glow effect
-    const light = new THREE.PointLight(EXIT.GLOW_COLOR, 1.0, 6);
-    light.position.set(pos.x, 1.5, pos.z);
-    this.scene.add(light);
-    this.meshes.push(light);
+    // Inner glow disc beneath the torus for a portal pool effect
+    const discGeometry = new THREE.CircleGeometry(EXIT.SIZE * 0.7, 24);
+    const discMaterial = new THREE.MeshStandardMaterial({
+      color: EXIT.COLOR,
+      emissive: EXIT.GLOW_COLOR,
+      emissiveIntensity: 0.4,
+      transparent: true,
+      opacity: 0.35,
+      roughness: 1.0,
+      metalness: 0.0,
+      side: THREE.DoubleSide,
+    });
+    const disc = new THREE.Mesh(discGeometry, discMaterial);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.set(pos.x, 0.02, pos.z);
+    this.scene.add(disc);
+    this.meshes.push(disc);
+
+    // Strong point light at the exit for a glow effect
+    this.exitLight = new THREE.PointLight(
+      EXIT.GLOW_COLOR,
+      VFX.EXIT_LIGHT_INTENSITY,
+      VFX.EXIT_LIGHT_DISTANCE
+    );
+    this.exitLight.position.set(pos.x, 1.5, pos.z);
+    this.scene.add(this.exitLight);
+    this.meshes.push(this.exitLight);
   }
 
   // ---------------------------------------------------------------------------

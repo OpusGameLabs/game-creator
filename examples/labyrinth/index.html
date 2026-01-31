@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labyrinth</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #87ceeb; overflow: hidden; font-family: monospace; }
+    canvas { display: block; }
+
+    /* ------ HUD ------ */
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: #fff;
+      font-size: 22px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 10;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+
+    /* ------ Overlays ------ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(10, 10, 30, 0.88);
+      z-index: 20;
+      color: #fff;
+    }
+    .overlay.hidden { display: none; }
+    .hidden { display: none; }
+
+    /* ------ Title ------ */
+    .overlay h1 {
+      font-size: 56px;
+      margin-bottom: 16px;
+      letter-spacing: 8px;
+      color: #ffcc00;
+      text-shadow:
+        0 0 20px rgba(255,204,0,0.5),
+        0 0 60px rgba(255,204,0,0.2),
+        0 0 100px rgba(255,204,0,0.1);
+      animation: titlePulse 3s ease-in-out infinite, titleFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,204,0,0.5), 0 0 60px rgba(255,204,0,0.2); }
+      50% { text-shadow: 0 0 30px rgba(255,204,0,0.7), 0 0 80px rgba(255,204,0,0.35), 0 0 120px rgba(255,204,0,0.15); }
+    }
+
+    @keyframes titleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .overlay p {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #aab;
+    }
+    .overlay .score-display {
+      font-size: 22px;
+      margin: 8px 0;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ------ Buttons ------ */
+    .overlay button {
+      margin-top: 30px;
+      padding: 14px 50px;
+      font-size: 20px;
+      font-family: monospace;
+      font-weight: bold;
+      color: #1a1a2e;
+      background: #ffcc00;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      letter-spacing: 2px;
+      border-radius: 4px;
+      box-shadow: 0 0 15px rgba(255,204,0,0.3), 0 4px 12px rgba(0,0,0,0.4);
+      animation: btnGlow 2s ease-in-out infinite;
+    }
+    .overlay button:hover {
+      background: #ffdd44;
+      transform: scale(1.08);
+      box-shadow: 0 0 25px rgba(255,204,0,0.5), 0 6px 20px rgba(0,0,0,0.4);
+    }
+    .overlay button:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 10px rgba(255,204,0,0.3), 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    @keyframes btnGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(255,204,0,0.3), 0 4px 12px rgba(0,0,0,0.4); }
+      50% { box-shadow: 0 0 25px rgba(255,204,0,0.5), 0 4px 16px rgba(0,0,0,0.4); }
+    }
+
+    /* ------ Subtitle fade-in ------ */
+    .overlay p {
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+    .overlay p:nth-child(2) { animation-delay: 0.15s; }
+    .overlay p:nth-child(3) { animation-delay: 0.3s; }
+    .overlay p:nth-child(4) { animation-delay: 0.45s; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="hud"></div>
+
+  <div id="menu-overlay" class="overlay">
+    <h1>LABYRINTH</h1>
+    <p>Navigate the marble through the maze</p>
+    <p>Collect gems and find the exit</p>
+    <p id="control-hint" style="margin-top:12px; color:#777;">WASD or Arrow Keys to move</p>
+    <button id="play-btn">PLAY</button>
+  </div>
+
+  <button id="recalibrate-btn" class="hidden" style="
+    position:fixed; top:20px; right:20px; z-index:30;
+    padding:8px 16px; font-size:14px; font-family:monospace; font-weight:bold;
+    color:#1a1a2e; background:#ffcc00; border:none; cursor:pointer;
+  ">RECALIBRATE</button>
+
+  <div id="gameover-overlay" class="overlay hidden">
+    <h1>GAME OVER</h1>
+    <div class="score-display" id="final-score"></div>
+    <div class="score-display" id="best-score" style="font-size:18px;color:#aab;"></div>
+    <button id="restart-btn">RESTART</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

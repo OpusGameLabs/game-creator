@@ -1,7 +1,9 @@
+import { initAudioBridge } from './audio/AudioBridge.js';
 import { Game } from './core/Game.js';
 import { eventBus, Events } from './core/EventBus.js';
 import { gameState } from './core/GameState.js';
 
+initAudioBridge();
 const game = new Game();
 
 // Expose for Playwright testing

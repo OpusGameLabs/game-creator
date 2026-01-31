@@ -353,33 +353,114 @@ function loadModel(path: string): Promise<THREE.Group> {
 }
 ```
 
-## Input Handling
+## Input Handling (Mobile-First)
 
-Use a dedicated InputSystem singleton that maps raw inputs to game actions:
+All games MUST work on desktop AND mobile unless explicitly specified otherwise. Allocate 60% effort to mobile / 40% desktop when making tradeoffs. Choose the best mobile input for each game concept:
+
+| Game Type | Primary Mobile Input | Fallback |
+|-----------|---------------------|----------|
+| Marble/tilt/balance | Gyroscope (DeviceOrientation) | Virtual joystick |
+| Runner/endless | Tap zones (left/right half) | Swipe gestures |
+| Puzzle/turn-based | Tap targets (44px min) | Drag & drop |
+| Shooter/aim | Virtual joystick + tap-to-fire | Dual joysticks |
+| Platformer | Virtual D-pad + jump button | Tilt for movement |
+
+### Unified Analog InputSystem
+
+Use a dedicated InputSystem that merges keyboard, gyroscope, and touch into a single analog interface. Game logic reads `moveX`/`moveZ` (-1..1) and never knows the source:
 
 ```typescript
-type ActionCallback = () => void;
-
 class InputSystem {
   private keys: Record<string, boolean> = {};
-  private actions = new Map<string, ActionCallback>();
+  moveX = 0;  // -1..1
+  moveZ = 0;  // -1..1
+  isMobile: boolean;
 
   constructor() {
+    this.isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1);
     document.addEventListener('keydown', (e) => { this.keys[e.code] = true; });
     document.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
   }
 
-  isPressed(code: string): boolean {
-    return !!this.keys[code];
+  /** Call from a user gesture (e.g. PLAY button) to init gyro/joystick. */
+  async initMobile(): Promise<void> {
+    // Request gyroscope permission (required on iOS 13+)
+    // If denied/unavailable, show virtual joystick fallback
   }
 
-  onAction(name: string, callback: ActionCallback): void {
-    this.actions.set(name, callback);
+  /** Call once per frame. Merges all sources into moveX/moveZ. */
+  update(): void {
+    let mx = 0, mz = 0;
+    // Keyboard (always active, acts as override)
+    if (this.keys['ArrowLeft'] || this.keys['KeyA']) mx -= 1;
+    if (this.keys['ArrowRight'] || this.keys['KeyD']) mx += 1;
+    if (this.keys['ArrowUp'] || this.keys['KeyW']) mz -= 1;
+    if (this.keys['ArrowDown'] || this.keys['KeyS']) mz += 1;
+    const kbActive = mx !== 0 || mz !== 0;
+    if (!kbActive) {
+      // Read from gyro or joystick (whichever is active)
+    }
+    this.moveX = Math.max(-1, Math.min(1, mx));
+    this.moveZ = Math.max(-1, Math.min(1, mz));
   }
 }
-
-export const inputSystem = new InputSystem();
 ```
+
+### Gyroscope Input Pattern
+
+For tilt-controlled games (marble, balance, racing):
+
+```typescript
+class GyroscopeInput {
+  available = false;
+  moveX = 0;
+  moveZ = 0;
+  private calibBeta: number | null = null;
+  private calibGamma: number | null = null;
+
+  async requestPermission(): Promise<boolean> {
+    // iOS 13+: DeviceOrientationEvent.requestPermission()
+    // Must be called from a user gesture handler
+  }
+
+  recalibrate(): void {
+    // Capture current orientation as neutral position
+  }
+
+  update(): void {
+    // Apply deadzone, normalize to -1..1, smooth with EMA
+  }
+}
+```
+
+### Virtual Joystick Pattern
+
+DOM-based circle-in-circle touch joystick for non-gyro devices:
+
+```typescript
+class VirtualJoystick {
+  active = false;
+  moveX = 0;  // -1..1
+  moveZ = 0;  // -1..1
+
+  show(): void {
+    // Create outer circle + inner knob DOM elements
+    // Track touch by identifier to handle multi-touch correctly
+    // Clamp knob movement to maxDistance from center
+    // Normalize displacement to -1..1
+  }
+
+  hide(): void { /* Remove DOM, reset values */ }
+}
+```
+
+### Input Priority
+
+1. On mobile: try gyroscope first (request permission from PLAY button tap)
+2. If gyro denied/unavailable: show virtual joystick
+3. Keyboard always active as fallback/override on any platform
+4. Game logic consumes only `input.moveX` and `input.moveZ` -- never knows the source
 
 ## When Adding Features
 

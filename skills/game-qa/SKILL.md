@@ -82,6 +82,7 @@ export default defineConfig({
 
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
   ],
 
   webServer: {
@@ -461,11 +462,50 @@ The recommended workflow is:
 2. **Use MCP** for subjective visual evaluation (does it look good? feel right? color palette working?)
 3. Run automated tests in CI; run MCP inspections during design passes
 
+## Mobile Input & Responsive Layout Tests
+
+Use the `mobile-chrome` project (Pixel 5 emulation) to test touch input and responsive layout:
+
+```js
+test('game canvas fills mobile viewport', async ({ gamePage }) => {
+  const { width, height } = await gamePage.evaluate(() => {
+    const canvas = document.querySelector('canvas');
+    return { width: canvas.clientWidth, height: canvas.clientHeight };
+  });
+  const viewport = gamePage.viewportSize();
+  expect(width).toBeGreaterThanOrEqual(viewport.width * 0.9);
+  expect(height).toBeGreaterThanOrEqual(viewport.height * 0.9);
+});
+
+test('virtual joystick appears on touch device', async ({ gamePage }) => {
+  // Start the game
+  await gamePage.tap('#play-btn');
+  await gamePage.waitForTimeout(1000);
+  // Joystick should be visible (if gyro is unavailable in emulation)
+  const joystick = await gamePage.$('#virtual-joystick');
+  // On emulated devices without gyro, joystick should appear
+  if (joystick) {
+    const visible = await joystick.isVisible();
+    expect(visible).toBe(true);
+  }
+});
+
+test('touch tap registers as input', async ({ gamePage }) => {
+  await gamePage.tap('#play-btn');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__?.started);
+  // Tap on the canvas
+  const canvas = gamePage.locator('canvas');
+  await canvas.tap();
+  // Game should still be running (no crash from touch input)
+  const running = await gamePage.evaluate(() => window.__GAME_STATE__?.started);
+  expect(running).toBe(true);
+});
+```
+
 ## What NOT to Test (Automated)
 
 - **Exact pixel positions** of animated objects (non-deterministic without clock control)
 - **Active gameplay screenshots** — moving objects make stable screenshots impossible; use MCP instead
 - **Audio playback** (Playwright has no audio inspection; test that audio objects exist via evaluate)
-- **Touch gestures on desktop** (test touch in mobile-emulated projects only)
 - **External API calls** unless mocked (e.g., Play.fun SDK — mock with `page.route()`)
 - **Subjective visual quality** — use MCP for "does this look good?" evaluations

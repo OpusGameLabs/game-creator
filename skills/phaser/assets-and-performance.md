@@ -117,13 +117,16 @@ this.load.bitmapFont('pixelfont', 'assets/fonts/pixel.png', 'assets/fonts/pixel.
 const score = this.add.bitmapText(16, 16, 'pixelfont', 'Score: 0', 24);
 ```
 
-## Mobile Optimization
+## Mobile Optimization (Primary Target)
+
+Mobile is the primary deployment target. Design for mobile first, then verify desktop.
 
 - Target 30fps if needed: `fps: { target: 30, forceSetTimeOut: true }` in game config
 - Reduce particle counts by 50-75%
 - Use simpler physics bodies (circles over polygons)
 - Minimize texture swaps — pack everything into fewer atlases
 - Use `Phaser.Scale.FIT` with `autoCenter` for responsive sizing
+- **Touch target sizes**: All interactive elements (buttons, game objects the player taps) must be at least **44x44px** on screen. Smaller targets frustrate mobile players.
 - Test on real devices, not just browser DevTools throttling
 
 ## Memory Management

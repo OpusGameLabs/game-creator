@@ -25,7 +25,8 @@ Read the entire game codebase to build a complete picture:
 - Every file in `src/entities/` — game objects
 - Every file in `src/ui/` — menus, HUD, overlays
 - Every file in `src/audio/` — music and sound effects
-- `index.html` — markup, overlays, styles
+- `index.html` — markup, overlays, styles, viewport meta
+- `src/systems/InputSystem.js` — input handling, mobile support (gyro, joystick, touch)
 - `tests/` — test coverage and quality
 
 Don't skim. Read every file completely so you understand the full picture before making recommendations.
@@ -43,9 +44,10 @@ Rate each area on a 1–5 scale (1 = broken/missing, 3 = functional but basic, 5
 | **Code architecture** | | EventBus, GameState, Constants, no circular deps |
 | **Performance** | | Delta capping, object pooling, disposal, no leaks |
 | **Player experience** | | Onboarding, feedback, difficulty curve, replayability |
+| **Mobile support** | | Touch input, responsive layout, gyro/joystick, 44px touch targets |
 | **Test coverage** | | Boot, gameplay, scoring, restart, visual, perf tests |
 
-**Overall score: X / 40**
+**Overall score: X / 45**
 
 ### Step 3: Improvement plan
 
@@ -127,6 +129,8 @@ When `$ARGUMENTS` includes a focus area keyword, weight these specific checks:
 **"menus"** — title screen appeal, game over information, restart flow, button styling, instructions clarity, best score display, animations
 
 **"audio"** — load the game-audio skill. Check BGM coverage (every game state should have music), SFX coverage (every player action should have feedback), volume mixing, transition smoothness between tracks
+
+**"mobile"** — touch input implemented (tap zones, virtual joystick, or gyroscope), responsive canvas (`Phaser.Scale.FIT` or CSS `width:100%`), 44px minimum touch targets, virtual joystick or tap zones for movement, gyroscope support for tilt games, no hover-only interactions, tested on mobile viewport (Pixel 5 emulation). Read `InputSystem.js`, all scene/system `update()` methods, `index.html` viewport meta, and `Constants.js` for touch target sizes.
 
 **"ux"** — onboarding (does the player know what to do?), feedback (does every action have a response?), difficulty curve (is it too hard/easy?), replayability (is there a reason to play again?)
 

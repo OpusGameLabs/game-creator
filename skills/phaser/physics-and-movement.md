@@ -167,6 +167,40 @@ export class StateMachine {
 }
 ```
 
+## Mobile-Aware State Machine
+
+To make state machines work across keyboard and touch, abstract raw input into an `inputState` object. States receive this object and never read `cursors` directly:
+
+```typescript
+// In Scene update() — build inputState from all sources
+const inputState = {
+  left: this.cursors.left.isDown || this.wasd.left.isDown || this.touchLeft,
+  right: this.cursors.right.isDown || this.wasd.right.isDown || this.touchRight,
+  jump: Phaser.Input.Keyboard.JustDown(this.spaceKey) || this.touchJump,
+};
+this.player.stateMachine.update(delta, inputState);
+
+// In states — use inputState instead of player.cursors
+class WalkState implements State {
+  update(player: Player, delta: number, inputState: InputState) {
+    if (inputState.left) {
+      player.setVelocityX(-player.speed);
+      player.setFlipX(true);
+    } else if (inputState.right) {
+      player.setVelocityX(player.speed);
+      player.setFlipX(false);
+    } else {
+      player.stateMachine.transition('idle');
+    }
+    if (inputState.jump && player.isGrounded()) {
+      player.stateMachine.transition('jump');
+    }
+  }
+}
+```
+
+This pattern ensures states are input-source-agnostic. Adding a new input method (gamepad, tilt) only requires updating the `inputState` construction in the Scene, not every state.
+
 ## Time-Based Movement
 
 Always use `delta` for consistent movement across frame rates:
