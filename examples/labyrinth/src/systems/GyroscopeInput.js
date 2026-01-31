@@ -10,6 +10,7 @@ export class GyroscopeInput {
     // Raw device orientation values
     this.beta = 0;   // front-back tilt (-180..180)
     this.gamma = 0;  // left-right tilt (-90..90)
+    this.alpha = 0;  // compass heading
 
     // Calibration offset (captured on first valid reading)
     this.calibBeta = null;
@@ -72,27 +73,66 @@ export class GyroscopeInput {
 
     this.beta = e.beta;
     this.gamma = e.gamma;
+    this.alpha = e.alpha || 0;
   }
 
   recalibrate() {
     this.calibBeta = this.beta;
     this.calibGamma = this.gamma;
+    // Reset smoothed output so there's no lurch after recalibration
+    this.moveX = 0;
+    this.moveZ = 0;
+  }
+
+  /**
+   * Get the current screen orientation angle.
+   * 0 = portrait, 90 = landscape-left, -90/270 = landscape-right, 180 = upside-down
+   */
+  _getScreenAngle() {
+    if (screen.orientation && screen.orientation.angle !== undefined) {
+      return screen.orientation.angle;
+    }
+    // Fallback for older browsers
+    return window.orientation || 0;
   }
 
   update() {
     if (!this.active || this.calibBeta === null) return;
 
     // Compute tilt relative to calibration offset
-    const rawX = this.gamma - this.calibGamma;
-    const rawZ = this.beta - this.calibBeta;
+    let rawX = this.gamma - this.calibGamma;
+    let rawZ = this.beta - this.calibBeta;
 
-    // Apply deadzone
-    const dx = Math.abs(rawX) < GYRO.DEADZONE ? 0 : rawX;
-    const dz = Math.abs(rawZ) < GYRO.DEADZONE ? 0 : rawZ;
+    // Handle screen orientation — remap axes if device is rotated
+    const angle = this._getScreenAngle();
+    if (angle === 90) {
+      // Landscape left: swap and invert
+      const tmp = rawX;
+      rawX = -rawZ;
+      rawZ = tmp;
+    } else if (angle === -90 || angle === 270) {
+      // Landscape right: swap and invert other way
+      const tmp = rawX;
+      rawX = rawZ;
+      rawZ = -tmp;
+    } else if (angle === 180) {
+      // Upside-down portrait: invert both
+      rawX = -rawX;
+      rawZ = -rawZ;
+    }
 
-    // Normalize to -1..1 based on max tilt angle
-    const nx = Math.max(-1, Math.min(1, dx / GYRO.MAX_TILT));
-    const nz = Math.max(-1, Math.min(1, dz / GYRO.MAX_TILT));
+    // Apply deadzone (subtract deadzone from magnitude, not threshold)
+    const dxSign = rawX >= 0 ? 1 : -1;
+    const dzSign = rawZ >= 0 ? 1 : -1;
+    const dxAbs = Math.max(0, Math.abs(rawX) - GYRO.DEADZONE);
+    const dzAbs = Math.max(0, Math.abs(rawZ) - GYRO.DEADZONE);
+
+    // Normalize to -1..1 based on max tilt angle (adjusted for deadzone)
+    const range = GYRO.MAX_TILT - GYRO.DEADZONE;
+    const nx = Math.max(-1, Math.min(1, (dxAbs / range) * dxSign));
+    // INVERT Z: tilting forward (positive beta delta) should move ball
+    // away from camera (-Z in Three.js), so negate
+    const nz = Math.max(-1, Math.min(1, -(dzAbs / range) * dzSign));
 
     // Smooth (exponential moving average)
     this.moveX = this.moveX + (nx - this.moveX) * GYRO.SMOOTHING;

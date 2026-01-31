@@ -81,6 +81,13 @@ export class Game {
     gameState.started = true;
     this.falling = false;
 
+    // Try to lock to portrait on mobile (best-effort, requires user gesture)
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(() => {});
+      }
+    } catch { /* not supported */ }
+
     // Init audio from user gesture context (PLAY button click)
     eventBus.emit(Events.AUDIO_INIT);
     eventBus.emit(Events.MUSIC_GAMEPLAY);

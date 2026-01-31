@@ -117,9 +117,45 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ------ Landscape warning (mobile only) ------ */
+    #rotate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 30, 0.95);
+      z-index: 100;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-family: monospace;
+    }
+    #rotate-overlay .rotate-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: rotateHint 1.5s ease-in-out infinite;
+    }
+    #rotate-overlay p {
+      font-size: 18px;
+      color: #aab;
+      opacity: 1;
+    }
+    @keyframes rotateHint {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(90deg); }
+    }
+    @media (orientation: landscape) and (max-height: 500px) {
+      #rotate-overlay { display: flex; }
+    }
   </style>
 </head>
 <body>
+  <div id="rotate-overlay">
+    <div class="rotate-icon">&#x1F4F1;</div>
+    <p>Please rotate to portrait mode</p>
+  </div>
+
   <div id="hud"></div>
 
   <div id="menu-overlay" class="overlay">
