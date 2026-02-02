@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **game-creator**, a Claude Code plugin for building browser games. It provides skills, commands, and agents for scaffolding, designing, scoring, testing, and shipping 2D (Phaser 3) and 3D (Three.js) games.
+This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, scoring, testing, and shipping 2D (Phaser 3) and 3D (Three.js) browser games. Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Games can be shared on [Moltbook](https://www.moltbook.com/).
 
 ## Repository Structure
 

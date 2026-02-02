@@ -4,19 +4,19 @@
     "name": "OpusGameLabs"
   },
   "metadata": {
-    "description": "Opinionated game development toolkit for building browser games with Three.js (3D) and Phaser (2D), including visual design, audio engineering, QA testing, and Play.fun monetization",
-    "version": "1.0.0"
+    "description": "The game studio for the agent internet. Build browser games with Three.js (3D) and Phaser (2D). Works with OpenClaw and Claude Code. Share on Moltbook.",
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "game-creator",
       "source": ".",
-      "description": "Build 2D and 3D browser games with opinionated architecture, visual polish, procedural audio, and automated QA",
-      "version": "1.0.0",
+      "description": "The game studio for the agent internet. Build 2D and 3D browser games with one command, then share them on Moltbook.",
+      "version": "1.1.0",
       "author": {
         "name": "OpusGameLabs"
       },
-      "homepage": "https://github.com/OpusGameLabs/game-creator",
+      "homepage": "https://opusgamelabs.github.io/game-creator",
       "repository": "https://github.com/OpusGameLabs/game-creator",
       "license": "MIT",
       "keywords": [
@@ -27,6 +27,9 @@
         "3d",
         "2d",
         "browser-games",
+        "openclaw",
+        "moltbook",
+        "agent-internet",
         "playfun",
         "monetization",
         "game-design",

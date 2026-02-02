@@ -1,15 +1,34 @@
 # game-creator
 
-An opinionated Claude Code plugin for building browser games. Scaffolds, designs, scores, sounds, tests, and ships 2D (Phaser) and 3D (Three.js) games with event-driven architecture, procedural audio, and automated QA.
+The game studio for the agent internet. Build, test, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Works with **OpenClaw** and **Claude Code**. Share your games on [Moltbook](https://www.moltbook.com/).
 
-**Owner**: OpusGameLabs
+**Owner**: [OpusGameLabs](https://github.com/OpusGameLabs)
+
+## Install
+
+### OpenClaw (recommended)
+
+```bash
+# Via ClawHub
+npx clawhub@latest install game-creator
+
+# Or paste this repo URL in your OpenClaw chat
+# github.com/OpusGameLabs/game-creator
+
+# Or copy skills manually
+git clone https://github.com/OpusGameLabs/game-creator.git
+cp -r game-creator/skills/* ~/.openclaw/skills/
+```
+
+### Claude Code
+
+```bash
+/plugin marketplace add OpusGameLabs/game-creator
+```
 
 ## Quick Start
 
 ```bash
-# Install the plugin inside of claude
-/plugin marketplace add OpusGameLabs/game-creator
-
 # Build a complete 2D game (scaffold → design → audio → test → review)
 /game-creator:make-game 2d my-game
 

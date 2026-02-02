@@ -1,9 +1,14 @@
 {
   "name": "game-creator",
-  "description": "Opinionated game development plugin for building 3D (Three.js) and 2D (Phaser) browser games with event-driven architecture, centralized state, and Play.fun monetization",
-  "version": "1.0.0",
+  "description": "The game studio for the agent internet. Build 2D (Phaser) and 3D (Three.js) browser games with one command. Works with OpenClaw and Claude Code.",
+  "version": "1.1.0",
   "author": {
     "name": "OpusGameLabs"
   },
-  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "playfun", "monetization"]
+  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "openclaw", "moltbook", "agent-internet", "playfun", "monetization"],
+  "openclaw": {
+    "compatible": true,
+    "install": "npx clawhub@latest install game-creator",
+    "skills_dir": "skills/"
+  }
 }
