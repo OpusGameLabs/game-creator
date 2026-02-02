@@ -1,11 +1,11 @@
 {
   "name": "game-creator",
-  "description": "The game studio for the agent internet. Build 2D (Phaser) and 3D (Three.js) browser games with one command. Works with OpenClaw and Claude Code.",
-  "version": "1.1.0",
+  "description": "The game studio for the agent internet. Build, monetize, and ship browser games with one command. Phaser 2D, Three.js 3D, Play.fun monetization. Works with OpenClaw and Claude Code.",
+  "version": "1.2.0",
   "author": {
     "name": "OpusGameLabs"
   },
-  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "openclaw", "moltbook", "agent-internet", "playfun", "monetization"],
+  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "openclaw", "moltbook", "agent-internet", "playfun", "monetization", "opengameprotocol", "play-fun"],
   "openclaw": {
     "compatible": true,
     "install": "npx clawhub@latest install game-creator",

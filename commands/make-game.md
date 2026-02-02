@@ -16,7 +16,8 @@ Build a complete browser game from scratch, step by step. This command walks you
 5. Automated tests that catch bugs when you make changes
 6. An architecture review with a quality score and improvement tips
 7. Live deployment to GitHub Pages with a public URL
-8. Future changes auto-deploy on `git push`
+8. Monetization via Play.fun — points tracking, leaderboards, wallet connect, and a play.fun URL to share on Moltbook
+9. Future changes auto-deploy on `git push`
 
 ## Orchestration Model
 
@@ -116,6 +117,7 @@ Create all pipeline tasks upfront using `TaskCreate`:
 5. Add QA tests
 6. Run architecture review
 7. Deploy to GitHub Pages
+8. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
 
 This gives the user full visibility into pipeline progress at all times.
 
@@ -533,11 +535,149 @@ Add a `deploy` script to `package.json` so future deploys are one command:
 > ```
 > Or if you're working with me, I'll commit your changes and run deploy for you.
 >
-> **Share your game** — send that URL to anyone and they can play instantly in their browser.
->
-> Want to monetize your game with Play.fun? I can help you set that up with the `/game-creator:playdotfun` skill.
+> **Next up: monetization.** I'll register your game on Play.fun (OpenGameProtocol), add the points SDK, and redeploy. Players earn rewards, you get a play.fun URL to share on Moltbook. Ready?
 
 Mark task 7 as `completed`.
+
+**Wait for user confirmation before proceeding.**
+
+### Step 7: Monetize with Play.fun
+
+Mark task 8 as `in_progress`.
+
+**This step stays in the main thread** because it requires interactive authentication.
+
+#### 7a. Authenticate with Play.fun
+
+Check if the user already has Play.fun credentials. The auth script is bundled with the plugin:
+
+```bash
+node skills/playdotfun/scripts/playfun-auth.js status
+```
+
+**If credentials exist**, skip to 7b.
+
+**If no credentials**, start the auth callback server:
+
+```bash
+node skills/playdotfun/scripts/playfun-auth.js callback &
+```
+
+Tell the user:
+
+> To register your game on Play.fun, you need to log in once.
+> Open this URL in your browser:
+> **https://app.play.fun/skills-auth?callback=http://localhost:9876/callback**
+>
+> Log in with your Play.fun account. Credentials are saved locally.
+> Tell me when you're done.
+
+**Wait for user confirmation.** Then verify with `playfun-auth.js status`.
+
+If callback fails, offer manual method as fallback.
+
+#### 7b. Register the game on Play.fun
+
+Determine the deployed game URL from Step 6 (`https://<username>.github.io/<game-name>/`).
+
+Read `package.json` for the game name and description. Read `src/core/Constants.js` to determine reasonable anti-cheat limits based on the scoring system.
+
+Use the Play.fun API to register the game. Load the `playdotfun` skill for API reference. Register via `POST https://api.opengameprotocol.com/games`:
+
+```json
+{
+  "name": "<game-name>",
+  "description": "<game-description>",
+  "gameUrl": "<deployed-url>",
+  "platform": "web",
+  "isHTMLGame": true,
+  "iframable": true,
+  "maxScorePerSession": <based on game scoring>,
+  "maxSessionsPerDay": 50,
+  "maxCumulativePointsPerDay": <reasonable daily cap>
+}
+```
+
+**Anti-cheat guidelines:**
+- Casual clicker/idle: `maxScorePerSession: 100-500`
+- Skill-based arcade (flappy bird, runners): `maxScorePerSession: 500-2000`
+- Competitive/complex: `maxScorePerSession: 1000-5000`
+
+Save the returned **game UUID**.
+
+#### 7c. Add the Play.fun Browser SDK
+
+Add the SDK script tag to `index.html` before `</head>`:
+
+```html
+<script src="https://sdk.play.fun/latest"></script>
+```
+
+Create `src/playfun.js` that wires the game's EventBus to Play.fun points tracking:
+
+```js
+// src/playfun.js — Play.fun (OpenGameProtocol) integration
+import { eventBus, Events } from './core/EventBus.js';
+
+const GAME_ID = '<game-uuid>';
+let sdk = null;
+let initialized = false;
+
+export async function initPlayFun() {
+  const SDKClass = typeof PlayFunSDK !== 'undefined' ? PlayFunSDK
+    : typeof OpenGameSDK !== 'undefined' ? OpenGameSDK : null;
+  if (!SDKClass) {
+    console.warn('Play.fun SDK not loaded');
+    return;
+  }
+  sdk = new SDKClass({ gameId: GAME_ID, ui: { usePointsWidget: true } });
+  await sdk.init();
+  initialized = true;
+
+  // Points on score change
+  eventBus.on(Events.SCORE_CHANGED, ({ score, delta }) => {
+    if (initialized && delta > 0) sdk.addPoints(delta);
+  });
+  // Save on game over
+  eventBus.on(Events.GAME_OVER, () => { if (initialized) sdk.savePoints(); });
+  // Auto-save every 30s
+  setInterval(() => { if (initialized) sdk.savePoints(); }, 30000);
+  // Save on unload
+  window.addEventListener('beforeunload', () => { if (initialized) sdk.savePoints(); });
+}
+```
+
+**Read the actual EventBus.js** to find the correct event names and payload shapes. Adapt accordingly.
+
+Add `initPlayFun()` to `src/main.js`:
+
+```js
+import { initPlayFun } from './playfun.js';
+// After game init
+initPlayFun().catch(err => console.warn('Play.fun init failed:', err));
+```
+
+#### 7d. Rebuild and redeploy
+
+```bash
+cd <project-dir> && npm run build && npx gh-pages -d dist
+```
+
+Wait ~30 seconds, then verify the deployment is live.
+
+#### 7e. Tell the user
+
+> Your game is monetized on Play.fun!
+>
+> **Play**: `<game-url>`
+> **Play.fun**: `https://play.fun/games/<game-uuid>`
+>
+> The Play.fun widget is now live — players see points, leaderboard, and wallet connect.
+> Points auto-save on game over and every 30 seconds.
+>
+> **Share on Moltbook**: Post your game URL to [moltbook.com](https://www.moltbook.com/) — 770K+ agents ready to play and upvote.
+
+Mark task 8 as `completed`.
 
 ### Pipeline Complete!
 
@@ -551,10 +691,13 @@ Tell the user:
 > - **Automated tests** — safety net for future changes
 > - **Quality review** — scored and prioritized improvements
 > - **Live on the web** — deployed to GitHub Pages with a public URL
+> - **Monetized on Play.fun** — points tracking, leaderboards, and wallet connect
+>
+> **Share your play.fun URL on Moltbook** to reach 770K+ agents on the agent internet.
 >
 > **What's next?**
 > - Add new gameplay features: `/game-creator:add-feature [describe what you want]`
 > - Upgrade to pixel art (if using shapes): `/game-creator:add-assets`
-> - Monetize with Play.fun: `/game-creator:playdotfun`
-> - Keep iterating! Run any step again anytime: `/game-creator:design-game`, `/game-creator:add-audio`, `/game-creator:qa-game`, `/game-creator:review-game`
+> - Launch a playcoin for your game (token rewards for players)
+> - Keep iterating! Run any step again: `/game-creator:design-game`, `/game-creator:add-audio`, `/game-creator:qa-game`
 > - Redeploy after changes: `npm run deploy`

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, scoring, testing, and shipping 2D (Phaser 3) and 3D (Three.js) browser games. Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Games can be shared on [Moltbook](https://www.moltbook.com/).
+This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, testing, monetizing, and shipping 2D (Phaser 3) and 3D (Three.js) browser games. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
 
 ## Repository Structure
 
@@ -19,18 +19,22 @@ skills/
   game-qa/SKILL.md         # Playwright testing (gameplay, visual, perf)
   game-architecture/SKILL.md  # Reference architecture patterns
   game-deploy/SKILL.md     # Deployment (GitHub Pages, Vercel, etc.)
+  playdotfun/SKILL.md      # Play.fun monetization (git submodule → submodules/playdotfun)
 templates/
   phaser-2d/               # Runnable 2D starter project (Phaser 3)
   threejs-3d/              # Runnable 3D starter project (Three.js)
 commands/
-  make-game.md             # Full pipeline: scaffold → assets → design → audio → QA → review → deploy
+  make-game.md             # Full pipeline: scaffold → assets → design → audio → QA → review → deploy → monetize
   improve-game.md          # Holistic audit + implement highest-impact improvements
   design-game.md           # Visual design audit + improvements
   add-feature.md           # Add feature following patterns
   add-assets.md            # Replace shapes with pixel art sprites
   add-audio.md             # Add Strudel.cc audio
   qa-game.md               # Add Playwright tests
+  monetize-game.md         # Play.fun monetization (register, SDK, redeploy)
   review-game.md           # Architecture review
+submodules/
+  playdotfun/              # Git submodule: github.com/OpusGameLabs/skills
 agents/
   game-reviewer.md         # Code review agent
   game-creator.md          # Autonomous game creation pipeline
@@ -132,4 +136,16 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 - Strudel.cc is AGPL-3.0. Games using `@strudel/web` must be open source.
 - Playwright screenshot tests use high pixel tolerance (3000 maxDiffPixels) because parallax clouds scroll between captures.
 - Headless Chromium reports low FPS (~7-9). FPS threshold in tests is set to 5. Use Playwright MCP for accurate FPS measurement.
-- The `playdotfun` skill directory is a symlink (`../../skills/skills`). This may need updating if the path changes.
+- The `playdotfun` skill is a git submodule at `submodules/playdotfun` (repo: `github.com/OpusGameLabs/skills`). The symlink `skills/playdotfun → ../submodules/playdotfun/skills` makes SKILL.md resolve correctly. After cloning, run `git submodule update --init` to pull the submodule.
+
+## Play.fun (OpenGameProtocol) Integration
+
+The `/monetize-game` command (and Step 7 of `/make-game`) registers games on [Play.fun](https://play.fun) and integrates the browser SDK.
+
+**Flow**: Auth → Register game → Add SDK to `index.html` + create `src/playfun.js` → Rebuild → Redeploy → Share play.fun URL on Moltbook
+
+**Auth**: Uses `skills/playdotfun/scripts/playfun-auth.js` for credential management. Supports web callback (localhost:9876) and manual paste.
+
+**SDK**: CDN script (`https://sdk.play.fun/latest`) + `src/playfun.js` that wires EventBus events (score changes, game over) to Play.fun points tracking. Non-blocking — if SDK fails to load, game still works.
+
+**Anti-cheat**: Games are registered with `maxScorePerSession`, `maxSessionsPerDay`, and `maxCumulativePointsPerDay` based on the game's scoring system.

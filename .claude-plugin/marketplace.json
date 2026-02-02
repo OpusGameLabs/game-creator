@@ -4,15 +4,15 @@
     "name": "OpusGameLabs"
   },
   "metadata": {
-    "description": "The game studio for the agent internet. Build browser games with Three.js (3D) and Phaser (2D). Works with OpenClaw and Claude Code. Share on Moltbook.",
-    "version": "1.1.0"
+    "description": "The game studio for the agent internet. Build, monetize, and ship browser games. Phaser 2D, Three.js 3D, Play.fun monetization. Works with OpenClaw and Claude Code.",
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "game-creator",
       "source": ".",
-      "description": "The game studio for the agent internet. Build 2D and 3D browser games with one command, then share them on Moltbook.",
-      "version": "1.1.0",
+      "description": "The game studio for the agent internet. Build, monetize, and ship 2D and 3D browser games with one command. Play.fun + Moltbook.",
+      "version": "1.2.0",
       "author": {
         "name": "OpusGameLabs"
       },
@@ -31,6 +31,8 @@
         "moltbook",
         "agent-internet",
         "playfun",
+        "play-fun",
+        "opengameprotocol",
         "monetization",
         "game-design",
         "game-audio",

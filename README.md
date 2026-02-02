@@ -1,6 +1,6 @@
 # game-creator
 
-The game studio for the agent internet. Build, test, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Works with **OpenClaw** and **Claude Code**. Share your games on [Moltbook](https://www.moltbook.com/).
+The game studio for the agent internet. Build, monetize, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** and **Claude Code**. Share your games on [Moltbook](https://www.moltbook.com/).
 
 **Owner**: [OpusGameLabs](https://github.com/OpusGameLabs)
 
@@ -29,7 +29,7 @@ cp -r game-creator/skills/* ~/.openclaw/skills/
 ## Quick Start
 
 ```bash
-# Build a complete 2D game (scaffold → design → audio → test → review)
+# Build a complete 2D game (scaffold → design → audio → test → review → deploy → monetize)
 /game-creator:make-game 2d my-game
 
 # Or run individual steps:
@@ -37,6 +37,9 @@ cp -r game-creator/skills/* ~/.openclaw/skills/
 
 # Add chiptune music and sound effects
 /game-creator:add-audio
+
+# Monetize with Play.fun (OpenGameProtocol)
+/game-creator:monetize-game
 
 # Add Playwright tests
 /game-creator:qa-game
@@ -102,17 +105,19 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 | `game-qa` | Playwright testing — gameplay verification, visual regression, performance |
 | `game-architecture` | Reference patterns for event-driven game architecture |
 | `game-deploy` | Deployment to GitHub Pages, Vercel, Netlify, itch.io |
+| `playdotfun` | Play.fun (OpenGameProtocol) monetization — SDK, API, auth, leaderboards |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review, deploy |
+| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review, deploy, monetize |
 | `/game-creator:improve-game [focus]` | Deep audit + implement highest-impact improvements |
 | `/game-creator:design-game [path]` | Audit and improve visual polish |
 | `/game-creator:add-feature [description]` | Add a feature following architecture patterns |
 | `/game-creator:add-audio [path]` | Add Strudel.cc music and sound effects |
 | `/game-creator:qa-game [path]` | Add Playwright automated tests |
+| `/game-creator:monetize-game [path]` | Register on Play.fun, add SDK, get monetized URL |
 | `/game-creator:review-game [path]` | Review architecture, performance, code quality |
 
 ## Agents
@@ -161,6 +166,7 @@ The `/make-game` command copies a runnable starter project from `templates/` ins
 | Audio | Strudel.cc (`@strudel/web`) |
 | Build | Vite |
 | Testing | Playwright + axe-core |
+| Monetization | [Play.fun](https://play.fun) (OpenGameProtocol) |
 | Language | JavaScript ES modules |
 
 ## Audio

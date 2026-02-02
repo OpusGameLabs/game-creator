@@ -1,0 +1,3 @@
+[submodule "submodules/playdotfun"]
+	path = submodules/playdotfun
+	url = https://github.com/OpusGameLabs/skills.git

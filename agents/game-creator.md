@@ -16,6 +16,7 @@ Load these skills before starting:
 - **`game-audio`** — Procedural audio: Strudel.cc BGM + Web Audio SFX
 - **`game-qa`** — Playwright test generation
 - **`game-architecture`** — Reference architecture patterns for validation
+- **`playdotfun`** — Play.fun (OpenGameProtocol) monetization integration
 
 ## Input
 
@@ -95,6 +96,7 @@ Create all pipeline tasks upfront using `TaskCreate`:
 4. Add audio (BGM + SFX)
 5. Add QA tests
 6. Run architecture review
+7. Monetize with Play.fun (register game, add SDK)
 
 This provides full visibility into pipeline progress.
 
@@ -345,6 +347,41 @@ Launch a `Task` subagent:
 
 Mark task 6 as `completed`.
 
+### Step 6: Monetize with Play.fun
+
+Mark task 7 as `in_progress`.
+
+Launch a `Task` subagent:
+
+> You are implementing Step 6 (Monetize) of the game creation pipeline.
+>
+> **Project path**: `<project-dir>`
+> **Engine**: `<2d|3d>`
+> **Skill to load**: `playdotfun`
+>
+> Integrate the Play.fun (OpenGameProtocol) browser SDK:
+>
+> 1. Add `<script src="https://sdk.play.fun/latest"></script>` to `index.html` before `</head>`
+> 2. Read `src/core/EventBus.js` to find the score and game over event names
+> 3. Create `src/playfun.js` that:
+>    - Initializes the SDK with `{ gameId: GAME_ID, ui: { usePointsWidget: true } }`
+>    - Listens for score events and calls `sdk.addPoints(delta)`
+>    - Calls `sdk.savePoints()` on game over, every 30 seconds, and on `beforeunload`
+>    - Uses `typeof PlayFunSDK !== 'undefined' ? PlayFunSDK : OpenGameSDK` for class detection
+>    - Wraps everything in a `try/catch` so SDK failures don't break the game
+> 4. Import and call `initPlayFun()` in `src/main.js` (non-blocking, `.catch()` to swallow errors)
+> 5. Use a placeholder `GAME_ID` value of `'PLAYFUN_GAME_ID'` — the orchestrator will replace it after registration
+>
+> Do NOT run builds — the orchestrator handles verification.
+
+**After subagent returns**, run the Verification Protocol (build + runtime).
+
+**Note**: The actual game registration on Play.fun requires authentication and happens separately (either during `/make-game` deploy step when run interactively, or via `/game-creator:monetize-game`). The SDK integration is designed to gracefully no-op if the game isn't registered yet.
+
+Mark task 7 as `completed`.
+
+**Gate**: Verification Protocol must pass. If it fails after 3 attempts, log failure, skip, continue.
+
 ## Error Handling
 
 - **Build failures**: The Verification Protocol handles this — fix subagent reads compiler/bundler output, fixes code, retries. Up to 3 attempts per step.
@@ -369,6 +406,7 @@ When the pipeline completes, produce a structured report that includes task comp
 | Audio | #4 | ⚠️ Skipped | Failed after 3 retries: [error summary] |
 | QA | #5 | ✅ Pass | 15/15 tests passing |
 | Review | #6 | ✅ Done | Score: 9.2/10 |
+| Monetize | #7 | ✅ Pass | Play.fun SDK integrated |
 
 ### Verification Results
 | Step | Build | Runtime | Attempts |
@@ -378,6 +416,7 @@ When the pipeline completes, produce a structured report that includes task comp
 | Design | ✅ | ✅ | 1 |
 | Audio | ❌ | — | 3 |
 | QA | ✅ | — | 1 |
+| Monetize | ✅ | ✅ | 1 |
 
 ### Test Results
 - Total: 15
