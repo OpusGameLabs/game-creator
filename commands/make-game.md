@@ -1,23 +1,23 @@
 ---
-description: Full guided pipeline — scaffold, design, audio, test, review, and deploy a game from scratch
+description: Full guided pipeline — scaffold, design, audio, deploy, and monetize a game from scratch
 disable-model-invocation: true
 argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
 ---
 
 # Make Game (Full Pipeline)
 
-Build a complete browser game from scratch, step by step. This command walks you through the entire pipeline — from an empty folder to a deployed, live game. No game development experience needed.
+Build a complete browser game from scratch, step by step. This command walks you through the entire pipeline — from an empty folder to a deployed, monetized game. No game development experience needed.
 
 **What you'll get:**
 1. A fully scaffolded game project with clean architecture
 2. Pixel art sprites — recognizable characters, enemies, and items (optional, replaces geometric shapes)
 3. Visual polish — gradients, particles, transitions, juice
 4. Chiptune music and retro sound effects (no audio files needed)
-5. Automated tests that catch bugs when you make changes
-6. An architecture review with a quality score and improvement tips
-7. Live deployment to GitHub Pages with a public URL
-8. Monetization via Play.fun — points tracking, leaderboards, wallet connect, and a play.fun URL to share on Moltbook
-9. Future changes auto-deploy on `git push`
+5. Live deployment to GitHub Pages with a public URL
+6. Monetization via Play.fun — points tracking, leaderboards, wallet connect, and a play.fun URL to share on Moltbook
+7. Future changes auto-deploy on `git push`
+
+**Quality assurance is built into every step** — each code-modifying step runs build verification, visual review via Playwright MCP, and autofixes any issues found.
 
 ## Orchestration Model
 
@@ -26,28 +26,26 @@ Build a complete browser game from scratch, step by step. This command walks you
 1. Set up the project (template copy, npm install, dev server)
 2. Create and track pipeline tasks using `TaskCreate`/`TaskUpdate`
 3. Delegate each code-writing step to a `Task` subagent
-4. Run the Verification Protocol after each code-modifying step
+4. Run the Verification Protocol (build + visual review + autofix) after each code-modifying step
 5. Report results to the user between steps
 
 **What stays in the main thread:**
 - Step 0: Parse arguments, create todo list
 - Step 1 (infrastructure only): Copy template, npm install, playwright install, create `scripts/verify-runtime.mjs`, start dev server
-- Verification protocol runs (build + runtime checks)
-- Step 6 (deploy): Interactive auth requires user back-and-forth
+- Verification protocol runs (build + runtime + visual review + autofix)
+- Step 4 (deploy): Interactive auth requires user back-and-forth
 
 **What goes to subagents** (via `Task` tool):
 - Step 1 (game implementation): Transform template into the actual game concept
 - Step 1.5: Pixel art sprites and backgrounds
 - Step 2: Visual polish
 - Step 3: Audio integration
-- Step 4: QA test generation
-- Step 5: Architecture review
 
 Each subagent receives: step instructions, relevant skill name, project path, engine type, dev server port, and game concept description.
 
 ## Verification Protocol
 
-Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3, 4). It has two phases:
+Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). It has three phases:
 
 ### Phase 1 — Build Check
 
@@ -55,7 +53,7 @@ Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3, 4). I
 cd <project-dir> && npm run build
 ```
 
-If the build fails, the step has not passed. Proceed to retry.
+If the build fails, proceed to autofix.
 
 ### Phase 2 — Runtime Check
 
@@ -65,13 +63,31 @@ cd <project-dir> && node scripts/verify-runtime.mjs
 
 This script (created during Step 1) launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
 
-### Retry Logic
+If the runtime check fails, proceed to autofix.
 
-If either phase fails:
-1. Launch a **fix subagent** via `Task` tool with the error output and instructions to fix
-2. Re-run the Verification Protocol
+### Phase 3 — Visual Review via Playwright MCP
+
+Use the Playwright MCP to visually review the game:
+
+1. **Take a screenshot** of the game running in the browser
+2. **Assess visually**: Is the game rendering correctly? Are there visual bugs, layout issues, or broken elements?
+3. **Identify issues**: Note any visual problems that need fixing (e.g., elements off-screen, missing graphics, broken UI, wrong colors)
+
+If visual issues are found, proceed to autofix.
+
+### Autofix Logic
+
+When any phase fails or visual issues are found:
+
+1. Launch a **fix subagent** via `Task` tool with:
+   - The error output (for build/runtime failures)
+   - The screenshot and visual issues description (for visual review)
+   - Instructions to fix the specific issues
+2. Re-run the Verification Protocol (all three phases)
 3. Up to **3 total attempts** per step (1 original + 2 retries)
 4. If all 3 attempts fail, report the failure to the user and ask whether to skip or abort
+
+**Important**: Always fix issues before proceeding to the next step. The autofix loop ensures each step produces working, visually correct output.
 
 ## Instructions
 
@@ -114,12 +130,10 @@ Create all pipeline tasks upfront using `TaskCreate`:
 2. Add pixel art sprites and backgrounds (2D only; marked N/A for 3D)
 3. Add visual polish (particles, transitions, juice)
 4. Add audio (BGM + SFX)
-5. Add QA tests
-6. Run architecture review
-7. Deploy to GitHub Pages
-8. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
+5. Deploy to GitHub Pages
+6. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
 
-This gives the user full visibility into pipeline progress at all times.
+This gives the user full visibility into pipeline progress at all times. Quality assurance (build, runtime, visual review, autofix) is built into each step, not a separate task.
 
 ### Step 1: Scaffold the game
 
@@ -338,87 +352,15 @@ Launch a `Task` subagent with these instructions:
 > Your game now has music and sound effects! Click/tap once to activate audio, then you'll hear the music.
 > Note: Strudel is AGPL-3.0, so your project needs a compatible open source license.
 >
-> **Next up: automated tests.** I'll add Playwright tests that verify your game boots, scenes work, and scoring functions — like a safety net for future changes. Ready?
+> **Next up: deploy to the web.** I'll help you set up GitHub Pages so your game gets a public URL. Future changes auto-deploy when you push. Ready?
 
 Mark task 4 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
-### Step 4: Add QA tests
+### Step 4: Deploy to GitHub Pages
 
 Mark task 5 as `in_progress`.
-
-Launch a `Task` subagent with these instructions:
-
-> You are implementing Step 4 (QA Tests) of the game creation pipeline.
->
-> **Project path**: `<project-dir>`
-> **Engine**: `<2d|3d>`
-> **Dev server port**: `<port>`
-> **Skill to load**: `game-qa`
->
-> Apply the game-qa skill:
-> 1. Audit testability: check for `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` exposure
-> 2. Ensure Playwright is installed (it should be — the orchestrator already ran `npx playwright install chromium`)
-> 3. Create `playwright.config.js` with the correct dev server port
-> 4. Expose game internals on window if not already done
-> 5. Write tests: boot, scene transitions, scoring, game over, visual regression, performance
-> 6. Run `npx playwright test` and handle first-run snapshot generation
-> 7. Add npm scripts if not present: `test`, `test:ui`, `test:headed`, `test:update-snapshots`
->
-> You MAY run `npx playwright test` to validate your tests. Fix failures (prefer fixing game code over weakening tests).
-
-**After subagent returns**, run the Verification Protocol (build check only — runtime check is not needed since the subagent already ran tests).
-
-**Tell the user:**
-> Your game now has automated tests! Here's how to run them:
-> - `npm test` — headless (fast, for CI)
-> - `npm run test:headed` — watch the browser run the tests
-> - `npm run test:ui` — interactive dashboard
->
-> **Next step: architecture review.** I'll check your code structure, performance patterns, and give you a quality score with specific improvements. Ready?
-
-Mark task 5 as `completed`.
-
-**Wait for user confirmation before proceeding.**
-
-### Step 5: Review architecture
-
-Mark task 6 as `in_progress`.
-
-Launch a `Task` subagent with these instructions:
-
-> You are implementing Step 5 (Architecture Review) of the game creation pipeline.
->
-> **Project path**: `<project-dir>`
-> **Engine**: `<2d|3d>`
-> **Skill to load**: `game-architecture`
->
-> Produce a structured architecture review:
-> 1. Identify the engine, read package.json, main entry, index.html
-> 2. Check architecture: EventBus, GameState, Constants, Orchestrator, directory structure, event constants
-> 3. Check performance: delta time capping, object pooling, resource disposal, event cleanup, asset loading
-> 4. Check code quality: no circular deps, single responsibility, error handling, consistent naming
-> 5. Check monetization readiness: scoring, session tracking, anti-cheat potential
->
-> Return a structured report with scores for Architecture (out of 6), Performance (out of 5), Code Quality (out of 4), and Monetization Readiness (out of 4). Include top recommendations and what's working well.
->
-> This is a read-only review. Do NOT modify any code.
-
-**No Verification Protocol** — this step produces a report, not code changes.
-
-**Tell the user** the review results:
-> Your game passed architecture review! Here's the summary: [key scores]
->
-> **Final step: deploy to the web.** I'll help you set up GitHub Pages so your game gets a public URL. Future changes auto-deploy when you push. Ready?
-
-Mark task 6 as `completed`.
-
-**Wait for user confirmation before proceeding.**
-
-### Step 6: Deploy to GitHub Pages
-
-Mark task 7 as `in_progress`.
 
 Load the game-deploy skill. **This step stays in the main thread** because it requires interactive authentication and user back-and-forth.
 
@@ -537,13 +479,13 @@ Add a `deploy` script to `package.json` so future deploys are one command:
 >
 > **Next up: monetization.** I'll register your game on Play.fun (OpenGameProtocol), add the points SDK, and redeploy. Players earn rewards, you get a play.fun URL to share on Moltbook. Ready?
 
-Mark task 7 as `completed`.
+Mark task 5 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
-### Step 7: Monetize with Play.fun
+### Step 5: Monetize with Play.fun
 
-Mark task 8 as `in_progress`.
+Mark task 6 as `in_progress`.
 
 **This step stays in the main thread** because it requires interactive authentication.
 
@@ -677,7 +619,7 @@ Wait ~30 seconds, then verify the deployment is live.
 >
 > **Share on Moltbook**: Post your game URL to [moltbook.com](https://www.moltbook.com/) — 770K+ agents ready to play and upvote.
 
-Mark task 8 as `completed`.
+Mark task 6 as `completed`.
 
 ### Pipeline Complete!
 
@@ -688,8 +630,7 @@ Tell the user:
 > - **Pixel art sprites** — recognizable characters (if chosen) or clean geometric shapes
 > - **Visual polish** — gradients, particles, transitions, juice
 > - **Music and SFX** — chiptune background music and retro sound effects
-> - **Automated tests** — safety net for future changes
-> - **Quality review** — scored and prioritized improvements
+> - **Quality assured** — each step verified with build, runtime, and visual review
 > - **Live on the web** — deployed to GitHub Pages with a public URL
 > - **Monetized on Play.fun** — points tracking, leaderboards, and wallet connect
 >
@@ -699,5 +640,5 @@ Tell the user:
 > - Add new gameplay features: `/game-creator:add-feature [describe what you want]`
 > - Upgrade to pixel art (if using shapes): `/game-creator:add-assets`
 > - Launch a playcoin for your game (token rewards for players)
-> - Keep iterating! Run any step again: `/game-creator:design-game`, `/game-creator:add-audio`, `/game-creator:qa-game`
+> - Keep iterating! Run any step again: `/game-creator:design-game`, `/game-creator:add-audio`
 > - Redeploy after changes: `npm run deploy`

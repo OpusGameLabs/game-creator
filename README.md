@@ -29,7 +29,8 @@ cp -r game-creator/skills/* ~/.openclaw/skills/
 ## Quick Start
 
 ```bash
-# Build a complete 2D game (scaffold → design → audio → test → review → deploy → monetize)
+# Build a complete 2D game (scaffold → design → audio → deploy → monetize)
+# QA (build + visual review + autofix) runs after every step
 /game-creator:make-game 2d my-game
 
 # Or run individual steps:
@@ -40,12 +41,6 @@ cp -r game-creator/skills/* ~/.openclaw/skills/
 
 # Monetize with Play.fun (OpenGameProtocol)
 /game-creator:monetize-game
-
-# Add Playwright tests
-/game-creator:qa-game
-
-# Review architecture compliance
-/game-creator:review-game
 ```
 
 ## Architecture
@@ -111,22 +106,19 @@ export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
 
 | Command | Description |
 |---------|-------------|
-| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, test, review, deploy, monetize |
+| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, deploy, monetize (QA at every step) |
 | `/game-creator:improve-game [focus]` | Deep audit + implement highest-impact improvements |
 | `/game-creator:design-game [path]` | Audit and improve visual polish |
 | `/game-creator:add-feature [description]` | Add a feature following architecture patterns |
 | `/game-creator:add-audio [path]` | Add Strudel.cc music and sound effects |
-| `/game-creator:qa-game [path]` | Add Playwright automated tests |
 | `/game-creator:monetize-game [path]` | Register on Play.fun, add SDK, get monetized URL |
-| `/game-creator:review-game [path]` | Review architecture, performance, code quality |
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
 | `game-reviewer` | Reviews codebases for architecture compliance, performance, and monetization readiness |
-| `game-creator` | Autonomous end-to-end game creation pipeline with build/test gates |
-| `game-qa-runner` | Runs tests, diagnoses failures, fixes game code, and re-runs until green |
+| `game-creator` | Autonomous end-to-end game creation pipeline with build/visual gates |
 | `game-deploy` | Deploys games to GitHub Pages, Vercel, or itch.io with pre/post validation |
 
 ## Example: Flappy Bird
@@ -184,16 +176,18 @@ stack(
 
 Strudel is AGPL-3.0 licensed. Projects using `@strudel/web` must be open source under a compatible license.
 
-## Testing
+## Quality Assurance
 
-Automated QA uses Playwright for canvas game testing:
+QA is built into every step of the pipeline, not a separate step:
 
-- **Gameplay verification**: Boot flow, scene transitions, input handling, scoring, game over, restart
-- **Visual regression**: Screenshot comparison per scene (with tolerance for animated elements)
-- **Performance**: Load time budgets, FPS measurement, canvas dimensions
-- **Accessibility**: axe-core HTML audits
+1. **Build check**: `npm run build` catches compilation errors
+2. **Runtime check**: Headless Chromium checks for WebGL errors, exceptions, and console errors
+3. **Visual review**: Playwright MCP takes screenshots and identifies visual issues
+4. **Autofix**: Any issues found trigger a fix subagent that automatically repairs the code
 
-For interactive visual QA, use [Playwright MCP](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md):
+This approach catches problems immediately when they're introduced, not at the end of the pipeline.
+
+For interactive visual QA during development, install [Playwright MCP](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md):
 
 ```bash
 claude mcp add playwright npx '@playwright/mcp@latest'

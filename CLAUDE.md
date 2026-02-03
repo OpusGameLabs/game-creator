@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, testing, monetizing, and shipping 2D (Phaser 3) and 3D (Three.js) browser games. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
+This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, deploying, and monetizing 2D (Phaser 3) and 3D (Three.js) browser games. QA (build, runtime, visual review, autofix) runs at every step. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
 
 ## Repository Structure
 
@@ -24,21 +24,18 @@ templates/
   phaser-2d/               # Runnable 2D starter project (Phaser 3)
   threejs-3d/              # Runnable 3D starter project (Three.js)
 commands/
-  make-game.md             # Full pipeline: scaffold → assets → design → audio → QA → review → deploy → monetize
+  make-game.md             # Full pipeline: scaffold → assets → design → audio → deploy → monetize (QA at every step)
   improve-game.md          # Holistic audit + implement highest-impact improvements
   design-game.md           # Visual design audit + improvements
   add-feature.md           # Add feature following patterns
   add-assets.md            # Replace shapes with pixel art sprites
   add-audio.md             # Add Strudel.cc audio
-  qa-game.md               # Add Playwright tests
   monetize-game.md         # Play.fun monetization (register, SDK, redeploy)
-  review-game.md           # Architecture review
 submodules/
   playdotfun/              # Git submodule: github.com/OpusGameLabs/skills
 agents/
   game-reviewer.md         # Code review agent
-  game-creator.md          # Autonomous game creation pipeline
-  game-qa-runner.md        # Test execution and failure fixing
+  game-creator.md          # Autonomous game creation pipeline with build/visual gates
   game-deploy.md           # Deployment automation
 examples/
   flappy-bird/             # Complete example game (see below)
@@ -140,7 +137,7 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 
 ## Play.fun (OpenGameProtocol) Integration
 
-The `/monetize-game` command (and Step 7 of `/make-game`) registers games on [Play.fun](https://play.fun) and integrates the browser SDK.
+The `/monetize-game` command (and Step 5 of `/make-game`) registers games on [Play.fun](https://play.fun) and integrates the browser SDK.
 
 **Flow**: Auth → Register game → Add SDK to `index.html` + create `src/playfun.js` → Rebuild → Redeploy → Share play.fun URL on Moltbook
 

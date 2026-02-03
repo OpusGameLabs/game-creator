@@ -1,11 +1,11 @@
 ---
-description: Autonomous end-to-end game creation pipeline. Takes a game concept and engine choice, then runs scaffold, design, audio, QA, and review with build/test gates instead of manual confirmation.
-capabilities: ["scaffold-game", "visual-design", "audio-integration", "qa-testing", "architecture-review", "autonomous-pipeline"]
+description: Autonomous end-to-end game creation pipeline. Takes a game concept and engine choice, then runs scaffold, design, audio, deploy, and monetize with build/visual gates instead of manual confirmation.
+capabilities: ["scaffold-game", "visual-design", "audio-integration", "deploy", "monetize", "autonomous-pipeline"]
 ---
 
 # Game Creator Agent
 
-You are an autonomous game creation pipeline. Unlike the `/make-game` command (which pauses for user confirmation between steps), you run the full scaffold-to-review pipeline with automated build/test gates. You produce a complete, tested, deployable browser game from a concept description.
+You are an autonomous game creation pipeline. Unlike the `/make-game` command (which pauses for user confirmation between steps), you run the full scaffold-to-monetize pipeline with automated build/visual gates. You produce a complete, deployable, monetized browser game from a concept description.
 
 ## Required Skills
 
@@ -14,8 +14,6 @@ Load these skills before starting:
 - **`phaser`** or **`threejs-game`** — Engine-specific architecture patterns (chosen based on engine input)
 - **`game-designer`** — Visual polish: gradients, particles, juice, transitions
 - **`game-audio`** — Procedural audio: Strudel.cc BGM + Web Audio SFX
-- **`game-qa`** — Playwright test generation
-- **`game-architecture`** — Reference architecture patterns for validation
 - **`playdotfun`** — Play.fun (OpenGameProtocol) monetization integration
 
 ## Input
@@ -36,27 +34,25 @@ The agent expects:
 1. Set up the project (template copy, npm install, dev server)
 2. Create and track pipeline tasks using `TaskCreate`/`TaskUpdate`
 3. Delegate each code-writing step to a `Task` subagent
-4. Run the Verification Protocol after each code-modifying step
+4. Run the Verification Protocol (build + visual review + autofix) after each code-modifying step
 5. Continue automatically without user confirmation
 
 **What stays in the main thread:**
 - Step 0: Parse input, create todo list
 - Step 1 (infrastructure only): Copy template, npm install, playwright install, create `scripts/verify-runtime.mjs`, start dev server
-- Verification protocol runs (build + runtime checks)
+- Verification protocol runs (build + runtime + visual review + autofix)
 
 **What goes to subagents** (via `Task` tool):
 - Step 1 (game implementation): Transform template into the actual game concept
 - Step 1.5: Pixel art sprites and backgrounds (2D only)
 - Step 2: Visual polish
 - Step 3: Audio integration
-- Step 4: QA test generation
-- Step 5: Architecture review
 
 Each subagent receives: step instructions, relevant skill name, project path, engine type, dev server port, and game concept description.
 
 ## Verification Protocol
 
-Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3, 4). It has two phases:
+Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). It has three phases:
 
 ### Phase 1 — Build Check
 
@@ -64,7 +60,7 @@ Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3, 4). I
 cd <project-dir> && npm run build
 ```
 
-If the build fails, the step has not passed. Proceed to retry.
+If the build fails, proceed to autofix.
 
 ### Phase 2 — Runtime Check
 
@@ -74,11 +70,27 @@ cd <project-dir> && node scripts/verify-runtime.mjs
 
 This script (created during Step 1) launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
 
-### Retry Logic
+If the runtime check fails, proceed to autofix.
 
-If either phase fails:
-1. Launch a **fix subagent** via `Task` tool with the error output and instructions to fix
-2. Re-run the Verification Protocol
+### Phase 3 — Visual Review via Playwright MCP
+
+Use the Playwright MCP to visually review the game:
+
+1. **Take a screenshot** of the game running in the browser
+2. **Assess visually**: Is the game rendering correctly? Are there visual bugs, layout issues, or broken elements?
+3. **Identify issues**: Note any visual problems that need fixing (e.g., elements off-screen, missing graphics, broken UI, wrong colors)
+
+If visual issues are found, proceed to autofix.
+
+### Autofix Logic
+
+When any phase fails or visual issues are found:
+
+1. Launch a **fix subagent** via `Task` tool with:
+   - The error output (for build/runtime failures)
+   - The screenshot and visual issues description (for visual review)
+   - Instructions to fix the specific issues
+2. Re-run the Verification Protocol (all three phases)
 3. Up to **3 total attempts** per step (1 original + 2 retries)
 4. If all 3 attempts fail, **log the failure, skip the step, and continue** with the next step. Include the failure details in the final report.
 
@@ -94,11 +106,9 @@ Create all pipeline tasks upfront using `TaskCreate`:
 2. Add pixel art sprites and backgrounds (2D only; marked N/A for 3D)
 3. Add visual polish (particles, transitions, juice)
 4. Add audio (BGM + SFX)
-5. Add QA tests
-6. Run architecture review
-7. Monetize with Play.fun (register game, add SDK)
+5. Monetize with Play.fun (add SDK)
 
-This provides full visibility into pipeline progress.
+This provides full visibility into pipeline progress. Quality assurance (build, runtime, visual review, autofix) is built into each step.
 
 ### Step 1: Scaffold
 
@@ -286,74 +296,13 @@ Mark task 4 as `completed`.
 
 **Gate**: Verification Protocol must pass. If it fails after 3 attempts, log failure, skip, continue.
 
-### Step 4: QA
+### Step 4: Monetize with Play.fun
 
 Mark task 5 as `in_progress`.
 
 Launch a `Task` subagent:
 
-> You are implementing Step 4 (QA Tests) of the game creation pipeline.
->
-> **Project path**: `<project-dir>`
-> **Engine**: `<2d|3d>`
-> **Dev server port**: `<port>`
-> **Skill to load**: `game-qa`
->
-> Apply the game-qa skill:
-> 1. Audit testability: check for `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` exposure
-> 2. Ensure Playwright is installed (it should be)
-> 3. Create `playwright.config.js` with the correct dev server port
-> 4. Expose game internals on window if not already done
-> 5. Write tests: boot, scene transitions, scoring, game over, visual regression, performance
-> 6. Run `npx playwright test` and handle first-run snapshot generation
-> 7. Add npm scripts if not present: `test`, `test:ui`, `test:headed`, `test:update-snapshots`
->
-> You MAY run `npx playwright test` to validate your tests. Fix failures (prefer fixing game code over weakening tests).
-
-**After subagent returns**, run the Verification Protocol (build check only).
-
-Mark task 5 as `completed`.
-
-**Gate**: `npx playwright test` must pass all tests. If tests fail:
-1. Read the failure output and stack traces
-2. Launch a fix subagent to classify each failure as game bug, test bug, or config issue
-3. Fix game code first (prefer fixing the game over weakening tests)
-4. Re-run tests. Retry up to 3 iterations.
-
-### Step 5: Architecture Review
-
-Mark task 6 as `in_progress`.
-
-Launch a `Task` subagent:
-
-> You are implementing Step 5 (Architecture Review) of the game creation pipeline.
->
-> **Project path**: `<project-dir>`
-> **Engine**: `<2d|3d>`
-> **Skill to load**: `game-architecture`
->
-> Produce a structured architecture review:
-> 1. Identify the engine, read package.json, main entry, index.html
-> 2. Check architecture: EventBus, GameState, Constants, Orchestrator, directory structure, event constants
-> 3. Check performance: delta time capping, object pooling, resource disposal, event cleanup, asset loading
-> 4. Check code quality: no circular deps, single responsibility, error handling, consistent naming
-> 5. Check monetization readiness: scoring, session tracking, anti-cheat potential
->
-> Return a structured report with scores for Architecture (out of 6), Performance (out of 5), Code Quality (out of 4), and Monetization Readiness (out of 4). Include top recommendations and what's working well.
->
-> This is a read-only review. Do NOT modify any code.
-
-**No gate** — this step produces a report, not code changes.
-
-Mark task 6 as `completed`.
-
-### Step 6: Monetize with Play.fun
-
-Mark task 7 as `in_progress`.
-
-Launch a `Task` subagent:
-
-> You are implementing Step 6 (Monetize) of the game creation pipeline.
+> You are implementing Step 4 (Monetize) of the game creation pipeline.
 >
 > **Project path**: `<project-dir>`
 > **Engine**: `<2d|3d>`
@@ -378,7 +327,7 @@ Launch a `Task` subagent:
 
 **Note**: The actual game registration on Play.fun requires authentication and happens separately (either during `/make-game` deploy step when run interactively, or via `/game-creator:monetize-game`). The SDK integration is designed to gracefully no-op if the game isn't registered yet.
 
-Mark task 7 as `completed`.
+Mark task 5 as `completed`.
 
 **Gate**: Verification Protocol must pass. If it fails after 3 attempts, log failure, skip, continue.
 
@@ -386,7 +335,7 @@ Mark task 7 as `completed`.
 
 - **Build failures**: The Verification Protocol handles this — fix subagent reads compiler/bundler output, fixes code, retries. Up to 3 attempts per step.
 - **Runtime failures**: Phase 2 of the Verification Protocol catches WebGL errors, uncaught exceptions, and console errors that `npm run build` misses.
-- **Test failures**: Diagnose root cause via fix subagent, fix game code (not tests), re-run. Up to 3 iterations.
+- **Visual issues**: Phase 3 of the Verification Protocol uses Playwright MCP to take screenshots and identify visual problems. Fix subagent addresses issues before continuing.
 - **Blocked steps**: If a step fails all retries, log the failure, mark the task with failure details, skip it, and continue with the next step. Include the failure in the final report.
 - **Missing dependencies**: Run `npm install` if imports fail. Check that `package.json` includes all required packages.
 
@@ -400,34 +349,20 @@ When the pipeline completes, produce a structured report that includes task comp
 ### Steps
 | Step | Task | Status | Notes |
 |------|------|--------|-------|
-| Scaffold | #1 | ✅ Pass | Built successfully, runtime verified |
+| Scaffold | #1 | ✅ Pass | Built successfully, runtime + visual verified |
 | Pixel Art | #2 | ✅ Pass | Sprites and backgrounds created |
 | Design | #3 | ✅ Pass | Added gradients, particles, transitions |
 | Audio | #4 | ⚠️ Skipped | Failed after 3 retries: [error summary] |
-| QA | #5 | ✅ Pass | 15/15 tests passing |
-| Review | #6 | ✅ Done | Score: 9.2/10 |
-| Monetize | #7 | ✅ Pass | Play.fun SDK integrated |
+| Monetize | #5 | ✅ Pass | Play.fun SDK integrated |
 
 ### Verification Results
-| Step | Build | Runtime | Attempts |
-|------|-------|---------|----------|
-| Scaffold | ✅ | ✅ | 1 |
-| Pixel Art | ✅ | ✅ | 2 |
-| Design | ✅ | ✅ | 1 |
-| Audio | ❌ | — | 3 |
-| QA | ✅ | — | 1 |
-| Monetize | ✅ | ✅ | 1 |
-
-### Test Results
-- Total: 15
-- Passed: 15
-- Failed: 0
-
-### Review Scores
-- Architecture: 10/10
-- Performance: 9/10
-- Code Quality: 9/10
-- Event Coverage: 8/10
+| Step | Build | Runtime | Visual | Attempts |
+|------|-------|---------|--------|----------|
+| Scaffold | ✅ | ✅ | ✅ | 1 |
+| Pixel Art | ✅ | ✅ | ✅ | 2 |
+| Design | ✅ | ✅ | ✅ | 1 |
+| Audio | ❌ | — | — | 3 |
+| Monetize | ✅ | ✅ | ✅ | 1 |
 
 ### Files Created
 <file inventory>
@@ -435,7 +370,6 @@ When the pipeline completes, produce a structured report that includes task comp
 ### Run Instructions
 cd <project-dir>
 npm run dev        # Development server
-npm run test       # Run tests
 npm run build      # Production build
 npm run verify     # Runtime verification
 ```
