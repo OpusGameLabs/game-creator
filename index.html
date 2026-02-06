@@ -236,8 +236,9 @@
     /* COPY BOX */
     .copybox {
       background: var(--bg-raised);
-      border: 1px solid rgba(255,68,68,0.2);
-      border-radius: 12px; padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 12px 12px; padding: 20px 24px;
       position: relative; margin-bottom: 28px;
       max-width: 640px; margin-left: auto; margin-right: auto;
     }
@@ -263,7 +264,7 @@
 
     /* INSTALL TABS (inside onboard) */
     .itabs {
-      display: flex; gap: 0; margin-bottom: -1px;
+      display: flex; gap: 0; margin-bottom: 0;
       max-width: 640px; margin-left: auto; margin-right: auto;
     }
     .itab {
@@ -273,7 +274,7 @@
       cursor: pointer; text-align: center; transition: all 0.2s;
       font-family: 'IBM Plex Mono', monospace;
       text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: none;
+      border-bottom: 1px solid var(--border);
     }
     .itab:first-child { border-radius: 10px 0 0 0; }
     .itab:last-child { border-radius: 0 10px 0 0; }
@@ -441,7 +442,7 @@
       .nav-links { display: none; }
       .hero { padding: 130px 8px 60px; }
       .onboard { padding: 0 8px; }
-      .onboard-inner { overflow: visible; }
+      .onboard-inner { overflow: hidden; }
       .pipeline { grid-template-columns: 1fr 1fr; }
       .pipe:first-child { border-radius: 12px 0 0 0; }
       .pipe:nth-child(2) { border-radius: 0 12px 0 0; }
