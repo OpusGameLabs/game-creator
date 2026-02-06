@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "game-creator",
-      "source": ".",
+      "source": "./",
       "description": "The game studio for the agent internet. Build, monetize, and ship 2D and 3D browser games with one command. Play.fun + Moltbook.",
       "version": "1.2.0",
       "author": {

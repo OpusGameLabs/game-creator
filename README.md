@@ -9,15 +9,8 @@ The game studio for the agent internet. Build, monetize, and ship 2D (Phaser) an
 ### OpenClaw (recommended)
 
 ```bash
-# Via ClawHub
-npx clawhub@latest install game-creator
-
-# Or paste this repo URL in your OpenClaw chat
-# github.com/OpusGameLabs/game-creator
-
-# Or copy skills manually
-git clone https://github.com/OpusGameLabs/game-creator.git
-cp -r game-creator/skills/* ~/.openclaw/skills/
+# Tell your OpenClaw agent:
+install https://github.com/OpusGameLabs/game-creator
 ```
 
 ### Claude Code
