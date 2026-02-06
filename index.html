@@ -248,6 +248,8 @@
     .copybox-text {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 14px; color: var(--text); line-height: 1.6;
+      padding-right: 70px;
+      word-break: break-all;
     }
     .copybox-btn {
       position: absolute; top: 16px; right: 16px;
@@ -437,7 +439,9 @@
     @media (max-width: 768px) {
       nav { padding: 12px 16px; }
       .nav-links { display: none; }
-      .hero { padding: 130px 16px 60px; }
+      .hero { padding: 130px 8px 60px; }
+      .onboard { padding: 0 8px; }
+      .onboard-inner { overflow: visible; }
       .pipeline { grid-template-columns: 1fr 1fr; }
       .pipe:first-child { border-radius: 12px 0 0 0; }
       .pipe:nth-child(2) { border-radius: 0 12px 0 0; }
@@ -447,9 +451,22 @@
       .steps { grid-template-columns: 1fr; }
       .step:not(:last-child)::after { display: none; }
       .onboard-hero { padding: 40px 16px 28px; }
-      .panel { padding: 0 16px 32px; }
+      .panel { padding: 0 12px 32px; }
       .agent-code { font-size: 12px; padding: 16px 20px; }
+      .itabs { max-width: 100%; }
       .itab { padding: 8px 10px; font-size: 11px; }
+      .ipanel { max-width: 100%; }
+      .copybox {
+        max-width: 100%; padding: 16px 14px;
+      }
+      .copybox-text {
+        font-size: 12px; padding-right: 0; padding-bottom: 40px;
+      }
+      .copybox-btn {
+        position: absolute; bottom: 12px; right: 12px; top: auto;
+      }
+      .cta-code { font-size: 12px; padding: 12px 16px; word-break: break-all; }
+      .bottom-actions { flex-direction: column; align-items: center; }
     }
   </style>
 </head>
@@ -506,8 +523,8 @@
           <div class="ipanel active" id="ipanel-h-openclaw">
             <div class="copybox">
               <div class="copybox-label">Send this to your agent</div>
-              <div class="copybox-text">npx clawhub@latest install game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, 'npx clawhub@latest install game-creator')">Copy</button>
+              <div class="copybox-text">install https://github.com/OpusGameLabs/game-creator</div>
+              <button class="copybox-btn" onclick="copyText(this, 'install https://github.com/OpusGameLabs/game-creator')">Copy</button>
             </div>
           </div>
 
@@ -525,7 +542,7 @@
             <div class="step">
               <div class="step-num">1</div>
               <h4>Send this to your agent</h4>
-              <p>Copy the command above and paste it into your OpenClaw or Claude Code chat.</p>
+              <p>Copy the message above and paste it into your OpenClaw or Claude Code chat.</p>
             </div>
             <div class="step">
               <div class="step-num">2</div>
@@ -559,9 +576,9 @@
           <!-- OpenClaw -->
           <div class="ipanel active" id="ipanel-a-openclaw">
             <div class="copybox">
-              <div class="copybox-label">Run this command</div>
-              <div class="copybox-text">npx clawhub@latest install game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, 'npx clawhub@latest install game-creator')">Copy</button>
+              <div class="copybox-label">Tell your agent</div>
+              <div class="copybox-text">install https://github.com/OpusGameLabs/game-creator</div>
+              <button class="copybox-btn" onclick="copyText(this, 'install https://github.com/OpusGameLabs/game-creator')">Copy</button>
             </div>
           </div>
 
@@ -578,7 +595,7 @@
           <div class="steps">
             <div class="step">
               <div class="step-num">1</div>
-              <h4>Run the command above</h4>
+              <h4>Tell your agent the message above</h4>
               <p>Installs 9 skills, 8 commands, and 4 autonomous agents into your environment.</p>
             </div>
             <div class="step">
@@ -784,7 +801,7 @@
   <div class="cta">
     <h2>Give your agent a game studio</h2>
     <p>One install. One command. Ship monetized games to the agent internet.</p>
-    <div class="cta-code">npx clawhub@latest install game-creator</div>
+    <div class="cta-code">install https://github.com/OpusGameLabs/game-creator</div>
     <br/><br/>
     <div class="hero-actions">
       <a class="btn btn-primary" href="#install">Get started</a>
