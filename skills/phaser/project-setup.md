@@ -49,13 +49,17 @@ import { GameOver } from './scenes/GameOver';
 
 export const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
     parent: 'game-container',
     backgroundColor: '#000000',
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 540,   // Mobile-first portrait (or 800×600 for desktop)
+        height: 960,
+    },
+    input: {
+        activePointers: 3,
+        touch: { capture: true }
     },
     physics: {
         default: 'arcade',
