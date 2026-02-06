@@ -163,10 +163,12 @@ this.player.update({ left, right, jump });
 scale: {
   mode: Phaser.Scale.FIT,
   autoCenter: Phaser.Scale.CENTER_BOTH,
-  width: 800,
-  height: 600,
+  width: 540,   // Mobile-first portrait
+  height: 960,
 },
 ```
+
+**⚠️ Important**: Don't combine CSS flexbox centering (`display: flex; justify-content: center`) with Phaser's `autoCenter`. They conflict and cause offset issues. See [mobile-scaling.md](mobile-scaling.md) for full guidance on dimensions, letterboxing, and common pitfalls.
 
 ## Anti-Patterns (Avoid These)
 
@@ -193,6 +195,7 @@ scale: {
 |------|-------|
 | [conventions.md](conventions.md) | Mandatory game-creator architecture conventions |
 | [project-setup.md](project-setup.md) | Scaffolding, Vite, TypeScript config |
+| [mobile-scaling.md](mobile-scaling.md) | Mobile-first dimensions, scaling modes, letterboxing, CSS pitfalls |
 | [scenes-and-lifecycle.md](scenes-and-lifecycle.md) | Scene system deep dive |
 | [game-objects.md](game-objects.md) | Custom objects, groups, containers |
 | [physics-and-movement.md](physics-and-movement.md) | Physics engines, movement patterns |
