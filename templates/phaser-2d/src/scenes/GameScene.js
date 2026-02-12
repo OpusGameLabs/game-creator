@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, PLAYER, COLORS } from '../core/Constants.js';
+import { GAME, PLAYER, COLORS, PX, TRANSITION } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 import { Player } from '../entities/Player.js';
@@ -18,8 +18,13 @@ export class GameScene extends Phaser.Scene {
     this.isMobile = this.sys.game.device.os.android ||
       this.sys.game.device.os.iOS || this.sys.game.device.os.iPad;
 
-    // Ground
-    const ground = this.add.rectangle(GAME.WIDTH / 2, GAME.HEIGHT - 15, GAME.WIDTH, 30, COLORS.GROUND);
+    // Ground (positioned relative to game dimensions)
+    const groundH = 30 * PX;
+    const ground = this.add.rectangle(
+      GAME.WIDTH / 2, GAME.HEIGHT - groundH / 2,
+      GAME.WIDTH, groundH,
+      COLORS.GROUND
+    );
     this.physics.add.existing(ground, true);
 
     // Player
@@ -46,10 +51,10 @@ export class GameScene extends Phaser.Scene {
     this.touchRight = false;
     this.touchJump = false;
 
-    // Tap-zone input: left half = left, right half = right, double-tap = jump
+    // Tap-zone input: left half = left, right half = right, top 40% = jump
     if (this.isMobile) {
       this.input.on('pointerdown', (pointer) => {
-        if (pointer.x < this.scale.width / 2) {
+        if (pointer.x < GAME.WIDTH / 2) {
           this.touchLeft = true;
         } else {
           this.touchRight = true;
@@ -59,9 +64,8 @@ export class GameScene extends Phaser.Scene {
         this.touchLeft = false;
         this.touchRight = false;
       });
-      // Swipe up or two-finger tap for jump
       this.input.on('pointerdown', (pointer) => {
-        if (pointer.y < this.scale.height * 0.4) {
+        if (pointer.y < GAME.HEIGHT * 0.4) {
           this.touchJump = true;
         }
       });
@@ -71,6 +75,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     gameState.started = true;
+
+    // Fade in from menu transition
+    this.cameras.main.fadeIn(TRANSITION.FADE_DURATION, 0, 0, 0);
   }
 
   update() {

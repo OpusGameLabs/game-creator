@@ -3,7 +3,11 @@ export const GAME = {
   NEAR: 0.1,
   FAR: 1000,
   MAX_DELTA: 0.05,
+  MAX_DPR: 2,
 };
+
+export const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (navigator.maxTouchPoints > 1);
 
 export const PLAYER = {
   SIZE: 1,

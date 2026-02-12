@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, TRANSITION } from '../core/Constants.js';
+import { GAME, COLORS, UI, TRANSITION } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 
@@ -9,13 +9,18 @@ export class UIScene extends Phaser.Scene {
   }
 
   create() {
-    this.scoreText = this.add.text(20, 20, 'Score: 0', {
-      fontSize: '24px',
-      fontFamily: 'monospace',
+    const scoreSize = Math.round(GAME.HEIGHT * UI.SCORE_SIZE_RATIO);
+    const padding = GAME.WIDTH * 0.03;
+
+    this.scoreText = this.add.text(padding, padding, 'Score: 0', {
+      fontSize: scoreSize + 'px',
+      fontFamily: UI.FONT,
       color: COLORS.UI_TEXT,
+      fontStyle: 'bold',
       stroke: COLORS.UI_SHADOW,
-      strokeThickness: 3,
+      strokeThickness: UI.SCORE_STROKE,
     });
+
 
     this.onScoreChanged = ({ score }) => {
       this.scoreText.setText(`Score: ${score}`);

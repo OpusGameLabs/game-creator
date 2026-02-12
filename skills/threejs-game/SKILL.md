@@ -93,6 +93,12 @@ src/
 └── main.ts              # Entry point - creates Game instance
 ```
 
+## Core Principles
+
+1. **Core loop first** — Implement one camera, one scene, one gameplay loop. Add player input and a terminal condition (win/lose) **before** adding visual polish. Keep initial scope small: 1 mechanic, 1 fail condition, 1 scoring system.
+2. **Gameplay clarity > visual complexity** — Treat 3D as a style choice, not a complexity mandate. A readable game with simple materials beats a visually complex but confusing one.
+3. **Restart-safe** — Gameplay must be fully restart-safe. `GameState.reset()` must restore a clean slate. Dispose geometries/materials/textures on cleanup. No stale references or leaked listeners across restarts.
+
 ## Core Patterns (Non-Negotiable)
 
 ### 1. EventBus Singleton
@@ -323,8 +329,12 @@ export default Game;
 ## Performance Rules
 
 - **Cap delta time**: `Math.min(clock.getDelta(), 0.1)` to prevent death spirals
-- **Object pooling**: Reuse `Vector3`, `Box3`, temp objects in hot loops to minimize GC
-- **Disable shadows** unless specifically needed and performant
+- **Object pooling**: Reuse `Vector3`, `Box3`, temp objects in hot loops to minimize GC. Avoid per-frame allocations — preallocate and reuse.
+- **Disable shadows on first pass** — Only enable shadow maps when specifically needed and tested on mobile. Dynamic shadows are the single most expensive rendering feature.
+- **Keep draw calls low** — Fewer unique materials and geometries = fewer draw calls. Merge static geometry where possible. Use instanced meshes for repeated objects.
+- **Prefer simple materials** — Use `MeshBasicMaterial` or `MeshStandardMaterial`. Avoid `MeshPhysicalMaterial`, custom shaders, or complex material setups unless specifically needed.
+- **No postprocessing by default** — Skip bloom, SSAO, motion blur, and other postprocessing passes on first implementation. These tank mobile performance. Add only after gameplay is solid and perf budget allows.
+- **Keep geometry/material count small** — A game with 10 unique materials renders faster than one with 100. Reuse materials across objects with the same appearance.
 - **Use `powerPreference: 'high-performance'`** on the renderer
 - **Dispose properly**: Call `.dispose()` on geometries, materials, textures when removing objects
 - **Frustum culling**: Let Three.js handle it (enabled by default) but set bounding spheres on custom geometry
@@ -470,3 +480,21 @@ class VirtualJoystick {
 4. Add state to `GameState.ts` if needed
 5. Wire it up in `Game.ts` orchestrator
 6. Communicate with other systems ONLY through EventBus
+
+## Pre-Ship Validation Checklist
+
+Before considering a game complete, verify:
+
+- [ ] **Core loop works** — Player can start, play, lose/win, and see the result
+- [ ] **Restart works cleanly** — `GameState.reset()` restores a clean slate, all Three.js resources disposed
+- [ ] **Touch + keyboard input** — Game works on mobile (gyro/joystick/tap) and desktop (keyboard/mouse)
+- [ ] **Responsive canvas** — Renderer resizes on window resize, camera aspect updated
+- [ ] **All values in Constants** — Zero hardcoded magic numbers in game logic
+- [ ] **EventBus only** — No direct cross-module imports for communication
+- [ ] **Resource cleanup** — Geometries, materials, textures disposed when removed from scene
+- [ ] **No postprocessing** — Unless explicitly needed and tested on mobile
+- [ ] **Shadows disabled** — Unless explicitly needed and budget allows
+- [ ] **Delta-capped movement** — `Math.min(clock.getDelta(), 0.1)` on every frame
+- [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
+- [ ] **Build passes** — `npm run build` succeeds with no errors
+- [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures

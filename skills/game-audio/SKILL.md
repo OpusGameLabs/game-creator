@@ -624,6 +624,38 @@ Game audio should never overpower gameplay. BGM gains are lower than you think:
 - Heavy `.room()` for space
 - Tempo: 70-100 cpm
 
+## Mute State Management
+
+Every game with audio MUST support a mute toggle. Store `isMuted` in GameState and respect it everywhere:
+
+```js
+// AudioManager — check mute before playing BGM
+playMusic(patternFn) {
+  if (gameState.game.isMuted || !this.initialized) return;
+  this.stopMusic();
+  setTimeout(() => {
+    try { this.currentMusic = patternFn(); } catch (e) { /* noop */ }
+  }, 100);
+}
+
+// SFX — check mute before playing
+export function scoreSfx() {
+  if (gameState.game.isMuted) return;
+  playNotes([659.25, 987.77], 'square', 0.12, 0.07, 0.3, 5000);
+}
+
+// AudioBridge — handle mute toggle event
+eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
+  gameState.game.isMuted = !gameState.game.isMuted;
+  if (gameState.game.isMuted) audioManager.stopMusic();
+});
+```
+
+Wire the toggle to:
+- A speaker icon button in the UI (visible on all scenes)
+- The **M** key on keyboard
+- Persist preference in `localStorage` if available
+
 ## Integration Checklist
 
 1. `npm install @strudel/web`
@@ -634,7 +666,8 @@ Game audio should never overpower gameplay. BGM gains are lower than you think:
 6. Wire `initAudioBridge()` in `main.js`
 7. Emit `AUDIO_INIT` on first user click (browser autoplay policy)
 8. Emit `MUSIC_GAMEPLAY`, `MUSIC_MENU`, `MUSIC_GAMEOVER`, `MUSIC_STOP` at scene transitions
-9. Test: BGM loops seamlessly, SFX fire once and stop, nothing clips
+9. **Add mute toggle** — `AUDIO_TOGGLE_MUTE` event, UI button, M key shortcut
+10. Test: BGM loops seamlessly, SFX fire once and stop, mute silences everything, nothing clips
 
 ## Important Notes
 

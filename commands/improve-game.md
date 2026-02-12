@@ -40,14 +40,15 @@ Rate each area on a 1–5 scale (1 = broken/missing, 3 = functional but basic, 5
 | **Gameplay feel** | | Is the core loop fun? Are controls responsive? Does difficulty ramp? |
 | **Visual polish** | | Backgrounds, colors, particles, animations, screen effects |
 | **Menus & UI** | | Title screen, HUD, game over, transitions, buttons |
-| **Audio** | | BGM for each state, SFX for each action, volume balance |
+| **Audio** | | BGM for each state, SFX for each action, volume balance, mute toggle |
 | **Code architecture** | | EventBus, GameState, Constants, no circular deps |
+| **Restart safety** | | Does GameState.reset() fully clean up? 3 restarts identical? No stale listeners/timers? |
 | **Performance** | | Delta capping, object pooling, disposal, no leaks |
 | **Player experience** | | Onboarding, feedback, difficulty curve, replayability |
 | **Mobile support** | | Touch input, responsive layout, gyro/joystick, 44px touch targets |
 | **Test coverage** | | Boot, gameplay, scoring, restart, visual, perf tests |
 
-**Overall score: X / 45**
+**Overall score: X / 50**
 
 ### Step 3: Improvement plan
 
@@ -98,7 +99,7 @@ Tell the user what changed:
 
 > **Improvement report**
 >
-> **Score: X/40 → Y/40** (+Z points)
+> **Score: X/50 → Y/50** (+Z points)
 >
 > **Implemented:**
 > 1. [Title] — [one-sentence summary of what changed]

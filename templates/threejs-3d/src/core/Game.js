@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GAME, CAMERA, COLORS } from './Constants.js';
+import { GAME, CAMERA, COLORS, IS_MOBILE } from './Constants.js';
 import { eventBus, Events } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
@@ -12,10 +12,10 @@ export class Game {
   constructor() {
     this.clock = new THREE.Clock();
 
-    // Renderer
+    // Renderer (DPR capped for mobile GPU performance)
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, GAME.MAX_DPR));
     this.renderer.setClearColor(COLORS.SKY);
     document.body.prepend(this.renderer.domElement);
 
@@ -39,6 +39,12 @@ export class Game {
     this.menu = new Menu();
     this.player = null;
 
+    // Mobile-aware hint text
+    const hint = document.getElementById('input-hint');
+    if (hint && IS_MOBILE) {
+      hint.textContent = 'Use the joystick to move';
+    }
+
     // Events
     eventBus.on(Events.GAME_START, () => this.startGame());
     eventBus.on(Events.GAME_RESTART, () => this.restart());
@@ -55,6 +61,7 @@ export class Game {
     gameState.started = true;
     this.player = new Player(this.scene);
     this.hud.show();
+    this.input.setGameActive(true);
   }
 
   restart() {
@@ -64,6 +71,7 @@ export class Game {
     }
     gameState.reset();
     this.hud.updateScore(0);
+    this.input.setGameActive(false);
     this.menu.showStart();
   }
 
@@ -71,6 +79,8 @@ export class Game {
     requestAnimationFrame(() => this.animate());
 
     const delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
+
+    this.input.update();
 
     if (gameState.started && !gameState.gameOver && this.player) {
       this.player.update(delta, this.input);

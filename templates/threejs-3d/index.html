@@ -2,22 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>My Game</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; overflow: hidden; font-family: monospace; }
+    body { background: #000; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     canvas { display: block; }
 
     #hud {
       position: fixed;
-      top: 20px;
-      left: 20px;
+      top: max(12px, 2vh);
+      left: max(12px, 2vw);
       color: #fff;
-      font-size: 24px;
+      font-size: clamp(16px, 3.5vmin, 28px);
+      font-weight: bold;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
       z-index: 10;
       pointer-events: none;
+      transition: transform 0.15s ease-out;
     }
 
     .overlay {
@@ -30,35 +32,77 @@
       background: rgba(0, 0, 0, 0.75);
       z-index: 20;
       color: #fff;
+      padding: 20px;
     }
     .overlay.hidden { display: none; }
 
     .overlay h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
+      font-size: clamp(28px, 7vmin, 56px);
+      margin-bottom: clamp(10px, 2vmin, 24px);
+      text-align: center;
     }
     .overlay p {
-      font-size: 20px;
-      margin-bottom: 10px;
+      font-size: clamp(14px, 2.5vmin, 22px);
+      margin-bottom: 8px;
       color: #aaa;
+      text-align: center;
     }
     .overlay .score-display {
-      font-size: 28px;
-      margin: 10px 0;
+      font-size: clamp(18px, 4vmin, 32px);
+      margin: 8px 0;
+    }
+    .overlay .best-display {
+      font-size: clamp(14px, 2.5vmin, 22px);
+      color: #aaa;
     }
     .overlay button {
-      margin-top: 30px;
-      padding: 12px 40px;
-      font-size: 20px;
-      font-family: monospace;
+      margin-top: clamp(16px, 3vmin, 32px);
+      padding: clamp(10px, 2vmin, 16px) clamp(28px, 6vmin, 48px);
+      font-size: clamp(16px, 2.5vmin, 22px);
+      font-family: inherit;
       font-weight: bold;
       color: #fff;
-      background: #44aaff;
+      background: #6c63ff;
       border: none;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s;
+      min-height: 44px;
+      min-width: 120px;
+      transition: background 0.2s, transform 0.1s;
     }
-    .overlay button:hover { background: #66ccff; }
+    .overlay button:hover { background: #857dff; transform: scale(1.05); }
+    .overlay button:active { background: #5a52d5; transform: scale(0.95); }
+
+    /* Virtual joystick (mobile only, created by InputSystem) */
+    #joystick-zone {
+      position: fixed;
+      bottom: max(20px, 3vh);
+      left: max(20px, 3vw);
+      width: clamp(100px, 20vmin, 140px);
+      height: clamp(100px, 20vmin, 140px);
+      z-index: 15;
+      display: none;
+      touch-action: none;
+    }
+    #joystick-base {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      position: relative;
+    }
+    #joystick-thumb {
+      width: 40%;
+      height: 40%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -66,15 +110,21 @@
 
   <div id="menu-overlay" class="overlay">
     <h1>MY GAME</h1>
-    <p>Use WASD or Arrow Keys to move</p>
+    <p id="input-hint">Use WASD or Arrow Keys to move</p>
     <button id="play-btn">PLAY</button>
   </div>
 
   <div id="gameover-overlay" class="overlay hidden">
     <h1>GAME OVER</h1>
     <div class="score-display" id="final-score">Score: 0</div>
-    <div class="score-display" id="best-score" style="font-size:20px;color:#aaa;">Best: 0</div>
+    <div class="best-display" id="best-score">Best: 0</div>
     <button id="restart-btn">RESTART</button>
+  </div>
+
+  <div id="joystick-zone">
+    <div id="joystick-base">
+      <div id="joystick-thumb"></div>
+    </div>
   </div>
 
   <script type="module" src="/src/main.js"></script>

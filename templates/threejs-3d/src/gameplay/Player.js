@@ -16,12 +16,9 @@ export class Player {
   }
 
   update(delta, input) {
-    const speed = PLAYER.SPEED * delta;
-
-    if (input.forward) this.mesh.position.z -= speed;
-    if (input.backward) this.mesh.position.z += speed;
-    if (input.left) this.mesh.position.x -= speed;
-    if (input.right) this.mesh.position.x += speed;
+    // Use analog moveX/moveZ for smooth joystick + keyboard support
+    this.mesh.position.x += input.moveX * PLAYER.SPEED * delta;
+    this.mesh.position.z += input.moveZ * PLAYER.SPEED * delta;
   }
 
   reset() {

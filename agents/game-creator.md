@@ -186,12 +186,23 @@ Launch a `Task` subagent with these instructions:
 > **Game concept**: `<concept description>`
 > **Skill to load**: `phaser` (2D) or `threejs-game` (3D)
 >
+> **Core loop first** — implement in this order:
+> 1. Input (touch + keyboard from the start — never keyboard-only)
+> 2. Player movement / core mechanic
+> 3. Fail condition (death, collision, timer)
+> 4. Scoring
+> 5. Restart flow (GameState.reset() → clean slate)
+>
+> Keep scope small: **1 scene, 1 mechanic, 1 fail condition**. Get the gameplay loop working before any polish.
+>
 > Transform the template into the game concept:
 > - Rename entities, scenes/systems, and events to match the concept
 > - Implement core gameplay mechanics
 > - Wire up EventBus events, GameState fields, and Constants values
 > - Ensure all modules communicate only through EventBus
 > - All magic numbers go in Constants.js
+> - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
+> - Add `isMuted` to GameState for audio mute support
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 
@@ -284,9 +295,10 @@ Launch a `Task` subagent:
 > 1. Audit the game: check for `@strudel/web`, read EventBus events, read all scenes
 > 2. Install `@strudel/web` if needed
 > 3. Create `src/audio/AudioManager.js`, `music.js`, `sfx.js`, `AudioBridge.js`
-> 4. Add audio events to EventBus.js
+> 4. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
+> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button.
 >
 > Do NOT run builds — the orchestrator handles verification.
 
