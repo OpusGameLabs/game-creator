@@ -1,0 +1,42 @@
+{
+  "_comment": "Example action payloads for iterate-client.js. Each step describes a burst of input + frames to advance.",
+  "steps": [
+    {
+      "_comment": "Click center of canvas to focus / start game",
+      "buttons": ["left_mouse_button"],
+      "frames": 2,
+      "mouse_x": 480,
+      "mouse_y": 270
+    },
+    {
+      "_comment": "Wait for menu transition",
+      "buttons": [],
+      "frames": 30
+    },
+    {
+      "_comment": "Press space to start playing",
+      "buttons": ["space"],
+      "frames": 4
+    },
+    {
+      "_comment": "Idle frames — let game run",
+      "buttons": [],
+      "frames": 60
+    },
+    {
+      "_comment": "Move right for 30 frames",
+      "buttons": ["right"],
+      "frames": 30
+    },
+    {
+      "_comment": "Jump while moving right",
+      "buttons": ["space", "right"],
+      "frames": 10
+    },
+    {
+      "_comment": "Release and observe",
+      "buttons": [],
+      "frames": 30
+    }
+  ]
+}

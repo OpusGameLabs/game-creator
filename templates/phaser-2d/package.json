@@ -9,7 +9,9 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:ui": "npx playwright test --ui",
-    "test:update-snapshots": "npx playwright test --update-snapshots"
+    "test:update-snapshots": "npx playwright test --update-snapshots",
+    "verify": "node scripts/verify-runtime.mjs",
+    "iterate": "node scripts/iterate-client.js --url http://localhost:3000"
   },
   "dependencies": {
     "phaser": "^3.90.0",

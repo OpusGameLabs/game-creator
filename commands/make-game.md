@@ -31,7 +31,7 @@ Build a complete browser game from scratch, step by step. This command walks you
 
 **What stays in the main thread:**
 - Step 0: Parse arguments, create todo list
-- Step 1 (infrastructure only): Copy template, npm install, playwright install, create `scripts/verify-runtime.mjs`, start dev server
+- Step 1 (infrastructure only): Copy template, npm install, playwright install, start dev server
 - Verification protocol runs (build + runtime + visual review + autofix)
 - Step 4 (deploy): Interactive auth requires user back-and-forth
 
@@ -61,9 +61,22 @@ If the build fails, proceed to autofix.
 cd <project-dir> && node scripts/verify-runtime.mjs
 ```
 
-This script (created during Step 1) launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
+This script launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
 
 If the runtime check fails, proceed to autofix.
+
+### Phase 2.5 — Iterate Check (screenshots + game state)
+
+```bash
+cd <project-dir> && node scripts/iterate-client.js \
+  --url http://localhost:<port> \
+  --actions-json '[{"buttons":["space"],"frames":4}]' \
+  --iterations 2 --screenshot-dir output/iterate
+```
+
+This produces screenshots (`output/iterate/shot-*.png`), game state JSON (`output/iterate/state-*.json`), and error files (`output/iterate/errors-*.json`). Feed these to the autofix subagent for richer context when issues are found.
+
+**Skip this phase** if `scripts/iterate-client.js` is not present (backward compatibility with existing projects).
 
 ### Phase 3 — Visual Review via Playwright MCP
 
@@ -151,64 +164,14 @@ Mark task 1 as `in_progress`.
 4. Update `<title>` in `index.html` to a human-readable version of the game name
 5. **Verify Node.js/npm availability**: Run `node --version && npm --version` to confirm Node.js and npm are installed and accessible. If they fail (e.g., nvm lazy-loading), try sourcing nvm: `export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"` then retry. If Node.js is not installed at all, tell the user they need to install it before continuing.
 6. Run `npm install` in the new project directory
-7. Run `npx playwright install chromium` to install the browser binary for runtime verification
-8. Create the runtime verification script `scripts/verify-runtime.mjs`:
-
-```js
-// scripts/verify-runtime.mjs
-// Launches headless Chromium, loads the game, checks for runtime errors.
-// Exit 0 = pass, Exit 1 = fail (prints errors to stderr).
-import { chromium } from '@playwright/test';
-
-const PORT = process.env.PORT || 3000;
-const URL = `http://localhost:${PORT}`;
-const WAIT_MS = 3000;
-
-async function verify() {
-  const errors = [];
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-
-  page.on('pageerror', (err) => errors.push(`PAGE ERROR: ${err.message}`));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      errors.push(`CONSOLE ERROR: ${msg.text()}`);
-    }
-  });
-
-  try {
-    const response = await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
-    if (!response || response.status() >= 400) {
-      errors.push(`HTTP ${response?.status() || 'NO_RESPONSE'} loading ${URL}`);
-    }
-  } catch (e) {
-    errors.push(`NAVIGATION ERROR: ${e.message}`);
-  }
-
-  // Wait for game to initialize and render
-  await page.waitForTimeout(WAIT_MS);
-
-  await browser.close();
-
-  if (errors.length > 0) {
-    console.error(`Runtime verification FAILED with ${errors.length} error(s):\n`);
-    errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
-    process.exit(1);
-  }
-
-  console.log('Runtime verification PASSED — no errors detected.');
-  process.exit(0);
-}
-
-verify();
-```
-
-9. Add a `verify` script to `package.json`:
-   ```json
-   "verify": "node scripts/verify-runtime.mjs"
-   ```
-
-10. Start the dev server in the background with `npm run dev` and confirm it responds. Keep it running throughout the pipeline. Note the port number — pass it to `scripts/verify-runtime.mjs` via the `PORT` env variable in subsequent runs.
+7. **Install Playwright and Chromium** — Playwright is required for runtime verification and the iterate loop:
+   1. Check if Playwright is available: `npx playwright --version`
+   2. If that fails, check `node_modules/.bin/playwright --version`
+   3. If neither works, run `npm install -D @playwright/test` explicitly
+   4. Then install the browser binary: `npx playwright install chromium`
+   5. Verify success; if it fails, warn and continue (build verification still works, but runtime/iterate checks will be skipped)
+8. **Verify template scripts exist** — The template ships with `scripts/verify-runtime.mjs`, `scripts/iterate-client.js`, and `scripts/example-actions.json`. Confirm they are present. The `verify` and `iterate` npm scripts are already in `package.json` from the template.
+9. Start the dev server in the background with `npm run dev` and confirm it responds. Keep it running throughout the pipeline. Note the port number — pass it to `scripts/verify-runtime.mjs` via the `PORT` env variable in subsequent runs.
 
 **Subagent — game implementation:**
 

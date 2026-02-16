@@ -39,7 +39,7 @@ The agent expects:
 
 **What stays in the main thread:**
 - Step 0: Parse input, create todo list
-- Step 1 (infrastructure only): Copy template, npm install, playwright install, create `scripts/verify-runtime.mjs`, start dev server
+- Step 1 (infrastructure only): Copy template, npm install, playwright install, start dev server
 - Verification protocol runs (build + runtime + visual review + autofix)
 
 **What goes to subagents** (via `Task` tool):
@@ -48,7 +48,7 @@ The agent expects:
 - Step 2: Visual polish
 - Step 3: Audio integration
 
-Each subagent receives: step instructions, relevant skill name, project path, engine type, dev server port, and game concept description.
+Each subagent receives: step instructions, relevant skill name, project path, engine type, dev server port, game concept description, and iterate client instructions.
 
 ## Verification Protocol
 
@@ -68,9 +68,22 @@ If the build fails, proceed to autofix.
 cd <project-dir> && node scripts/verify-runtime.mjs
 ```
 
-This script (created during Step 1) launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
+This script launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
 
 If the runtime check fails, proceed to autofix.
+
+### Phase 2.5 — Iterate Check (screenshots + game state)
+
+```bash
+cd <project-dir> && node scripts/iterate-client.js \
+  --url http://localhost:<port> \
+  --actions-json '[{"buttons":["space"],"frames":4}]' \
+  --iterations 2 --screenshot-dir output/iterate
+```
+
+This produces screenshots (`output/iterate/shot-*.png`), game state JSON (`output/iterate/state-*.json`), and error files (`output/iterate/errors-*.json`). Feed these to the autofix subagent for richer context when issues are found.
+
+**Skip this phase** if `scripts/iterate-client.js` is not present (backward compatibility with existing projects).
 
 ### Phase 3 — Visual Review via Playwright MCP
 
@@ -110,6 +123,33 @@ Create all pipeline tasks upfront using `TaskCreate`:
 
 This provides full visibility into pipeline progress. Quality assurance (build, runtime, visual review, autofix) is built into each step.
 
+**Create `progress.md`** at the project root:
+
+```markdown
+# Progress
+
+Original prompt: <the user's game concept, verbatim>
+
+Engine: <2d|3d>
+Created: <date>
+
+## Pipeline Status
+
+- [ ] Step 1: Scaffold
+- [ ] Step 1.5: Pixel Art (2D only)
+- [ ] Step 2: Visual Design
+- [ ] Step 3: Audio
+- [ ] Step 4: Monetize
+
+## Decisions
+
+## TODOs
+
+## Gotchas
+```
+
+Update `progress.md` after each step completes — check off the step, log decisions, note gotchas, and leave TODOs for the next step or agent. If `progress.md` already exists (resuming a previous session), read it first and preserve the original prompt.
+
 ### Step 1: Scaffold
 
 Mark task 1 as `in_progress`.
@@ -120,60 +160,14 @@ Mark task 1 as `in_progress`.
 2. Update `package.json` name and `index.html` title
 3. Verify Node.js/npm availability (source nvm if needed)
 4. Run `npm install`
-5. Run `npx playwright install chromium`
-6. Create the runtime verification script `scripts/verify-runtime.mjs`:
-
-```js
-// scripts/verify-runtime.mjs
-// Launches headless Chromium, loads the game, checks for runtime errors.
-// Exit 0 = pass, Exit 1 = fail (prints errors to stderr).
-import { chromium } from '@playwright/test';
-
-const PORT = process.env.PORT || 3000;
-const URL = `http://localhost:${PORT}`;
-const WAIT_MS = 3000;
-
-async function verify() {
-  const errors = [];
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-
-  page.on('pageerror', (err) => errors.push(`PAGE ERROR: ${err.message}`));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      errors.push(`CONSOLE ERROR: ${msg.text()}`);
-    }
-  });
-
-  try {
-    const response = await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
-    if (!response || response.status() >= 400) {
-      errors.push(`HTTP ${response?.status() || 'NO_RESPONSE'} loading ${URL}`);
-    }
-  } catch (e) {
-    errors.push(`NAVIGATION ERROR: ${e.message}`);
-  }
-
-  // Wait for game to initialize and render
-  await page.waitForTimeout(WAIT_MS);
-
-  await browser.close();
-
-  if (errors.length > 0) {
-    console.error(`Runtime verification FAILED with ${errors.length} error(s):\n`);
-    errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
-    process.exit(1);
-  }
-
-  console.log('Runtime verification PASSED — no errors detected.');
-  process.exit(0);
-}
-
-verify();
-```
-
-7. Add a `verify` script to `package.json`: `"verify": "node scripts/verify-runtime.mjs"`
-8. Start the dev server in the background. Note the port number.
+5. **Install Playwright and Chromium** — Playwright is required for runtime verification and the iterate loop:
+   1. Check if Playwright is available: `npx playwright --version`
+   2. If that fails, check `node_modules/.bin/playwright --version`
+   3. If neither works, run `npm install -D @playwright/test` explicitly
+   4. Then install the browser binary: `npx playwright install chromium`
+   5. Verify success; if it fails, warn and continue (build verification still works, but runtime/iterate checks will be skipped)
+6. **Verify template scripts exist** — The template ships with `scripts/verify-runtime.mjs`, `scripts/iterate-client.js`, and `scripts/example-actions.json`. Confirm they are present. The `verify` and `iterate` npm scripts are already in `package.json` from the template.
+7. Start the dev server in the background. Note the port number.
 
 **Subagent — game implementation:**
 
@@ -203,6 +197,13 @@ Launch a `Task` subagent with these instructions:
 > - All magic numbers go in Constants.js
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
 > - Add `isMuted` to GameState for audio mute support
+> - **Update `render_game_to_text()`** in `main.js` to reflect your new entities, obstacles, and mechanics. Add all player-relevant state: position, velocity, visible enemies/obstacles, collectibles, timers/cooldowns, and mode flags.
+>
+> **Iterate after each meaningful change**: The dev server is running on port `<port>`. After each chunk of work (e.g., input wired up, collision added, scoring working), run:
+> ```
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '<relevant actions>' --iterations 3
+> ```
+> Inspect the output screenshots and `state-*.json` files. Fix errors before moving on.
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 
@@ -238,6 +239,12 @@ Launch a `Task` subagent:
 > 9. Add Phaser animations for entities with multiple frames
 > 10. Adjust physics bodies for new sprite dimensions
 >
+> **Iterate after each meaningful change**: The dev server is running on port `<port>`. After updating sprites/backgrounds, run:
+> ```
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4}]' --iterations 3
+> ```
+> Inspect screenshots to verify sprites render correctly. Fix visual issues before moving on.
+>
 > Do NOT run builds — the orchestrator handles verification.
 
 **After subagent returns**, run the Verification Protocol.
@@ -269,6 +276,12 @@ Launch a `Task` subagent:
 > 3. All new values go in Constants.js, use EventBus for triggering effects
 > 4. Don't alter gameplay mechanics
 >
+> **Iterate after each meaningful change**: The dev server is running on port `<port>`. After adding visual effects, run:
+> ```
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4},{"buttons":[],"frames":60}]' --iterations 3
+> ```
+> Inspect screenshots to verify visual improvements look correct. Fix issues before moving on.
+>
 > Do NOT run builds — the orchestrator handles verification.
 
 **After subagent returns**, run the Verification Protocol.
@@ -299,6 +312,12 @@ Launch a `Task` subagent:
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
 > 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button.
+>
+> **Iterate after each meaningful change**: The dev server is running on port `<port>`. After wiring audio, run:
+> ```
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4}]' --iterations 2
+> ```
+> Check `state-*.json` and error logs — audio init issues often show as console errors.
 >
 > Do NOT run builds — the orchestrator handles verification.
 
@@ -342,6 +361,17 @@ Launch a `Task` subagent:
 Mark task 5 as `completed`.
 
 **Gate**: Verification Protocol must pass. If it fails after 3 attempts, log failure, skip, continue.
+
+## Progress Tracking
+
+After each pipeline step completes (or fails), update `progress.md`:
+
+1. Check off the completed step
+2. Log any decisions made (e.g., "Used DARK palette for cave theme")
+3. Note gotchas discovered (e.g., "Physics body had to be smaller than sprite for fair collisions")
+4. Add TODOs for follow-up (e.g., "Enemy variety — only one type currently")
+
+If the pipeline is interrupted (crash, user cancel, timeout), `progress.md` enables the next agent session to pick up exactly where it left off. The original prompt is always preserved at the top.
 
 ## Error Handling
 

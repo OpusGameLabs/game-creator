@@ -31,6 +31,9 @@ commands/
   add-assets.md            # Replace shapes with pixel art sprites
   add-audio.md             # Add Strudel.cc audio
   monetize-game.md         # Play.fun monetization (register, SDK, redeploy)
+scripts/
+  iterate-client.js        # Standalone Playwright iterate loop (action → screenshot → state → errors)
+  example-actions.json     # Example action payloads for iterate-client.js
 submodules/
   playdotfun/              # Git submodule: github.com/OpusGameLabs/skills
 agents/
@@ -54,6 +57,12 @@ All games built with this plugin follow these mandatory patterns:
 4. **Orchestrator** — One entry point (Game.js or GameConfig.js) initializes all systems and manages the game lifecycle.
 
 5. **Directory structure** — `core/` (EventBus, GameState, Constants), `scenes/` or `systems/`, `entities/`, `ui/`, `audio/`.
+
+6. **`render_game_to_text()`** — Every game exposes `window.render_game_to_text()` in `main.js`. Returns a concise JSON string of the current game state for AI agents to read without interpreting pixels. Must include: coordinate system note, game mode (`menu`/`playing`/`game_over`), score, player position/velocity, and visible entities. Keep it succinct — only current, on-screen state.
+
+7. **`advanceTime(ms)`** — Every game exposes `window.advanceTime(ms)` in `main.js`. Returns a Promise that resolves after `ms` milliseconds of real time, allowing test scripts to advance the game in controlled increments. For frame-precise control in `@playwright/test`, prefer `page.clock.install()` + `runFor()`.
+
+8. **`progress.md`** — Created at the project root by the game-creator agent. Records the original user prompt, TODOs, decisions, gotchas, and loose ends after each pipeline step. Enables multi-session continuity and agent handoff.
 
 ## Example Game: Flappy Bird
 
@@ -127,6 +136,8 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 **Run the example**: `cd examples/flappy-bird && npm run dev` starts on port 3000.
 
 **Run tests**: `cd examples/flappy-bird && npm run test`. Tests auto-start the Vite dev server.
+
+**Quick iterate loop**: `node scripts/iterate-client.js --url http://localhost:3000 --actions-json '[{"buttons":["space"],"frames":4}]'` — captures screenshots, text state, and console errors. Use after every meaningful code change for tight feedback.
 
 ## Notes
 
