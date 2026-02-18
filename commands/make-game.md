@@ -499,7 +499,7 @@ Determine the deployed game URL from Step 6 (`https://<username>.github.io/<game
 
 Read `package.json` for the game name and description. Read `src/core/Constants.js` to determine reasonable anti-cheat limits based on the scoring system.
 
-Use the Play.fun API to register the game. Load the `playdotfun` skill for API reference. Register via `POST https://api.opengameprotocol.com/games`:
+Use the Play.fun API to register the game. Load the `playdotfun` skill for API reference. Register via `POST https://api.play.fun/games`:
 
 ```json
 {
@@ -524,11 +524,14 @@ Save the returned **game UUID**.
 
 #### 7c. Add the Play.fun Browser SDK
 
-Add the SDK script tag to `index.html` before `</head>`:
+Add the SDK script and meta tag to `index.html` before `</head>`:
 
 ```html
+<meta name="x-ogp-key" content="USER_API_KEY_HERE" />
 <script src="https://sdk.play.fun/latest"></script>
 ```
+
+**Important**: The `x-ogp-key` meta tag must contain the **user's Play.fun API key** (not the game ID). This is required for SDK authentication.
 
 Create `src/playfun.js` that wires the game's EventBus to Play.fun points tracking:
 
@@ -551,18 +554,28 @@ export async function initPlayFun() {
   await sdk.init();
   initialized = true;
 
-  // Points on score change
+  // addPoints() — call frequently during gameplay to buffer points locally (non-blocking)
   eventBus.on(Events.SCORE_CHANGED, ({ score, delta }) => {
     if (initialized && delta > 0) sdk.addPoints(delta);
   });
-  // Save on game over
+
+  // savePoints() — ONLY call at natural break points (game over, level complete)
+  // WARNING: savePoints() opens a BLOCKING MODAL — never call during active gameplay!
   eventBus.on(Events.GAME_OVER, () => { if (initialized) sdk.savePoints(); });
-  // Auto-save every 30s
-  setInterval(() => { if (initialized) sdk.savePoints(); }, 30000);
-  // Save on unload
+
+  // Save on page unload (browser handles this gracefully)
   window.addEventListener('beforeunload', () => { if (initialized) sdk.savePoints(); });
 }
 ```
+
+**Critical SDK behavior:**
+
+| Method | When to use | Behavior |
+|--------|-------------|----------|
+| `addPoints(n)` | During gameplay | Buffers points locally, non-blocking |
+| `savePoints()` | Game over / level end | **Opens blocking modal**, syncs buffered points to server |
+
+⚠️ **Do NOT call `savePoints()` on a timer or during active gameplay** — it interrupts the player with a modal dialog. Only call at natural pause points (game over, level transitions, menu screens).
 
 **Read the actual EventBus.js** to find the correct event names and payload shapes. Adapt accordingly.
 
@@ -590,7 +603,7 @@ Wait ~30 seconds, then verify the deployment is live.
 > **Play.fun**: `https://play.fun/games/<game-uuid>`
 >
 > The Play.fun widget is now live — players see points, leaderboard, and wallet connect.
-> Points auto-save on game over and every 30 seconds.
+> Points are buffered during gameplay and saved on game over.
 >
 > **Share on Moltbook**: Post your game URL to [moltbook.com](https://www.moltbook.com/) — 770K+ agents ready to play and upvote.
 
