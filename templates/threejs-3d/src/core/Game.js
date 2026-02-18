@@ -5,7 +5,6 @@ import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
 import { Player } from '../gameplay/Player.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
-import { HUD } from '../ui/HUD.js';
 import { Menu } from '../ui/Menu.js';
 
 export class Game {
@@ -35,22 +34,17 @@ export class Game {
     // Systems
     this.input = new InputSystem();
     this.level = new LevelBuilder(this.scene);
-    this.hud = new HUD();
     this.menu = new Menu();
     this.player = null;
 
-    // Mobile-aware hint text
-    const hint = document.getElementById('input-hint');
-    if (hint && IS_MOBILE) {
-      hint.textContent = 'Use the joystick to move';
-    }
-
     // Events
-    eventBus.on(Events.GAME_START, () => this.startGame());
     eventBus.on(Events.GAME_RESTART, () => this.restart());
 
     // Resize
     window.addEventListener('resize', () => this.onResize());
+
+    // Auto-start game (no title screen — Play.fun handles the chrome)
+    this.startGame();
 
     // Start render loop
     this.animate();
@@ -60,7 +54,6 @@ export class Game {
     gameState.reset();
     gameState.started = true;
     this.player = new Player(this.scene);
-    this.hud.show();
     this.input.setGameActive(true);
   }
 
@@ -69,10 +62,7 @@ export class Game {
       this.player.destroy();
       this.player = null;
     }
-    gameState.reset();
-    this.hud.updateScore(0);
-    this.input.setGameActive(false);
-    this.menu.showStart();
+    this.startGame();
   }
 
   animate() {

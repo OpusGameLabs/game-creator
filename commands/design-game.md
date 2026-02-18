@@ -33,9 +33,9 @@ Score each area 1-5 and present as a table:
 | Animations & Tweens | | |
 | Particle Effects | | |
 | Screen Transitions | | |
-| Typography & HUD | | |
+| Typography | | |
 | Game Feel / Juice | | |
-| Menu & Game Over | | |
+| Game Over | | |
 
 Then list the top improvements ranked by visual impact, with a plain-English description of what each one does (e.g., "Add a sky gradient so the background looks like a real sky instead of a flat color").
 

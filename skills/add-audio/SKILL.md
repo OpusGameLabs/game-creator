@@ -1,6 +1,6 @@
 ---
 name: add-audio
-description: Add music and sound effects to a game using Strudel.cc — background music, menu themes, and SFX
+description: Add music and sound effects to a game using Strudel.cc — background music, gameplay themes, and SFX
 ---
 
 # Add Audio
@@ -17,7 +17,7 @@ First, load the game-audio skill to get the full Strudel patterns and integratio
 
 - Read `package.json` to identify the engine and check if `@strudel/web` is installed
 - Read `src/core/EventBus.js` to see what game events exist (flap, score, death, etc.)
-- Read all scene files to understand the game flow (menu, gameplay, game over)
+- Read all scene files to understand the game flow (gameplay, game over)
 - Identify what music and SFX would fit the game's genre and mood
 
 ### Step 2: Plan
@@ -26,7 +26,6 @@ Present a table of planned audio:
 
 | Event / Scene | Audio Type | Style | Description |
 |---------------|-----------|-------|-------------|
-| MenuScene | BGM | Chiptune | Bouncy melody with light drums |
 | GameScene | BGM | Chiptune | Upbeat square wave melody + bass + drums |
 | GameOverScene | BGM | Somber | Slow descending melody |
 | Player action | SFX | Retro | Quick pitch sweep |
@@ -42,9 +41,9 @@ Explain in plain English: "Background music will automatically loop during each 
 3. Create `src/audio/AudioBridge.js` — wires EventBus events to AudioManager for BGM, calls SFX functions directly
 4. Create `src/audio/music.js` with BGM for each scene (Strudel `stack()` + `.play()` — these loop continuously)
 5. Create `src/audio/sfx.js` with SFX for each event (**Web Audio API** — OscillatorNode + GainNode + BiquadFilterNode for true one-shot playback)
-6. Add audio events to `EventBus.js` (`AUDIO_INIT`, `MUSIC_MENU`, `MUSIC_GAMEPLAY`, `MUSIC_GAMEOVER`, `MUSIC_STOP`)
+6. Add audio events to `EventBus.js` (`AUDIO_INIT`, `MUSIC_GAMEPLAY`, `MUSIC_GAMEOVER`, `MUSIC_STOP`)
 7. Wire `initAudioBridge()` in `main.js`
-8. Emit `AUDIO_INIT` on first user interaction in the menu scene
+8. Emit `AUDIO_INIT` on first user interaction (game starts immediately, no menu)
 9. Emit music events at scene transitions and SFX events at game actions
 
 **Critical**: Strudel's `.play()` starts a continuously looping pattern — correct for BGM, wrong for SFX. SFX **must** use the Web Audio API directly (see game-audio skill). Import `stack`, `note`, `s`, `hush` from `@strudel/web` for BGM only.

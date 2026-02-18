@@ -13,12 +13,10 @@ src/
 │   ├── GameState.ts       # Centralized state with reset()
 │   └── Constants.ts       # ALL config values — zero hardcoded numbers
 ├── scenes/
-│   ├── Boot.ts            # Minimal setup, start Preloader
+│   ├── Boot.ts            # Minimal setup, start Game scene
 │   ├── Preloader.ts       # Load all assets, show progress bar
-│   ├── MainMenu.ts        # Title screen
-│   ├── Game.ts            # Main gameplay
-│   ├── HUD.ts             # Parallel UI overlay scene
-│   └── GameOver.ts        # End screen
+│   ├── Game.ts            # Main gameplay (starts immediately, no title screen)
+│   └── GameOver.ts        # End screen with restart
 ├── objects/               # Game entities (Player, Enemy, etc.)
 ├── systems/               # Managers and subsystems
 ├── ui/                    # UI components (buttons, bars, dialogs)

@@ -52,12 +52,10 @@ src/
 │   ├── GameState.ts       # Centralized state with reset()
 │   └── Constants.ts       # ALL config values
 ├── scenes/
-│   ├── Boot.ts            # Minimal setup, start Preloader
+│   ├── Boot.ts            # Minimal setup, start Game scene
 │   ├── Preloader.ts       # Load all assets, show progress bar
-│   ├── MainMenu.ts        # Title screen
-│   ├── Game.ts            # Main gameplay
-│   ├── HUD.ts             # Parallel UI overlay scene
-│   └── GameOver.ts        # End screen
+│   ├── Game.ts            # Main gameplay (starts immediately, no title screen)
+│   └── GameOver.ts        # End screen with restart
 ├── objects/               # Game entities (Player, Enemy, etc.)
 ├── systems/               # Managers and subsystems
 ├── ui/                    # UI components (buttons, bars, dialogs)
@@ -74,7 +72,9 @@ See [project-setup.md](project-setup.md) for full config and tooling details.
 - Use `init()` for receiving data from scene transitions
 - Load assets in a dedicated `Preloader` scene, not in every scene
 - Keep `update()` lean — delegate to subsystems and game objects
-- Use parallel scenes for UI overlays (HUD, pause menu)
+- **No title screen by default** — boot directly into gameplay. Only add a title/menu scene if the user explicitly asks for one
+- **No in-game score HUD** — the Play.fun widget displays score in a deadzone at the top of the game. Do not create a separate UIScene or HUD overlay for score display
+- Use parallel scenes for UI overlays (pause menu) only when requested
 - Communicate between scenes via EventBus (not direct references)
 
 See [scenes-and-lifecycle.md](scenes-and-lifecycle.md) for patterns and examples.

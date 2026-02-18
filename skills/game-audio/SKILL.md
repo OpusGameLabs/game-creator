@@ -43,7 +43,7 @@ src/
 ├── audio/
 │   ├── AudioManager.js    # Strudel init/play/stop for BGM
 │   ├── AudioBridge.js     # Wires EventBus → audio playback
-│   ├── music.js           # BGM patterns (Strudel — menu, gameplay, game over)
+│   ├── music.js           # BGM patterns (Strudel — gameplay, game over)
 │   └── sfx.js             # SFX (Web Audio API — one-shot sounds)
 ```
 
@@ -258,7 +258,7 @@ export function selectSfx() {
 ```js
 import { eventBus, Events } from '../core/EventBus.js';
 import { audioManager } from './AudioManager.js';
-import { menuTheme, gameplayBGM, gameOverTheme } from './music.js';
+import { gameplayBGM, gameOverTheme } from './music.js';
 import { scoreSfx, deathSfx, clickSfx } from './sfx.js';
 
 export function initAudioBridge() {
@@ -266,7 +266,7 @@ export function initAudioBridge() {
   eventBus.on(Events.AUDIO_INIT, () => audioManager.init());
 
   // BGM transitions (Strudel)
-  eventBus.on(Events.MUSIC_MENU, () => audioManager.playMusic(menuTheme));
+  // No menu music by default — games boot directly into gameplay
   eventBus.on(Events.MUSIC_GAMEPLAY, () => audioManager.playMusic(gameplayBGM));
   eventBus.on(Events.MUSIC_GAMEOVER, () => audioManager.playMusic(gameOverTheme));
   eventBus.on(Events.MUSIC_STOP, () => audioManager.stopMusic());
@@ -488,7 +488,7 @@ export function gameplayBGM() {
 }
 ```
 
-### Menu Theme (ambient, gentle)
+### Menu Theme (ambient, gentle — only add if the game has a title screen)
 
 ```js
 export function menuTheme() {
@@ -665,7 +665,7 @@ Wire the toggle to:
 5. Create `src/audio/AudioBridge.js` — wire EventBus events to audio
 6. Wire `initAudioBridge()` in `main.js`
 7. Emit `AUDIO_INIT` on first user click (browser autoplay policy)
-8. Emit `MUSIC_GAMEPLAY`, `MUSIC_MENU`, `MUSIC_GAMEOVER`, `MUSIC_STOP` at scene transitions
+8. Emit `MUSIC_GAMEPLAY`, `MUSIC_GAMEOVER`, `MUSIC_STOP` at scene transitions (add `MUSIC_MENU` only if the game has a title screen)
 9. **Add mute toggle** — `AUDIO_TOGGLE_MUTE` event, UI button, M key shortcut
 10. Test: BGM loops seamlessly, SFX fire once and stop, mute silences everything, nothing clips
 

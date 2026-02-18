@@ -12,10 +12,6 @@ export const Events = {
   // Score
   SCORE_CHANGED: 'score:changed',
 
-  // Menu
-  MENU_SHOW: 'menu:show',
-  MENU_HIDE: 'menu:hide',
-
   // Audio (used by /add-audio)
   AUDIO_INIT: 'audio:init',
   MUSIC_MENU: 'music:menu',

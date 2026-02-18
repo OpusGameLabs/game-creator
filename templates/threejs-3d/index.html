@@ -9,18 +9,7 @@
     body { background: #000; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     canvas { display: block; }
 
-    #hud {
-      position: fixed;
-      top: max(12px, 2vh);
-      left: max(12px, 2vw);
-      color: #fff;
-      font-size: clamp(16px, 3.5vmin, 28px);
-      font-weight: bold;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      z-index: 10;
-      pointer-events: none;
-      transition: transform 0.15s ease-out;
-    }
+    /* Score HUD omitted — Play.fun widget displays score in a deadzone at the top */
 
     .overlay {
       position: fixed;
@@ -106,14 +95,6 @@
   </style>
 </head>
 <body>
-  <div id="hud">Score: 0</div>
-
-  <div id="menu-overlay" class="overlay">
-    <h1>MY GAME</h1>
-    <p id="input-hint">Use WASD or Arrow Keys to move</p>
-    <button id="play-btn">PLAY</button>
-  </div>
-
   <div id="gameover-overlay" class="overlay hidden">
     <h1>GAME OVER</h1>
     <div class="score-display" id="final-score">Score: 0</div>

@@ -58,7 +58,7 @@ All games built with this plugin follow these mandatory patterns:
 
 5. **Directory structure** — `core/` (EventBus, GameState, Constants), `scenes/` or `systems/`, `entities/`, `ui/`, `audio/`.
 
-6. **`render_game_to_text()`** — Every game exposes `window.render_game_to_text()` in `main.js`. Returns a concise JSON string of the current game state for AI agents to read without interpreting pixels. Must include: coordinate system note, game mode (`menu`/`playing`/`game_over`), score, player position/velocity, and visible entities. Keep it succinct — only current, on-screen state.
+6. **`render_game_to_text()`** — Every game exposes `window.render_game_to_text()` in `main.js`. Returns a concise JSON string of the current game state for AI agents to read without interpreting pixels. Must include: coordinate system note, game mode (`playing`/`game_over`), score, player position/velocity, and visible entities. Keep it succinct — only current, on-screen state. Games boot directly into gameplay (no title screen by default), so `playing` is the initial mode.
 
 7. **`advanceTime(ms)`** — Every game exposes `window.advanceTime(ms)` in `main.js`. Returns a Promise that resolves after `ms` milliseconds of real time, allowing test scripts to advance the game in controlled increments. For frame-precise control in `@playwright/test`, prefer `page.clock.install()` + `runFor()`.
 

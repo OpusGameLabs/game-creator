@@ -125,7 +125,7 @@ window.render_game_to_text = () => {
   const activeScenes = game.scene.getScenes(true).map(s => s.scene.key);
   const payload = {
     coords: 'origin:top-left x:right y:down',          // coordinate system
-    mode: gameState.gameOver ? 'game_over' : gameState.started ? 'playing' : 'menu',
+    mode: gameState.gameOver ? 'game_over' : 'playing',
     scene: activeScenes[0] || null,
     score: gameState.score,
     bestScore: gameState.bestScore,
@@ -209,19 +209,7 @@ Test that the game initializes and scenes transition correctly.
 ```js
 import { test, expect } from '../fixtures/game-test.js';
 
-test('game boots to menu scene', async ({ gamePage }) => {
-  const sceneKey = await gamePage.evaluate(() => {
-    return window.__GAME__.scene.getScenes(true)[0]?.scene?.key;
-  });
-  expect(sceneKey).toBe('MenuScene');
-});
-
-test('menu transitions to game on input', async ({ gamePage }) => {
-  await gamePage.keyboard.press('Space');
-  await gamePage.waitForFunction(() => {
-    const scenes = window.__GAME__.scene.getScenes(true);
-    return scenes.some(s => s.scene.key === 'GameScene');
-  });
+test('game boots directly to gameplay', async ({ gamePage }) => {
   const sceneKey = await gamePage.evaluate(() => {
     return window.__GAME__.scene.getScenes(true)[0]?.scene?.key;
   });
@@ -303,17 +291,15 @@ test('score increments when passing pipes', async ({ gamePage }) => {
 Screenshot-based tests to catch unintended visual changes.
 
 ```js
-test('menu scene renders correctly', async ({ gamePage }) => {
+test('gameplay scene renders correctly', async ({ gamePage }) => {
   // Wait a beat for animations to settle
   await gamePage.waitForTimeout(500);
-  await expect(gamePage.locator('canvas')).toHaveScreenshot('menu-scene.png', {
+  await expect(gamePage.locator('canvas')).toHaveScreenshot('gameplay-scene.png', {
     maxDiffPixels: 300,
   });
 });
 
 test('game over scene renders correctly', async ({ gamePage }) => {
-  await gamePage.keyboard.press('Space');
-  await gamePage.waitForFunction(() => window.__GAME_STATE__.started);
 
   // Let bird die
   await gamePage.waitForFunction(
@@ -505,10 +491,9 @@ claude mcp add playwright npx '@playwright/mcp@latest'
 When using MCP for QA:
 
 1. Navigate to the game URL with `browser_navigate`
-2. Take a screenshot with `browser_take_screenshot` — analyze the menu scene
-3. Click or press Space with `browser_click` or `browser_press_key` to start
-4. Take screenshots during gameplay to check visuals
-5. Let the bird die, take a screenshot of the game over screen
+2. Take a screenshot with `browser_take_screenshot` — analyze gameplay (game starts immediately, no title screen)
+3. Take screenshots during gameplay to check visuals
+4. Let the player die, take a screenshot of the game over screen
 6. Report findings with specific visual observations
 
 ### MCP + Automated: Best of Both

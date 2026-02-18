@@ -89,14 +89,11 @@ export const UI = {
   BTN_H_RATIO: 0.075,         // button height as % of GAME.HEIGHT
   BTN_RADIUS: 12 * PX,        // button corner radius
   MIN_TOUCH: 44 * PX,         // minimum touch target
-  SCORE_SIZE_RATIO: 0.04,     // HUD score font size
-  SCORE_STROKE: 4 * PX,       // HUD score stroke thickness
+  // Score HUD omitted — Play.fun widget displays score in a deadzone at the top
 };
 
 // --- Transitions ---
 
 export const TRANSITION = {
   FADE_DURATION: 350,
-  SCORE_POP_SCALE: 1.3,
-  SCORE_POP_DURATION: 150,
 };

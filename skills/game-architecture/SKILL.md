@@ -18,7 +18,7 @@ Reference knowledge for building well-structured browser games. These patterns a
 
 4. **Configuration Centralization**: Every magic number, balance value, asset path, spawn point, and timing value goes in `Constants.js`. Game logic files contain zero hardcoded values.
 
-5. **Orchestrator Pattern**: One `Game.js` class initializes all systems, manages game flow (menu -> loading -> gameplay -> death/win), and runs the main loop. Systems don't self-initialize.
+5. **Orchestrator Pattern**: One `Game.js` class initializes all systems, manages game flow (boot -> gameplay -> death/win -> restart), and runs the main loop. Systems don't self-initialize. **No title screen by default** — boot directly into gameplay. Only add a title/menu scene if the user explicitly asks for one.
 
 6. **Restart-Safe and Deterministic**: Gameplay must survive full restart cycles cleanly. `GameState.reset()` restores a complete clean slate. All event listeners are removed in cleanup/shutdown. No stale references, lingering timers, leaked tweens, or orphaned physics bodies survive across restarts. Test by restarting 3x in a row — the third run must behave identically to the first.
 
@@ -51,10 +51,6 @@ export const Events = {
   GAME_PAUSED: 'game:paused',
   GAME_OVER: 'game:over',
 
-  // UI
-  MENU_OPENED: 'menu:opened',
-  SETTINGS_CHANGED: 'settings:changed',
-
   // System
   ASSETS_LOADED: 'assets:loaded',
   LOADING_PROGRESS: 'loading:progress'
@@ -84,7 +80,7 @@ class GameState {
   constructor() {
     this.player = { health, maxHealth, speed, inventory, buffs };
     this.combat = { killCount, waveNumber, score };
-    this.game = { started, paused, isPlaying, menuState };
+    this.game = { started, paused, isPlaying };
   }
 }
 ```
@@ -206,11 +202,11 @@ All wave difficulty math references these constants, never hardcoded numbers.
 Standard flow for both 2D and 3D games:
 
 ```
-Boot/Load -> Main Menu -> Gameplay <-> Pause Menu
-                                   -> Game Over -> Main Menu
+Boot/Load -> Gameplay <-> Pause Menu (if requested)
+                      -> Game Over -> Gameplay (restart)
 ```
 
-Manage this through `gameState.game.menuState` which tracks the current flow state.
+**No title screen by default.** Games boot directly into gameplay. The Play.fun widget handles score display, leaderboards, and wallet connect in a deadzone at the top of the game, so no in-game score HUD is needed. Only add a title/menu scene if the user explicitly requests one.
 
 ## Mute State Management
 

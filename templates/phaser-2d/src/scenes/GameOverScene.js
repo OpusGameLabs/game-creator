@@ -97,11 +97,11 @@ export class GameOverScene extends Phaser.Scene {
     eventBus.emit(Events.GAME_RESTART);
     this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('MenuScene');
+      this.scene.start('GameScene');
     });
   }
 
-  // --- Helpers (same as MenuScene) ---
+  // --- Helpers ---
 
   drawGradient(w, h, topColor, bottomColor) {
     const bg = this.add.graphics();
