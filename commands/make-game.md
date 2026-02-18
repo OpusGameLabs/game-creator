@@ -199,6 +199,8 @@ Launch a `Task` subagent with these instructions:
 > - Wire up EventBus events, GameState fields, and Constants values
 > - Ensure all modules communicate only through EventBus
 > - All magic numbers go in Constants.js
+> - **No title screen** — the template boots directly into gameplay. Do not create a MenuScene or title screen. Only add one if the user explicitly asks.
+> - **No in-game score HUD** — the Play.fun widget displays score in a deadzone at the top of the game. Do not create a UIScene or HUD overlay for score display.
 > - **Mobile-first input**: Choose the best mobile input scheme for the game concept (tap zones, virtual joystick, gyroscope tilt, swipe). Implement touch + keyboard from the start — never keyboard-only. Use the unified analog InputSystem pattern (moveX/moveZ) so game logic is input-source-agnostic.
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
 > - Add `isMuted` to GameState for audio mute support
@@ -275,13 +277,13 @@ Launch a `Task` subagent with these instructions:
 >
 > Apply the game-designer skill:
 > 1. Audit the current visuals — read Constants.js, all scenes, entities, EventBus
-> 2. Score each visual area (background, palette, animations, particles, transitions, typography, game feel, menus) on a 1-5 scale
+> 2. Score each visual area (background, palette, animations, particles, transitions, typography, game feel, game over) on a 1-5 scale
 > 3. Implement the highest-impact improvements:
 >    - Sky gradients or environment backgrounds
 >    - Particle effects for key gameplay moments
 >    - Screen shake, flash, or slow-mo for impact
 >    - Smooth scene transitions
->    - UI juice: score pop, button hover, text shadows
+>    - UI juice: button hover, text shadows, floating score text
 > 4. All new values go in Constants.js, use EventBus for triggering effects
 > 5. Don't alter gameplay mechanics
 >

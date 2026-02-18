@@ -41,9 +41,9 @@ Evaluate these areas and score each 1-5:
 | **Animations & Tweens** | Do things move smoothly? Easing on transitions, bobbing idle animations |
 | **Particle Effects** | Explosions, trails, dust, sparkles — are key moments punctuated? |
 | **Screen Transitions** | Fade in/out, slide, zoom — or hard cuts between scenes? |
-| **Typography & HUD** | Score/health readable? Consistent font choices? Visual hierarchy? |
-| **Game Feel / Juice** | Screen shake on impact, flash on hit, scale pop on score, haptic feedback |
-| **Menu & Game Over** | Polished or placeholder? Buttons feel clickable? Clear call to action? |
+| **Typography** | Consistent font choices? Visual hierarchy? Text readable at all sizes? |
+| **Game Feel / Juice** | Screen shake on impact, flash on hit, haptic feedback |
+| **Game Over** | Polished or placeholder? Restart button feels clickable? Clear call to action? Score display with animation? |
 
 Present the scores as a table, then list the top improvements ranked by visual impact.
 
@@ -155,20 +155,11 @@ eventBus.on(Events.SCREEN_SHAKE, ({ intensity, duration }) => {
 });
 ```
 
-#### Score Pop Animation
+#### Floating Score Text
 ```js
-// On score change — scale pop + optional floating text
+// On score change — floating "+1" text near the action (score HUD is handled by Play.fun widget)
 eventBus.on(Events.SCORE_CHANGED, ({ score }) => {
-  // Pop the score text
-  scene.tweens.add({
-    targets: scoreText,
-    scaleX: 1.4, scaleY: 1.4,
-    duration: 80,
-    yoyo: true,
-    ease: 'Quad.easeOut',
-  });
-  // Floating "+1" text
-  const floater = scene.add.text(birdX + 30, birdY - 20, '+1', {
+  const floater = scene.add.text(playerX + 30, playerY - 20, '+1', {
     fontSize: '20px', fontFamily: 'Arial Black',
     color: '#ffff00', stroke: '#000000', strokeThickness: 3,
   }).setOrigin(0.5);
@@ -299,11 +290,9 @@ ground.lineBetween(0, groundY, width, groundY);
 If the Playwright MCP is available (`claude mcp add playwright npx '@playwright/mcp@latest'`), use it for a real visual audit:
 
 1. **`browser_navigate`** to the game URL (e.g., `http://localhost:3000`)
-2. **`browser_take_screenshot`** — capture the menu scene and analyze colors, layout, atmosphere
-3. **`browser_press_key`** (Space) — start the game
-4. **`browser_take_screenshot`** — capture gameplay, check background, pipes, bird, score HUD
-5. Let the bird die, **`browser_take_screenshot`** — check game over screen polish
-6. **`browser_press_key`** (Space) — restart and verify transitions
+2. **`browser_take_screenshot`** — capture gameplay (game starts immediately, no title screen), check background, entities, atmosphere
+3. Let the player die, **`browser_take_screenshot`** — check game over screen polish and score display
+4. **`browser_press_key`** (Space) — restart and verify transitions
 
 This gives you real visual data to base your design audit on, rather than imagining the game from code alone. Screenshots let you judge color cohesion, visual hierarchy, and atmosphere with your own eyes.
 

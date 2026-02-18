@@ -101,7 +101,6 @@ export class GameScene extends Phaser.Scene {
     if (gameState.gameOver) return;
     gameState.gameOver = true;
     eventBus.emit(Events.GAME_OVER, { score: gameState.score });
-    this.scene.stop('UIScene');
     this.scene.start('GameOverScene');
   }
 }

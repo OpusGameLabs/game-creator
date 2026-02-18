@@ -14,11 +14,10 @@ npm run dev
 ```
 src/
 ├── scenes/
-│   ├── Boot.ts           # Minimal setup, start Preloader
+│   ├── Boot.ts           # Minimal setup, start Game scene
 │   ├── Preloader.ts      # Load all assets, show progress bar
-│   ├── MainMenu.ts       # Title screen
-│   ├── Game.ts           # Main gameplay
-│   └── GameOver.ts       # End screen
+│   ├── Game.ts           # Main gameplay (starts immediately, no title screen)
+│   └── GameOver.ts       # End screen with restart
 ├── objects/
 │   ├── Player.ts         # Custom game objects
 │   └── Enemy.ts
@@ -43,7 +42,6 @@ assets/
 import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { Preloader } from './scenes/Preloader';
-import { MainMenu } from './scenes/MainMenu';
 import { Game } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
 
@@ -64,7 +62,7 @@ export const config: Phaser.Types.Core.GameConfig = {
             debug: false,
         },
     },
-    scene: [Boot, Preloader, MainMenu, Game, GameOver],
+    scene: [Boot, Preloader, Game, GameOver],
 };
 ```
 

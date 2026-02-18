@@ -93,7 +93,7 @@ If tests still fail, repeat steps 3-6. **Maximum 3 iterations.** If tests still 
 
 If visual inspection was requested and Playwright MCP is available:
 
-- Take screenshots of each major game state (menu, gameplay, game over)
+- Take screenshots of each major game state (gameplay, game over)
 - Compare against visual expectations
 - Flag any visual issues not caught by automated tests
 

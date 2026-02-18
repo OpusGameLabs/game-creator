@@ -89,7 +89,7 @@ src/
 │   ├── LevelBuilder.ts  # Constructs the game world
 │   └── AssetLoader.ts   # Loads models, textures, audio
 ├── ui/                  # User interface
-│   └── ...              # Menus, HUD, overlays
+│   └── ...              # Game over, overlays
 └── main.ts              # Entry point - creates Game instance
 ```
 
@@ -169,7 +169,6 @@ interface GameFlags {
   started: boolean;
   paused: boolean;
   isPlaying: boolean;
-  menuState: string;
 }
 
 class GameState {
@@ -182,7 +181,6 @@ class GameState {
     started: false,
     paused: false,
     isPlaying: false,
-    menuState: 'main',
   };
 
   reset(): void {
@@ -191,7 +189,6 @@ class GameState {
     this.game.started = false;
     this.game.paused = false;
     this.game.isPlaying = false;
-    this.game.menuState = 'main';
   }
 }
 

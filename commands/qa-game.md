@@ -47,7 +47,7 @@ First, load the game-qa skill to get the full testing patterns and fixtures.
 Write tests based on what the game actually does:
 
 - **game.spec.js**: Boot test, scene transitions, input handling, scoring, game over, restart
-- **visual.spec.js**: Screenshot regression for stable scenes (menu, game over). Skip active gameplay screenshots — moving objects make them unstable.
+- **visual.spec.js**: Screenshot regression for stable scenes (gameplay initial state, game over). Skip active gameplay screenshots — moving objects make them unstable.
 - **perf.spec.js**: Load time budget, FPS during gameplay, canvas dimensions
 
 Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()` to read game state. Use `page.keyboard.press()` for input.

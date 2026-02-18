@@ -10,7 +10,7 @@ Make your game better. This command deep-audits gameplay, visuals, code quality,
 
 ## Instructions
 
-Improve the game in the current directory. If `$ARGUMENTS` specifies a focus area (e.g., "gameplay", "visuals", "performance", "polish", "menus"), weight that area higher but still audit everything.
+Improve the game in the current directory. If `$ARGUMENTS` specifies a focus area (e.g., "gameplay", "visuals", "performance", "polish", "game-over"), weight that area higher but still audit everything.
 
 ### Step 1: Deep audit
 
@@ -23,7 +23,7 @@ Read the entire game codebase to build a complete picture:
 - `src/core/Game.js` (or `GameConfig.js`) — orchestrator and game loop
 - Every file in `src/scenes/` or `src/systems/` — gameplay logic
 - Every file in `src/entities/` — game objects
-- Every file in `src/ui/` — menus, HUD, overlays
+- Every file in `src/ui/` — game over, overlays
 - Every file in `src/audio/` — music and sound effects
 - `index.html` — markup, overlays, styles, viewport meta
 - `src/systems/InputSystem.js` — input handling, mobile support (gyro, joystick, touch)
@@ -39,7 +39,7 @@ Rate each area on a 1–5 scale (1 = broken/missing, 3 = functional but basic, 5
 |------|-------|-----------|
 | **Gameplay feel** | | Is the core loop fun? Are controls responsive? Does difficulty ramp? |
 | **Visual polish** | | Backgrounds, colors, particles, animations, screen effects |
-| **Menus & UI** | | Title screen, HUD, game over, transitions, buttons |
+| **Game Over & UI** | | Game over screen, transitions, restart flow, buttons |
 | **Audio** | | BGM for each state, SFX for each action, volume balance, mute toggle |
 | **Code architecture** | | EventBus, GameState, Constants, no circular deps |
 | **Restart safety** | | Does GameState.reset() fully clean up? 3 restarts identical? No stale listeners/timers? |
@@ -121,13 +121,13 @@ When `$ARGUMENTS` includes a focus area keyword, weight these specific checks:
 
 **"gameplay"** — core loop, controls, difficulty progression, enemy variety, power-ups, risk/reward, pacing, level design
 
-**"visuals"** — load the game-designer skill and apply its full design audit (backgrounds, palette, animations, particles, transitions, typography, juice, menus)
+**"visuals"** — load the game-designer skill and apply its full design audit (backgrounds, palette, animations, particles, transitions, typography, juice)
 
 **"performance"** — delta capping, object pooling, geometry/material disposal, event listener cleanup, requestAnimationFrame usage, draw call count, texture atlas usage
 
 **"polish"** — screen shake, hit pause, squash/stretch, easing curves, sound timing, button feedback, score popups, death animations, transition smoothness
 
-**"menus"** — title screen appeal, game over information, restart flow, button styling, instructions clarity, best score display, animations
+**"game-over"** — game over screen appeal, restart flow, button styling, score display, best score display, animations. Note: games do not have title/menu screens by default (Play.fun handles the chrome). Only add a title screen if the user explicitly requests one. Score HUD is handled by the Play.fun widget — do not add a separate in-game score display.
 
 **"audio"** — load the game-audio skill. Check BGM coverage (every game state should have music), SFX coverage (every player action should have feedback), volume mixing, transition smoothness between tracks
 
