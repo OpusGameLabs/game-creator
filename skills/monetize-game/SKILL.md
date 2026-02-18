@@ -129,14 +129,24 @@ Integrate the SDK into the game. This is a lightweight addition — the SDK load
 
 #### 4a. Add the SDK script and meta tag to `index.html`
 
-Add before the closing `</head>` tag:
+First, extract the user's API key from stored credentials:
+
+```bash
+# Read API key from Claude config (stored by playfun-auth.js)
+API_KEY=$(cat ~/.claude.json | jq -r '.mcpServers["play-fun"].headers["x-api-key"]')
+echo "User API Key: $API_KEY"
+```
+
+If no API key is found, prompt the user to authenticate first (Step 1).
+
+Then add before the closing `</head>` tag, substituting the actual API key:
 
 ```html
-<meta name="x-ogp-key" content="USER_API_KEY_HERE" />
+<meta name="x-ogp-key" content="<USER_API_KEY>" />
 <script src="https://sdk.play.fun/latest"></script>
 ```
 
-**Important**: The `x-ogp-key` meta tag must contain the **user's API key** (not the game ID). This is required for SDK authentication.
+**Important**: The `x-ogp-key` meta tag must contain the **user's API key** (not the game ID). Do NOT leave the placeholder `USER_API_KEY_HERE` — always substitute the actual key extracted above.
 
 #### 4b. Create `src/playfun.js` integration module
 

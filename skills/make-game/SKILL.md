@@ -523,14 +523,24 @@ Save the returned **game UUID**.
 
 #### 7c. Add the Play.fun Browser SDK
 
-Add the SDK script and meta tag to `index.html` before `</head>`:
+First, extract the user's API key from stored credentials:
+
+```bash
+# Read API key from Claude config (stored by playfun-auth.js)
+API_KEY=$(cat ~/.claude.json | jq -r '.mcpServers["play-fun"].headers["x-api-key"]')
+echo "User API Key: $API_KEY"
+```
+
+If no API key is found, prompt the user to authenticate first.
+
+Then add the SDK script and meta tag to `index.html` before `</head>`, substituting the actual API key:
 
 ```html
-<meta name="x-ogp-key" content="USER_API_KEY_HERE" />
+<meta name="x-ogp-key" content="<USER_API_KEY>" />
 <script src="https://sdk.play.fun/latest"></script>
 ```
 
-**Important**: The `x-ogp-key` meta tag must contain the **user's Play.fun API key** (not the game ID). This is required for SDK authentication.
+**Important**: The `x-ogp-key` meta tag must contain the **user's Play.fun API key** (not the game ID). Do NOT leave the placeholder — always substitute the actual key extracted above.
 
 Create `src/playfun.js` that wires the game's EventBus to Play.fun points tracking:
 
