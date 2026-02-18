@@ -95,7 +95,7 @@ Read the game's `package.json` for the name and description. Read `src/core/Cons
 
 Use the Play.fun MCP `register_game` tool if available. Otherwise, use the API directly:
 
-Load the `playdotfun` skill for API reference. Register the game via `POST https://api.opengameprotocol.com/games` with:
+Load the `playdotfun` skill for API reference. Register the game via `POST https://api.play.fun/games` with:
 
 ```json
 {
@@ -127,13 +127,26 @@ Save the returned **game UUID** — you'll need it for the SDK integration.
 
 Integrate the SDK into the game. This is a lightweight addition — the SDK loads from CDN and provides a points widget overlay.
 
-#### 4a. Add the SDK script tag to `index.html`
+#### 4a. Add the SDK script and meta tag to `index.html`
 
-Add before the closing `</head>` tag:
+First, extract the user's API key from stored credentials:
+
+```bash
+# Read API key from Claude config (stored by playfun-auth.js)
+API_KEY=$(cat ~/.claude.json | jq -r '.mcpServers["play-fun"].headers["x-api-key"]')
+echo "User API Key: $API_KEY"
+```
+
+If no API key is found, prompt the user to authenticate first (Step 1).
+
+Then add before the closing `</head>` tag, substituting the actual API key:
 
 ```html
+<meta name="x-ogp-key" content="<USER_API_KEY>" />
 <script src="https://sdk.play.fun/latest"></script>
 ```
+
+**Important**: The `x-ogp-key` meta tag must contain the **user's API key** (not the game ID). Do NOT leave the placeholder `USER_API_KEY_HERE` — always substitute the actual key extracted above.
 
 #### 4b. Create `src/playfun.js` integration module
 
@@ -172,6 +185,7 @@ export async function initPlayFun() {
 
 function wireEvents() {
   // Award points on score changes
+  // addPoints() buffers points locally — call frequently during gameplay
   if (Events.SCORE_CHANGED) {
     eventBus.on(Events.SCORE_CHANGED, ({ score, delta }) => {
       if (sdk && initialized && delta > 0) {
@@ -181,22 +195,20 @@ function wireEvents() {
   }
 
   // Save points on game over
+  // savePoints() opens a BLOCKING MODAL — only call at natural break points:
+  // - Game over
+  // - Level complete
+  // - User returns to menu
+  // DO NOT call savePoints() during active gameplay or on a timer!
   if (Events.GAME_OVER) {
     eventBus.on(Events.GAME_OVER, () => {
       if (sdk && initialized) {
-        sdk.savePoints();
+        sdk.savePoints(); // Uses buffered points from addPoints() calls
       }
     });
   }
 
-  // Auto-save every 30 seconds
-  setInterval(() => {
-    if (sdk && initialized) {
-      sdk.savePoints();
-    }
-  }, 30000);
-
-  // Save on page unload
+  // Save on page unload (non-blocking, browser handles it)
   window.addEventListener('beforeunload', () => {
     if (sdk && initialized) {
       sdk.savePoints();
@@ -204,6 +216,15 @@ function wireEvents() {
   });
 }
 ```
+
+**Critical SDK behavior:**
+
+| Method | When to use | Behavior |
+|--------|-------------|----------|
+| `addPoints(n)` | During gameplay | Buffers points locally, non-blocking |
+| `savePoints()` | Game over / level end | **Opens blocking modal**, syncs buffered points to server |
+
+⚠️ **Do NOT call `savePoints()` on a timer or during active gameplay** — it interrupts the player with a modal dialog. Only call at natural pause points (game over, level transitions, menu screens).
 
 **Important**: Read the actual `EventBus.js` to find the correct event names. Common patterns:
 - `SCORE_CHANGED` / `score:changed` with `{ score, delta }` or `{ score }`
@@ -259,7 +280,7 @@ curl -s -o /dev/null -w "%{http_code}" "$GAME_URL"
 > - Points widget overlay (bottom-right corner)
 > - Leaderboard tracking
 > - Wallet connect for claiming rewards
-> - Auto-saves points every 30 seconds + on game over
+> - Points buffered during gameplay, saved on game over
 >
 > **Share on Moltbook**: Post your game URL to [moltbook.com](https://www.moltbook.com/) — 770K+ agents on the agent internet ready to play and upvote.
 >

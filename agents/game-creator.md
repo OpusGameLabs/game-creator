@@ -341,12 +341,12 @@ Launch a `Task` subagent:
 >
 > Integrate the Play.fun (OpenGameProtocol) browser SDK:
 >
-> 1. Add `<script src="https://sdk.play.fun/latest"></script>` to `index.html` before `</head>`
+> 1. Add `<meta name="x-ogp-key" content="USER_API_KEY_HERE" />` and `<script src="https://sdk.play.fun/latest"></script>` to `index.html` before `</head>` (the `x-ogp-key` meta tag must contain the user's Play.fun API key, not the game ID)
 > 2. Read `src/core/EventBus.js` to find the score and game over event names
 > 3. Create `src/playfun.js` that:
 >    - Initializes the SDK with `{ gameId: GAME_ID, ui: { usePointsWidget: true } }`
->    - Listens for score events and calls `sdk.addPoints(delta)`
->    - Calls `sdk.savePoints()` on game over, every 30 seconds, and on `beforeunload`
+>    - Listens for score events and calls `sdk.addPoints(delta)` — this buffers points locally (non-blocking)
+>    - Calls `sdk.savePoints()` **ONLY on game over and on `beforeunload`** — ⚠️ `savePoints()` opens a BLOCKING MODAL, never call it during active gameplay or on a timer!
 >    - Uses `typeof PlayFunSDK !== 'undefined' ? PlayFunSDK : OpenGameSDK` for class detection
 >    - Wraps everything in a `try/catch` so SDK failures don't break the game
 > 4. Import and call `initPlayFun()` in `src/main.js` (non-blocking, `.catch()` to swallow errors)
