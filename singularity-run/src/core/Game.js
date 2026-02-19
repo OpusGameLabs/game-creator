@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GAME, CAMERA, COLORS, RUNNER, COLLECTIBLE } from './Constants.js';
+import { GAME, CAMERA, COLORS, RUNNER, COLLECTIBLE, EFFECTS, OBSTACLE } from './Constants.js';
 import { eventBus, Events } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
@@ -7,6 +7,9 @@ import { Player } from '../gameplay/Player.js';
 import { ObstacleManager } from '../gameplay/ObstacleManager.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Menu } from '../ui/Menu.js';
+import { MatrixRain } from '../systems/MatrixRain.js';
+import { ParticleEffects } from '../systems/ParticleEffects.js';
+import { TrailEffect } from '../systems/TrailEffect.js';
 
 export class Game {
   constructor() {
@@ -37,8 +40,23 @@ export class Game {
     this.obstacles = new ObstacleManager(this.scene);
     this.player = null;
 
+    // Visual effects systems
+    this.matrixRain = new MatrixRain(this.scene);
+    this.particleEffects = new ParticleEffects(this.scene);
+    this.trailEffect = new TrailEffect(this.scene);
+
     // Score accumulator for fractional distance
     this._scoreAccumulator = 0;
+
+    // Death camera shake state
+    this._shakeTimer = 0;
+    this._shakeIntensity = 0;
+    this._cameraBasePos = new THREE.Vector3();
+
+    // Death slow-mo state
+    this._slowmoTimer = 0;
+    this._slowmoActive = false;
+    this._deathAnimDone = false;
 
     // Events
     eventBus.on(Events.GAME_RESTART, () => this.restart());
@@ -60,6 +78,11 @@ export class Game {
 
     this.player = new Player(this.scene);
     this._scoreAccumulator = 0;
+    this._shakeTimer = 0;
+    this._shakeIntensity = 0;
+    this._slowmoTimer = 0;
+    this._slowmoActive = false;
+    this._deathAnimDone = false;
     this.input.setGameActive(true);
 
     // Position camera behind player
@@ -78,13 +101,31 @@ export class Game {
     this.obstacles.clear();
     this.level.reset();
 
+    // Reset visual effects
+    this.matrixRain.reset();
+    this.particleEffects.reset();
+    this.trailEffect.reset();
+
     this.startGame();
   }
 
   animate() {
-    const delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
+    let delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
 
     this.input.update();
+
+    // Apply slow-mo during death sequence
+    if (this._slowmoActive) {
+      this._slowmoTimer -= delta;
+      if (this._slowmoTimer <= 0) {
+        this._slowmoActive = false;
+        this._deathAnimDone = true;
+      } else {
+        // Ease game speed down during slow-mo
+        const slowFactor = this._slowmoTimer / EFFECTS.DEATH_SLOWMO_DURATION;
+        delta *= slowFactor * 0.3; // Dramatically slow everything
+      }
+    }
 
     if (gameState.started && !gameState.gameOver && this.player) {
       // Increase speed over time
@@ -130,7 +171,14 @@ export class Game {
         const collected = this.obstacles.checkCollectibleCollision(playerBox);
         if (collected) {
           gameState.addScore(COLLECTIBLE.POINTS);
-          eventBus.emit(Events.COLLECTIBLE_PICKED, { points: COLLECTIBLE.POINTS });
+          eventBus.emit(Events.COLLECTIBLE_PICKED, {
+            points: COLLECTIBLE.POINTS,
+            position: {
+              x: collected.mesh.position.x,
+              y: collected.mesh.position.y,
+              z: collected.mesh.position.z,
+            },
+          });
           eventBus.emit(Events.SCORE_CHANGED, { score: gameState.score, delta: COLLECTIBLE.POINTS });
         }
       }
@@ -138,8 +186,48 @@ export class Game {
       // Update tunnel/level to follow player
       this.level.update(this.player.runZ);
 
+      // Obstacle warning glow: brighten obstacles as player approaches
+      this._updateObstacleWarning();
+
       // Update camera
       this._updateCamera(false);
+
+    } else if (this._slowmoActive && this.player) {
+      // During slow-mo after death, keep updating movement at reduced speed
+      const distance = gameState.currentSpeed * delta;
+      this.player.moveForward(distance);
+      this.level.update(this.player.runZ);
+      this._updateCamera(false);
+    }
+
+    // --- Always-running visual effects ---
+    const playerZ = this.player ? this.player.runZ : 0;
+
+    // Matrix rain runs always (background ambiance)
+    this.matrixRain.update(delta, playerZ);
+
+    // Particle effects (pickup bursts + speed lines)
+    this.particleEffects.update(
+      delta,
+      playerZ,
+      this.camera.position,
+      gameState.currentSpeed
+    );
+
+    // Trail effect
+    if (this.player) {
+      this.trailEffect.update(delta, this.player.mesh.position, gameState.gameOver);
+    }
+
+    // Camera shake (runs during death)
+    if (this._shakeTimer > 0) {
+      // Use real (unscaled) delta for shake so it runs at normal speed even during slow-mo
+      const realDelta = Math.min(this.clock.getDelta !== undefined ? 1 / 60 : delta, GAME.MAX_DELTA);
+      this._shakeTimer -= 1 / 60;
+      const shakeT = Math.max(0, this._shakeTimer / EFFECTS.DEATH_SHAKE_DURATION);
+      const intensity = this._shakeIntensity * shakeT;
+      this.camera.position.x += (Math.random() - 0.5) * intensity;
+      this.camera.position.y += (Math.random() - 0.5) * intensity * 0.5;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -169,9 +257,50 @@ export class Game {
     gameState.gameOver = true;
     this.input.setGameActive(false);
 
+    // Start death camera shake
+    this._shakeTimer = EFFECTS.DEATH_SHAKE_DURATION;
+    this._shakeIntensity = EFFECTS.DEATH_SHAKE_INTENSITY;
+
+    // Start slow-mo before fully stopping
+    this._slowmoActive = true;
+    this._slowmoTimer = EFFECTS.DEATH_SLOWMO_DURATION;
+
     eventBus.emit(Events.PLAYER_DIED);
     eventBus.emit(Events.MUSIC_STOP);
-    eventBus.emit(Events.GAME_OVER, { score: gameState.score });
+
+    // Delay the game over UI slightly to let the shake/slowmo play out
+    setTimeout(() => {
+      eventBus.emit(Events.GAME_OVER, { score: gameState.score });
+    }, (EFFECTS.DEATH_SHAKE_DURATION + EFFECTS.DEATH_SLOWMO_DURATION) * 500);
+  }
+
+  /** Make obstacles glow/pulse as player approaches */
+  _updateObstacleWarning() {
+    if (!this.player) return;
+    const playerZ = this.player.runZ;
+
+    // Since all obstacles share the same material, find the closest obstacle
+    // and set the shared material's emissive intensity based on proximity.
+    // This creates a global "danger approaching" pulse effect.
+    let closestDist = Infinity;
+    for (const obs of this.obstacles.obstacles) {
+      const dist = Math.abs(obs.z - playerZ);
+      if (dist < closestDist) {
+        closestDist = dist;
+      }
+    }
+
+    const obstacleMat = this.obstacles.getObstacleMaterial();
+    if (obstacleMat) {
+      if (closestDist < OBSTACLE.WARN_DISTANCE) {
+        const t = 1 - (closestDist / OBSTACLE.WARN_DISTANCE);
+        const baseIntensity = 0.3;
+        obstacleMat.emissiveIntensity =
+          baseIntensity + t * (OBSTACLE.WARN_GLOW_INTENSITY - baseIntensity);
+      } else {
+        obstacleMat.emissiveIntensity = 0.3;
+      }
+    }
   }
 
   onResize() {

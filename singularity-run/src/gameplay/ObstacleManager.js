@@ -104,6 +104,11 @@ export class ObstacleManager {
     return this.collectibles;
   }
 
+  /** Get the shared obstacle material (for warning glow effect) */
+  getObstacleMaterial() {
+    return this._obstacleMat;
+  }
+
   /** Check if a collectible intersects the given box. Returns removed collectible or null. */
   checkCollectibleCollision(playerBox) {
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
