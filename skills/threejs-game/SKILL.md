@@ -7,11 +7,13 @@ description: Build 3D browser games with Three.js using event-driven modular arc
 
 You are an expert Three.js game developer. Follow these opinionated patterns when building 3D browser games.
 
+> **Reference**: See `reference/llms.txt` (quick guide) and `reference/llms-full.txt` (full API + TSL) for official Three.js LLM documentation. Prefer patterns from those files when they conflict with this skill.
+
 ## Tech Stack
 
-- **Renderer**: Three.js (latest stable, ESM imports)
+- **Renderer**: Three.js (`three@0.183.0+`, ESM imports)
 - **Build Tool**: Vite
-- **Language**: TypeScript
+- **Language**: JavaScript (not TypeScript) for game templates — TypeScript optional
 - **Package Manager**: npm
 
 ## Project Setup
@@ -21,13 +23,13 @@ When scaffolding a new Three.js game:
 ```bash
 mkdir <game-name> && cd <game-name>
 npm init -y
-npm install three
-npm install -D vite typescript @types/three
+npm install three@^0.183.0
+npm install -D vite
 ```
 
-Create `vite.config.ts`:
+Create `vite.config.js`:
 
-```typescript
+```js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -38,23 +40,6 @@ export default defineConfig({
 });
 ```
 
-Create `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "dist"
-  },
-  "include": ["src"]
-}
-```
-
 Add to `package.json` scripts:
 
 ```json
@@ -62,11 +47,40 @@ Add to `package.json` scripts:
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   }
 }
 ```
+
+## Modern Import Patterns
+
+### Vite / npm (default — used in our templates)
+
+```js
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+```
+
+### Import Maps / CDN (standalone HTML games, no build step)
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.183.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+</script>
+```
+
+Use import maps when shipping a single HTML file with no build tooling. Pin the version in the import map URL.
 
 ## Required Architecture
 
@@ -75,22 +89,22 @@ Every Three.js game MUST use this directory structure:
 ```
 src/
 ├── core/
-│   ├── Game.ts          # Main orchestrator - init systems, render loop
-│   ├── EventBus.ts      # Singleton pub/sub for all module communication
-│   ├── GameState.ts     # Centralized state singleton
-│   └── Constants.ts     # ALL config values, balance numbers, asset paths
+│   ├── Game.js          # Main orchestrator - init systems, render loop
+│   ├── EventBus.js      # Singleton pub/sub for all module communication
+│   ├── GameState.js     # Centralized state singleton
+│   └── Constants.js     # ALL config values, balance numbers, asset paths
 ├── systems/             # Low-level engine systems
-│   ├── InputSystem.ts   # Keyboard/mouse/gamepad input
-│   ├── PhysicsSystem.ts # Collision detection
+│   ├── InputSystem.js   # Keyboard/mouse/gamepad input
+│   ├── PhysicsSystem.js # Collision detection
 │   └── ...              # Audio, particles, etc.
 ├── gameplay/            # Game mechanics
 │   └── ...              # Player, enemies, weapons, etc.
 ├── level/               # Level/world building
-│   ├── LevelBuilder.ts  # Constructs the game world
-│   └── AssetLoader.ts   # Loads models, textures, audio
+│   ├── LevelBuilder.js  # Constructs the game world
+│   └── AssetLoader.js   # Loads models, textures, audio
 ├── ui/                  # User interface
 │   └── ...              # Game over, overlays
-└── main.ts              # Entry point - creates Game instance
+└── main.js              # Entry point - creates Game instance
 ```
 
 ## Core Principles
@@ -105,27 +119,27 @@ src/
 
 ALL inter-module communication goes through an EventBus. Modules never import each other directly for communication.
 
-```typescript
-type EventCallback = (data?: any) => void;
-
+```js
 class EventBus {
-  private listeners = new Map<string, Set<EventCallback>>();
+  constructor() {
+    this.listeners = new Map();
+  }
 
-  on(event: string, callback: EventCallback): () => void {
+  on(event, callback) {
     if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event)!.add(callback);
+    this.listeners.get(event).add(callback);
     return () => this.off(event, callback);
   }
 
-  once(event: string, callback: EventCallback): void {
-    const wrapper: EventCallback = (...args) => {
+  once(event, callback) {
+    const wrapper = (...args) => {
       this.off(event, wrapper);
       callback(...args);
     };
     this.on(event, wrapper);
   }
 
-  off(event: string, callback: EventCallback): void {
+  off(event, callback) {
     const cbs = this.listeners.get(event);
     if (cbs) {
       cbs.delete(callback);
@@ -133,14 +147,14 @@ class EventBus {
     }
   }
 
-  emit(event: string, data?: unknown): void {
+  emit(event, data) {
     const cbs = this.listeners.get(event);
     if (cbs) cbs.forEach(cb => {
       try { cb(data); } catch (e) { console.error(`EventBus error [${event}]:`, e); }
     });
   }
 
-  clear(event?: string): void {
+  clear(event) {
     event ? this.listeners.delete(event) : this.listeners.clear();
   }
 }
@@ -150,40 +164,30 @@ export const eventBus = new EventBus();
 // Define ALL events as constants — use domain:action naming
 export const Events = {
   // Group by domain: player:*, enemy:*, game:*, ui:*, etc.
-} as const;
+};
 ```
 
 ### 2. Centralized GameState
 
 One singleton holds ALL game state. Systems read from it, events update it.
 
-```typescript
-import { PLAYER_CONFIG } from './Constants';
-
-interface PlayerState {
-  health: number;
-  score: number;
-}
-
-interface GameFlags {
-  started: boolean;
-  paused: boolean;
-  isPlaying: boolean;
-}
+```js
+import { PLAYER_CONFIG } from './Constants.js';
 
 class GameState {
-  player: PlayerState = {
-    health: PLAYER_CONFIG.HEALTH,
-    score: 0,
-  };
+  constructor() {
+    this.player = {
+      health: PLAYER_CONFIG.HEALTH,
+      score: 0,
+    };
+    this.game = {
+      started: false,
+      paused: false,
+      isPlaying: false,
+    };
+  }
 
-  game: GameFlags = {
-    started: false,
-    paused: false,
-    isPlaying: false,
-  };
-
-  reset(): void {
+  reset() {
     this.player.health = PLAYER_CONFIG.HEALTH;
     this.player.score = 0;
     this.game.started = false;
@@ -197,85 +201,81 @@ export const gameState = new GameState();
 
 ### 3. Constants File
 
-Every magic number, balance value, asset path, and configuration goes in `Constants.ts`. Never hardcode values in game logic.
+Every magic number, balance value, asset path, and configuration goes in `Constants.js`. Never hardcode values in game logic.
 
-```typescript
+```js
 export const PLAYER_CONFIG = {
   HEALTH: 100,
   SPEED: 5,
   JUMP_FORCE: 8,
-} as const;
+};
 
 export const ENEMY_CONFIG = {
   SPEED: 3,
   HEALTH: 50,
   SPAWN_RATE: 2000,
-} as const;
+};
 
 export const WORLD = {
   WIDTH: 100,
   HEIGHT: 50,
   GRAVITY: 9.8,
   FOG_DENSITY: 0.04,
-} as const;
+};
 
 export const CAMERA = {
   FOV: 75,
   NEAR: 0.01,
   FAR: 100,
-} as const;
+};
 
 export const COLORS = {
   AMBIENT: 0x404040,
   DIRECTIONAL: 0xffffff,
   FOG: 0x000000,
-} as const;
+};
 
 export const ASSET_PATHS = {
   // model paths, texture paths, etc.
-} as const;
+};
 ```
 
-### 4. Game.ts Orchestrator
+### 4. Game.js Orchestrator
 
-The Game class initializes everything and runs the render loop:
+The Game class initializes everything and runs the render loop. Uses `renderer.setAnimationLoop()` — the official Three.js pattern (handles WebGPU async correctly and pauses when the tab is hidden):
 
-```typescript
+```js
 import * as THREE from 'three';
-import { CAMERA, COLORS, WORLD } from './Constants';
+import { CAMERA, COLORS, WORLD } from './Constants.js';
 
 class Game {
-  private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
-  private renderer!: THREE.WebGLRenderer;
-  private clock = new THREE.Clock();
-
   constructor() {
+    this.clock = new THREE.Clock();
     this.init();
   }
 
-  private init(): void {
+  init() {
     this.setupRenderer();
     this.setupScene();
     this.setupCamera();
     this.setupSystems();
     this.setupUI();
     this.setupEventListeners();
-    this.animate();
+    this.renderer.setAnimationLoop(() => this.animate());
   }
 
-  private setupRenderer(): void {
+  setupRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       antialias: false,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('game-container')!.appendChild(this.renderer.domElement);
+    document.getElementById('game-container').appendChild(this.renderer.domElement);
     window.addEventListener('resize', () => this.onWindowResize());
   }
 
-  private setupScene(): void {
+  setupScene() {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(COLORS.FOG, WORLD.FOG_DENSITY);
 
@@ -285,7 +285,7 @@ class Game {
     this.scene.add(dirLight);
   }
 
-  private setupCamera(): void {
+  setupCamera() {
     this.camera = new THREE.PerspectiveCamera(
       CAMERA.FOV,
       window.innerWidth / window.innerHeight,
@@ -294,26 +294,25 @@ class Game {
     );
   }
 
-  private setupSystems(): void {
+  setupSystems() {
     // Initialize game systems
   }
 
-  private setupUI(): void {
+  setupUI() {
     // Initialize UI overlays
   }
 
-  private setupEventListeners(): void {
+  setupEventListeners() {
     // Subscribe to EventBus events
   }
 
-  private onWindowResize(): void {
+  onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  private animate(): void {
-    requestAnimationFrame(() => this.animate());
+  animate() {
     const delta = Math.min(this.clock.getDelta(), 0.1); // Cap delta to prevent spiral
     // Update all systems with delta
     this.renderer.render(this.scene, this.camera);
@@ -323,9 +322,66 @@ class Game {
 export default Game;
 ```
 
+## Renderer Selection
+
+### WebGLRenderer (default — use for all game templates)
+
+Maximum browser compatibility. Well-established, most examples and tutorials use this. Our templates default to WebGLRenderer.
+
+```js
+import * as THREE from 'three';
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+```
+
+### WebGPURenderer (when you need TSL or compute shaders)
+
+Required for custom node-based materials (TSL), compute shaders, and advanced rendering. Note: import path changes to `'three/webgpu'` and init is async.
+
+```js
+import * as THREE from 'three/webgpu';
+const renderer = new THREE.WebGPURenderer({ antialias: true });
+await renderer.init();
+```
+
+**When to pick WebGPU**: You need TSL custom shaders, compute shaders, or node-based materials. Otherwise, stick with WebGL.
+
+## TSL (Three.js Shading Language)
+
+TSL is Three.js's cross-backend shading language — write shader logic in JavaScript instead of raw GLSL/WGSL. Works with both WebGL and WebGPU backends.
+
+### Basic example
+
+```js
+import { texture, uv, color } from 'three/tsl';
+
+const material = new THREE.MeshStandardNodeMaterial();
+material.colorNode = texture(myTexture).mul(color(0xff0000));
+```
+
+### NodeMaterial classes (for TSL)
+
+Use node-based material variants when writing TSL shaders:
+
+- `MeshBasicNodeMaterial`
+- `MeshStandardNodeMaterial`
+- `MeshPhysicalNodeMaterial`
+- `LineBasicNodeMaterial`
+- `SpriteNodeMaterial`
+
+### When to use TSL
+
+- Custom animated materials (color cycling, vertex displacement)
+- Procedural textures (noise, patterns)
+- Compute shaders for particle systems or physics
+- Cross-backend compatibility (same code on WebGL and WebGPU)
+
+For the full TSL specification, functions, and node types, see `reference/llms-full.txt`.
+
 ## Performance Rules
 
+- **Use `renderer.setAnimationLoop()`** instead of manual `requestAnimationFrame`. It pauses when the tab is hidden and handles WebGPU async correctly.
 - **Cap delta time**: `Math.min(clock.getDelta(), 0.1)` to prevent death spirals
+- **Cap pixel ratio**: `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))` — avoids GPU overload on high-DPI screens
 - **Object pooling**: Reuse `Vector3`, `Box3`, temp objects in hot loops to minimize GC. Avoid per-frame allocations — preallocate and reuse.
 - **Disable shadows on first pass** — Only enable shadow maps when specifically needed and tested on mobile. Dynamic shadows are the single most expensive rendering feature.
 - **Keep draw calls low** — Fewer unique materials and geometries = fewer draw calls. Merge static geometry where possible. Use instanced meshes for repeated objects.
@@ -343,12 +399,12 @@ export default Game;
 - Use `THREE.TextureLoader`, `GLTFLoader` from `three/addons`
 - Show loading progress via callbacks to UI
 
-```typescript
+```js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
 
-function loadModel(path: string): Promise<THREE.Group> {
+function loadModel(path) {
   return new Promise((resolve, reject) => {
     loader.load(
       path,
@@ -376,14 +432,12 @@ All games MUST work on desktop AND mobile unless explicitly specified otherwise.
 
 Use a dedicated InputSystem that merges keyboard, gyroscope, and touch into a single analog interface. Game logic reads `moveX`/`moveZ` (-1..1) and never knows the source:
 
-```typescript
+```js
 class InputSystem {
-  private keys: Record<string, boolean> = {};
-  moveX = 0;  // -1..1
-  moveZ = 0;  // -1..1
-  isMobile: boolean;
-
   constructor() {
+    this.keys = {};
+    this.moveX = 0;  // -1..1
+    this.moveZ = 0;  // -1..1
     this.isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
       (navigator.maxTouchPoints > 1);
     document.addEventListener('keydown', (e) => { this.keys[e.code] = true; });
@@ -391,13 +445,13 @@ class InputSystem {
   }
 
   /** Call from a user gesture (e.g. PLAY button) to init gyro/joystick. */
-  async initMobile(): Promise<void> {
+  async initMobile() {
     // Request gyroscope permission (required on iOS 13+)
     // If denied/unavailable, show virtual joystick fallback
   }
 
   /** Call once per frame. Merges all sources into moveX/moveZ. */
-  update(): void {
+  update() {
     let mx = 0, mz = 0;
     // Keyboard (always active, acts as override)
     if (this.keys['ArrowLeft'] || this.keys['KeyA']) mx -= 1;
@@ -418,24 +472,26 @@ class InputSystem {
 
 For tilt-controlled games (marble, balance, racing):
 
-```typescript
+```js
 class GyroscopeInput {
-  available = false;
-  moveX = 0;
-  moveZ = 0;
-  private calibBeta: number | null = null;
-  private calibGamma: number | null = null;
+  constructor() {
+    this.available = false;
+    this.moveX = 0;
+    this.moveZ = 0;
+    this.calibBeta = null;
+    this.calibGamma = null;
+  }
 
-  async requestPermission(): Promise<boolean> {
+  async requestPermission() {
     // iOS 13+: DeviceOrientationEvent.requestPermission()
     // Must be called from a user gesture handler
   }
 
-  recalibrate(): void {
+  recalibrate() {
     // Capture current orientation as neutral position
   }
 
-  update(): void {
+  update() {
     // Apply deadzone, normalize to -1..1, smooth with EMA
   }
 }
@@ -445,20 +501,22 @@ class GyroscopeInput {
 
 DOM-based circle-in-circle touch joystick for non-gyro devices:
 
-```typescript
+```js
 class VirtualJoystick {
-  active = false;
-  moveX = 0;  // -1..1
-  moveZ = 0;  // -1..1
+  constructor() {
+    this.active = false;
+    this.moveX = 0;  // -1..1
+    this.moveZ = 0;  // -1..1
+  }
 
-  show(): void {
+  show() {
     // Create outer circle + inner knob DOM elements
     // Track touch by identifier to handle multi-touch correctly
     // Clamp knob movement to maxDistance from center
     // Normalize displacement to -1..1
   }
 
-  hide(): void { /* Remove DOM, reset values */ }
+  hide() { /* Remove DOM, reset values */ }
 }
 ```
 
@@ -472,10 +530,10 @@ class VirtualJoystick {
 ## When Adding Features
 
 1. Create a new module in the appropriate `src/` subdirectory
-2. Define new events in `EventBus.ts` Events enum using `domain:action` naming
-3. Add configuration to `Constants.ts`
-4. Add state to `GameState.ts` if needed
-5. Wire it up in `Game.ts` orchestrator
+2. Define new events in `EventBus.js` Events object using `domain:action` naming
+3. Add configuration to `Constants.js`
+4. Add state to `GameState.js` if needed
+5. Wire it up in `Game.js` orchestrator
 6. Communicate with other systems ONLY through EventBus
 
 ## Pre-Ship Validation Checklist

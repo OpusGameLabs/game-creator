@@ -119,7 +119,8 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| phaser | ^3.90.0 | 2D game engine |
+| phaser | ^3.90.0 | 2D game engine (Phaser template) |
+| three | ^0.183.0 | 3D game engine (Three.js template) |
 | @strudel/web | ^1.3.0 | Procedural audio (AGPL-3.0) |
 | @playwright/test | ^1.58.0 | Automated QA (dev) |
 | @axe-core/playwright | ^4.11.0 | Accessibility testing (dev) |

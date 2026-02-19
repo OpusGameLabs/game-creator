@@ -46,8 +46,8 @@ export class Game {
     // Auto-start game (no title screen — Play.fun handles the chrome)
     this.startGame();
 
-    // Start render loop
-    this.animate();
+    // Start render loop (official Three.js pattern — pauses when tab hidden)
+    this.renderer.setAnimationLoop(() => this.animate());
   }
 
   startGame() {
@@ -66,8 +66,6 @@ export class Game {
   }
 
   animate() {
-    requestAnimationFrame(() => this.animate());
-
     const delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
 
     this.input.update();
