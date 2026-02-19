@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Game Creator — The Game Studio for the Agent Internet</title>
-  <meta name="description" content="Your agent builds, tests, and ships browser games. One command. Works with OpenClaw and Claude Code. The game studio for the agent internet." />
+  <meta name="description" content="Your AI agent builds, tests, and ships browser games. One command. Works with 40+ AI coding agents. The game studio for the agent internet." />
   <meta property="og:title" content="Game Creator — The Game Studio for the Agent Internet" />
-  <meta property="og:description" content="Your agent builds browser games with one command. Works with OpenClaw and Claude Code." />
+  <meta property="og:description" content="Your AI agent builds browser games with one command. Works with 40+ AI coding agents." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Game Creator — The Game Studio for the Agent Internet" />
-  <meta name="twitter:description" content="Your agent builds browser games with one command. Share them on Moltbook." />
+  <meta name="twitter:description" content="Your AI agent builds browser games with one command. Share them on Moltbook." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -516,25 +516,41 @@
           </div>
 
           <div class="itabs">
-            <button class="itab active" onclick="pickInstall('h','openclaw')">OpenClaw</button>
+            <button class="itab active" onclick="pickInstall('h','all')">All Agents</button>
+            <button class="itab" onclick="pickInstall('h','antigravity')">Antigravity</button>
             <button class="itab" onclick="pickInstall('h','claude')">Claude Code</button>
+            <button class="itab" onclick="pickInstall('h','cursor')">Cursor</button>
           </div>
 
-          <!-- OpenClaw -->
-          <div class="ipanel active" id="ipanel-h-openclaw">
+          <div class="ipanel active" id="ipanel-h-all">
             <div class="copybox">
-              <div class="copybox-label">Send this to your agent</div>
-              <div class="copybox-text">install https://github.com/OpusGameLabs/game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, 'install https://github.com/OpusGameLabs/game-creator')">Copy</button>
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator')">Copy</button>
             </div>
           </div>
 
-          <!-- Claude Code -->
+          <div class="ipanel" id="ipanel-h-antigravity">
+            <div class="copybox">
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a antigravity</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a antigravity')">Copy</button>
+            </div>
+          </div>
+
           <div class="ipanel" id="ipanel-h-claude">
             <div class="copybox">
-              <div class="copybox-label">Send this to your agent</div>
-              <div class="copybox-text">/plugin marketplace add OpusGameLabs/game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, '/plugin marketplace add OpusGameLabs/game-creator')">Copy</button>
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a claude-code</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a claude-code')">Copy</button>
+            </div>
+          </div>
+
+          <div class="ipanel" id="ipanel-h-cursor">
+            <div class="copybox">
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a cursor</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a cursor')">Copy</button>
             </div>
           </div>
 
@@ -542,8 +558,8 @@
           <div class="steps">
             <div class="step">
               <div class="step-num">1</div>
-              <h4>Send this to your agent</h4>
-              <p>Copy the message above and paste it into your OpenClaw or Claude Code chat.</p>
+              <h4>Install the skill</h4>
+              <p>Run the command above. Works with 40+ AI coding agents including Antigravity, Claude Code, Cursor, Codex, and more.</p>
             </div>
             <div class="step">
               <div class="step-num">2</div>
@@ -570,25 +586,41 @@
           </div>
 
           <div class="itabs">
-            <button class="itab active" onclick="pickInstall('a','openclaw')">OpenClaw</button>
+            <button class="itab active" onclick="pickInstall('a','all')">All Agents</button>
+            <button class="itab" onclick="pickInstall('a','antigravity')">Antigravity</button>
             <button class="itab" onclick="pickInstall('a','claude')">Claude Code</button>
+            <button class="itab" onclick="pickInstall('a','cursor')">Cursor</button>
           </div>
 
-          <!-- OpenClaw -->
-          <div class="ipanel active" id="ipanel-a-openclaw">
+          <div class="ipanel active" id="ipanel-a-all">
             <div class="copybox">
-              <div class="copybox-label">Tell your agent</div>
-              <div class="copybox-text">install https://github.com/OpusGameLabs/game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, 'install https://github.com/OpusGameLabs/game-creator')">Copy</button>
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator')">Copy</button>
             </div>
           </div>
 
-          <!-- Claude Code -->
+          <div class="ipanel" id="ipanel-a-antigravity">
+            <div class="copybox">
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a antigravity</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a antigravity')">Copy</button>
+            </div>
+          </div>
+
           <div class="ipanel" id="ipanel-a-claude">
             <div class="copybox">
-              <div class="copybox-label">Run this command</div>
-              <div class="copybox-text">/plugin marketplace add OpusGameLabs/game-creator</div>
-              <button class="copybox-btn" onclick="copyText(this, '/plugin marketplace add OpusGameLabs/game-creator')">Copy</button>
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a claude-code</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a claude-code')">Copy</button>
+            </div>
+          </div>
+
+          <div class="ipanel" id="ipanel-a-cursor">
+            <div class="copybox">
+              <div class="copybox-label">Run in your terminal</div>
+              <div class="copybox-text">npx skills add OpusGameLabs/game-creator -a cursor</div>
+              <button class="copybox-btn" onclick="copyText(this, 'npx skills add OpusGameLabs/game-creator -a cursor')">Copy</button>
             </div>
           </div>
 
@@ -596,8 +628,8 @@
           <div class="steps">
             <div class="step">
               <div class="step-num">1</div>
-              <h4>Tell your agent the message above</h4>
-              <p>Installs 9 skills, 8 commands, and 4 autonomous agents into your environment.</p>
+              <h4>Install the skill</h4>
+              <p>Run the command above. Installs 9 skills, 8 commands, and 4 autonomous agents into your environment.</p>
             </div>
             <div class="step">
               <div class="step-num">2</div>
@@ -664,7 +696,7 @@
     <div class="section-title">Everything your agent needs to ship a game</div>
     <p class="section-desc">
       Nine skills, seven commands, and four autonomous agents.
-      Works with OpenClaw and Claude Code. Monetizes with Play.fun. QA built into every step.
+      Works with 40+ AI coding agents. Monetizes with Play.fun. QA built into every step.
     </p>
     <div class="features">
       <div class="feat">
@@ -786,8 +818,7 @@
     <div class="section-title">Production-grade foundations</div>
     <p class="section-desc">Batteries included. Every dependency configured and wired up automatically.</p>
     <div class="stack">
-      <div class="stack-item">OpenClaw <span class="dim">Agent Runtime</span></div>
-      <div class="stack-item">Claude Code <span class="dim">Plugin Host</span></div>
+      <div class="stack-item">40+ AI Agents <span class="dim">Supported</span></div>
       <div class="stack-item">Phaser 3 <span class="dim">2D Engine</span></div>
       <div class="stack-item">Three.js <span class="dim">3D Engine</span></div>
       <div class="stack-item">Strudel.cc <span class="dim">Audio</span></div>
@@ -802,7 +833,7 @@
   <div class="cta">
     <h2>Give your agent a game studio</h2>
     <p>One install. One command. Ship monetized games to the agent internet.</p>
-    <div class="cta-code">install https://github.com/OpusGameLabs/game-creator</div>
+    <div class="cta-code">npx skills add OpusGameLabs/game-creator</div>
     <br/><br/>
     <div class="hero-actions">
       <a class="btn btn-primary" href="#install">Get started</a>
@@ -813,7 +844,7 @@
   <!-- FOOTER -->
   <footer>
     Built by <a href="https://github.com/OpusGameLabs">OpusGameLabs</a> &middot;
-    Powered by <a href="https://openclaw.ai">OpenClaw</a> + <a href="https://claude.ai">Claude Code</a> &middot;
+    Works with <a href="https://skills.dev">40+ AI agents</a> &middot;
     <a href="https://www.moltbook.com/">Moltbook</a> &middot;
     <a href="https://github.com/OpusGameLabs/game-creator">Source</a>
   </footer>
