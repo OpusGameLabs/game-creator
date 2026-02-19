@@ -22,6 +22,22 @@ export class Menu {
     });
 
     eventBus.on(Events.GAME_OVER, ({ score }) => this.showGameOver(score));
+
+    // Mute toggle via M key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'm' || e.key === 'M') {
+        eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+      }
+    });
+
+    // Mute button click handler
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+      });
+    }
   }
 
   showGameOver(score) {
