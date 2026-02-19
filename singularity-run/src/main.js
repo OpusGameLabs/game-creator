@@ -1,8 +1,35 @@
 import { Game } from './core/Game.js';
 import { eventBus, Events } from './core/EventBus.js';
 import { gameState } from './core/GameState.js';
+import { initAudioBridge } from './audio/AudioBridge.js';
+
+// Load muted preference from localStorage
+try {
+  const savedMuted = localStorage.getItem('singularity-run-muted');
+  if (savedMuted === 'true') {
+    gameState.isMuted = true;
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      muteBtn.textContent = 'MUTED';
+      muteBtn.style.opacity = '0.3';
+    }
+  }
+} catch (e) { /* localStorage unavailable */ }
+
+// Initialize audio bridge before game so event listeners are ready
+initAudioBridge();
 
 const game = new Game();
+
+// Init audio on first user interaction (browser autoplay policy)
+function onFirstInteraction() {
+  eventBus.emit(Events.AUDIO_INIT);
+  eventBus.emit(Events.MUSIC_GAMEPLAY);
+  document.removeEventListener('click', onFirstInteraction);
+  document.removeEventListener('touchstart', onFirstInteraction);
+}
+document.addEventListener('click', onFirstInteraction);
+document.addEventListener('touchstart', onFirstInteraction);
 
 // Expose for Playwright testing
 window.__GAME__ = game;

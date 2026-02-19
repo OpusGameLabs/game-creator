@@ -89,10 +89,14 @@ export class Game {
     this._updateCamera(true);
 
     eventBus.emit(Events.GAME_START);
+    eventBus.emit(Events.MUSIC_GAMEPLAY);
     eventBus.emit(Events.SPEED_CHANGED, { speed: gameState.currentSpeed });
   }
 
   restart() {
+    // Stop any playing music before restarting
+    eventBus.emit(Events.MUSIC_STOP);
+
     // Clean up existing objects
     if (this.player) {
       this.player.destroy();
@@ -271,6 +275,7 @@ export class Game {
     // Delay the game over UI slightly to let the shake/slowmo play out
     setTimeout(() => {
       eventBus.emit(Events.GAME_OVER, { score: gameState.score });
+      eventBus.emit(Events.MUSIC_GAMEOVER);
     }, (EFFECTS.DEATH_SHAKE_DURATION + EFFECTS.DEATH_SLOWMO_DURATION) * 500);
   }
 

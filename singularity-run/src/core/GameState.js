@@ -11,7 +11,7 @@ class GameState {
     this.currentLane = 0; // -1, 0, 1
     this.currentSpeed = 0;
     this.distanceTraveled = 0;
-    this.isMuted = false;
+    this.isMuted = this.isMuted || false;
   }
 
   addScore(points = 1) {
