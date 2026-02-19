@@ -287,7 +287,7 @@ ground.lineBetween(0, groundY, width, groundY);
 
 ## Using Playwright MCP for Visual Inspection
 
-If the Playwright MCP is available (`claude mcp add playwright npx '@playwright/mcp@latest'`), use it for a real visual audit:
+If the Playwright MCP is available, use it for a real visual audit:
 
 1. **`browser_navigate`** to the game URL (e.g., `http://localhost:3000`)
 2. **`browser_take_screenshot`** — capture gameplay (game starts immediately, no title screen), check background, entities, atmosphere

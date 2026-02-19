@@ -132,7 +132,8 @@ Integrate the SDK into the game. This is a lightweight addition — the SDK load
 First, extract the user's API key from stored credentials:
 
 ```bash
-# Read API key from Claude config (stored by playfun-auth.js)
+# Read API key from agent config (stored by playfun-auth.js)
+# Example path for Claude Code — adapt for your agent
 API_KEY=$(cat ~/.claude.json | jq -r '.mcpServers["play-fun"].headers["x-api-key"]')
 echo "User API Key: $API_KEY"
 ```

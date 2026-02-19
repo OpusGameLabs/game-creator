@@ -463,13 +463,11 @@ test('bird falls after 1 second without input', async ({ page }) => {
 
 ## Playwright MCP — Interactive Visual QA
 
-In addition to automated tests, use the **Playwright MCP** for interactive visual inspection. This gives Claude direct browser control via a visible Chrome window.
+In addition to automated tests, use the **Playwright MCP** for interactive visual inspection. This gives your agent direct browser control via a visible Chrome window.
 
 ### Setup
 
-```bash
-claude mcp add playwright npx '@playwright/mcp@latest'
-```
+Add the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) to your agent's MCP configuration.
 
 ### When to Use MCP vs Automated Tests
 

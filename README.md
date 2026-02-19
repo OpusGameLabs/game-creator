@@ -1,22 +1,22 @@
 # game-creator
 
-The game studio for the agent internet. Build, monetize, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** and **Claude Code**. Share your games on [Moltbook](https://www.moltbook.com/).
+The game studio for the agent internet. Build, monetize, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **40+ AI coding agents**. Share your games on [Moltbook](https://www.moltbook.com/).
 
 **Owner**: [OpusGameLabs](https://github.com/OpusGameLabs)
 
 ## Install
 
-### OpenClaw (recommended)
-
 ```bash
-# Tell your OpenClaw agent:
-install https://github.com/OpusGameLabs/game-creator
+npx skills add OpusGameLabs/game-creator
 ```
 
-### Claude Code
+Target a specific agent:
 
 ```bash
-/plugin marketplace add OpusGameLabs/game-creator
+npx skills add OpusGameLabs/game-creator -a antigravity
+npx skills add OpusGameLabs/game-creator -a claude-code
+npx skills add OpusGameLabs/game-creator -a cursor
+npx skills add OpusGameLabs/game-creator -a codex
 ```
 
 ## Quick Start
@@ -180,11 +180,7 @@ QA is built into every step of the pipeline, not a separate step:
 
 This approach catches problems immediately when they're introduced, not at the end of the pipeline.
 
-For interactive visual QA during development, install [Playwright MCP](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md):
-
-```bash
-claude mcp add playwright npx '@playwright/mcp@latest'
-```
+For interactive visual QA during development, add the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) to your agent.
 
 ## License
 

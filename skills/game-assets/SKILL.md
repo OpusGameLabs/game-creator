@@ -14,7 +14,7 @@ Procedural circles and rectangles are fast to scaffold, but players can't tell a
 This approach:
 - **Zero external dependencies** — no image files, no downloads, no broken URLs
 - **Legitimate art style** — 16x16 and 32x32 pixel art is a real aesthetic (Celeste, Shovel Knight, Vampire Survivors itself)
-- **Unique per game** — Claude generates custom sprites matching each game's theme
+- **Unique per game** — your agent generates custom sprites matching each game's theme
 - **Drops into existing architecture** — replaces `fillCircle()` + `generateTexture()` in entity constructors
 - **Animation support** — multiple frames as separate matrices, wired to Phaser anims
 

@@ -155,7 +155,7 @@ Mark task 1 as `in_progress`.
 **Main thread — infrastructure setup:**
 
 1. Locate the plugin's template directory. Check these paths in order until found:
-   - `~/.claude/plugins/cache/local-plugins/game-creator/1.0.0/templates/`
+   - The agent's plugin cache (e.g. `~/.claude/plugins/cache/local-plugins/game-creator/1.0.0/templates/`)
    - The `templates/` directory relative to this plugin's install location
 2. Copy the entire template directory to the target project name:
    - 2D: copy `templates/phaser-2d/` → `<game-name>/`
@@ -529,7 +529,8 @@ Save the returned **game UUID**.
 First, extract the user's API key from stored credentials:
 
 ```bash
-# Read API key from Claude config (stored by playfun-auth.js)
+# Read API key from agent config (stored by playfun-auth.js)
+# Example path for Claude Code — adapt for your agent
 API_KEY=$(cat ~/.claude.json | jq -r '.mcpServers["play-fun"].headers["x-api-key"]')
 echo "User API Key: $API_KEY"
 ```

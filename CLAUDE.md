@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, deploying, and monetizing 2D (Phaser 3) and 3D (Three.js) browser games. QA (build, runtime, visual review, autofix) runs at every step. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **OpenClaw** (via ClawHub or manual install) and **Claude Code** (via plugin marketplace). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
+This is **game-creator**, the game studio for the agent internet. It provides skills, commands, and agents for scaffolding, designing, deploying, and monetizing 2D (Phaser 3) and 3D (Three.js) browser games. QA (build, runtime, visual review, autofix) runs at every step. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **40+ AI coding agents** (via `npx skills add`). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
 
 ## Repository Structure
 
@@ -132,7 +132,7 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 
 **Add a new command**: Create `commands/<name>.md` with YAML frontmatter (`description`, `argument-hint`, `allowed-tools`, `disable-model-invocation`). Body contains the prompt instructions.
 
-**Sync to plugin cache**: After editing skill/command files, copy to `~/.claude/plugins/cache/local-plugins/game-creator/1.0.0/`.
+**Sync to plugin cache**: After editing skill/command files, copy to your agent's plugin cache directory (e.g. `~/.claude/plugins/cache/local-plugins/game-creator/1.0.0/` for Claude Code).
 
 **Run the example**: `cd examples/flappy-bird && npm run dev` starts on port 3000.
 

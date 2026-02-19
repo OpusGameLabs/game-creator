@@ -4,7 +4,7 @@
     "name": "OpusGameLabs"
   },
   "metadata": {
-    "description": "The game studio for the agent internet. Build, monetize, and ship browser games. Phaser 2D, Three.js 3D, Play.fun monetization. Works with OpenClaw and Claude Code.",
+    "description": "The game studio for the agent internet. Build, monetize, and ship browser games. Phaser 2D, Three.js 3D, Play.fun monetization. Works with 40+ AI coding agents.",
     "version": "1.2.0"
   },
   "plugins": [
