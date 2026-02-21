@@ -104,12 +104,10 @@ tests/
 ### Audio integration
 
 Strudel audio requires user interaction to start (browser autoplay policy). The flow:
-1. MenuScene first tap → `AUDIO_INIT` event → `initStrudel()` called
-2. MenuScene first tap → `MUSIC_MENU` event → menu theme plays
-3. MenuScene second tap → `MUSIC_STOP` → transition to GameScene
-4. GameScene `startPlaying()` → `MUSIC_GAMEPLAY` → gameplay BGM
-5. Bird dies → `BIRD_DIED` (death SFX) + `MUSIC_STOP`
-6. GameOverScene create → `MUSIC_GAMEOVER` → somber theme
+1. GameScene first input → `AUDIO_INIT` event → `initStrudel()` called
+2. GameScene `startPlaying()` → `MUSIC_GAMEPLAY` → gameplay BGM
+3. Bird dies → `BIRD_DIED` (death SFX) + `MUSIC_STOP`
+4. GameOverScene create → `MUSIC_GAMEOVER` → somber theme
 
 SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners.
 

@@ -134,11 +134,11 @@ export class LevelCompleteScene extends Phaser.Scene {
     const hasNextLevel = gameState.currentLevel + 1 < LEVELS.length;
 
     if (hasNextLevel) {
-      const nextBtn = this.add.rectangle(cx - 80, cy + 110, 150, 44, COLORS.BUTTON, 0.9);
+      const nextBtn = this.add.rectangle(cx, cy + 110, 150, 44, COLORS.BUTTON, 0.9);
       nextBtn.setStrokeStyle(2, COLORS.BUTTON_HOVER);
       nextBtn.setInteractive({ useHandCursor: true });
 
-      const nextText = this.add.text(cx - 80, cy + 110, 'NEXT LEVEL', {
+      const nextText = this.add.text(cx, cy + 110, 'NEXT LEVEL', {
         fontSize: UI.FONT_SIZE_MEDIUM,
         fontFamily: UI.FONT_FAMILY,
         color: COLORS.UI_TEXT,
@@ -170,42 +170,6 @@ export class LevelCompleteScene extends Phaser.Scene {
       nextBtn.on('pointerdown', () => this.nextLevel());
     }
 
-    // Menu button with hover scale
-    const menuX = hasNextLevel ? cx + 80 : cx;
-    const menuBtn = this.add.rectangle(menuX, cy + 110, 140, 44, 0x555555, 0.9);
-    menuBtn.setStrokeStyle(2, 0x777777);
-    menuBtn.setInteractive({ useHandCursor: true });
-
-    const menuText = this.add.text(menuX, cy + 110, 'MENU', {
-      fontSize: UI.FONT_SIZE_LARGE,
-      fontFamily: UI.FONT_FAMILY,
-      color: COLORS.UI_TEXT,
-      fontStyle: 'bold',
-      stroke: EFFECTS.TEXT_STROKE_COLOR,
-      strokeThickness: EFFECTS.TEXT_STROKE_THICKNESS,
-    }).setOrigin(0.5);
-
-    menuBtn.on('pointerover', () => {
-      menuBtn.setFillStyle(0x777777, 1);
-      this.tweens.add({
-        targets: [menuBtn, menuText],
-        scaleX: EFFECTS.BUTTON_HOVER_SCALE,
-        scaleY: EFFECTS.BUTTON_HOVER_SCALE,
-        duration: EFFECTS.BUTTON_HOVER_DURATION,
-        ease: 'Quad.easeOut',
-      });
-    });
-    menuBtn.on('pointerout', () => {
-      menuBtn.setFillStyle(0x555555, 0.9);
-      this.tweens.add({
-        targets: [menuBtn, menuText],
-        scaleX: 1,
-        scaleY: 1,
-        duration: EFFECTS.BUTTON_HOVER_DURATION,
-        ease: 'Quad.easeOut',
-      });
-    });
-    menuBtn.on('pointerdown', () => this.goToMenu());
 
     // Confetti celebration effect
     this.createCelebration();
@@ -291,13 +255,4 @@ export class LevelCompleteScene extends Phaser.Scene {
     });
   }
 
-  goToMenu() {
-    eventBus.emit(Events.MUSIC_STOP);
-    eventBus.emit(Events.GAME_RESTART);
-    this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0, (camera, progress) => {
-      if (progress === 1) {
-        this.scene.start('MenuScene');
-      }
-    });
-  }
 }

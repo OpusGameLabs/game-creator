@@ -42,6 +42,11 @@ export class GameScene extends Phaser.Scene {
     // Particle system (visual effects driven by EventBus)
     this.particleSystem = new ParticleSystem(this);
 
+    // Init audio on first user interaction (browser autoplay policy)
+    this.input.once('pointerdown', () => {
+      eventBus.emit(Events.AUDIO_INIT);
+    });
+
     // Game state
     gameState.started = true;
 

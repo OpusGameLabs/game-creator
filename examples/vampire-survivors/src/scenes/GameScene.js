@@ -23,6 +23,14 @@ export class GameScene extends Phaser.Scene {
     this.xpGems = [];
     this.levelingUp = false;
 
+    // Init audio on first user interaction (browser autoplay policy)
+    this.input.once('pointerdown', () => {
+      eventBus.emit(Events.AUDIO_INIT);
+    });
+    this.input.keyboard.once('keydown', () => {
+      eventBus.emit(Events.AUDIO_INIT);
+    });
+
     // World bounds
     this.physics.world.setBounds(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
 

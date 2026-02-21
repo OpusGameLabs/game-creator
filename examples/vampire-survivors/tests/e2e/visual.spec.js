@@ -1,10 +1,9 @@
 import { test, expect, startPlaying } from '../fixtures/game-test.js';
 
 test.describe('Vampire Survivors — Visual Regression', () => {
-  test('menu scene screenshot', async ({ page }) => {
-    // Wait for menu particles to settle
+  test('initial gameplay screenshot', async ({ page }) => {
     await page.waitForTimeout(1000);
-    await expect(page).toHaveScreenshot('menu-scene.png', {
+    await expect(page).toHaveScreenshot('initial-gameplay.png', {
       maxDiffPixels: 3000,
     });
   });
