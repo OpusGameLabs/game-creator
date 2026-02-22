@@ -14,13 +14,7 @@ export const test = base.extend({
 });
 
 export async function startPlaying(page) {
-  // First tap: init audio (or skip to game if audio already inited)
-  await page.keyboard.press('Space');
-  await page.waitForTimeout(200);
-  // Second tap: start game from menu
-  await page.keyboard.press('Space');
-  await page.waitForTimeout(200);
-  // Third tap: start playing from GET READY state
+  // First tap: dismiss GET READY and start playing (also inits audio)
   await page.keyboard.press('Space');
   await page.waitForTimeout(300);
 }

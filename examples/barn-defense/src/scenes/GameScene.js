@@ -42,6 +42,12 @@ export class GameScene extends Phaser.Scene {
     // Particle system (visual effects driven by EventBus)
     this.particleSystem = new ParticleSystem(this);
 
+    // Init audio on first user interaction (browser autoplay policy)
+    this.input.once('pointerdown', () => {
+      eventBus.emit(Events.AUDIO_INIT);
+      eventBus.emit(Events.MUSIC_GAMEPLAY);
+    });
+
     // Game state
     gameState.started = true;
 
@@ -71,9 +77,6 @@ export class GameScene extends Phaser.Scene {
 
     // Fade in
     this.cameras.main.fadeIn(TRANSITION.FADE_DURATION);
-
-    // Start gameplay BGM
-    eventBus.emit(Events.MUSIC_GAMEPLAY);
 
     // Screen flash + shake on barn hit (uses EFFECTS constants)
     this.onBarnHit = () => {

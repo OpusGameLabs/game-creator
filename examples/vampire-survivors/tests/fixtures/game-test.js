@@ -14,11 +14,7 @@ export const test = base.extend({
 });
 
 export async function startPlaying(page) {
-  // First tap — audio init
-  await page.click('canvas');
-  await page.waitForTimeout(300);
-  // Second tap — start game
-  await page.click('canvas');
+  // Game boots directly into gameplay — just wait for scene to be ready
   await page.waitForTimeout(500);
 }
 

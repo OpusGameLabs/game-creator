@@ -1,7 +1,7 @@
 // =============================================================================
 // Barn Defense - BootScene
 // Boots the game, generates pixel art textures programmatically, then
-// transitions to menu.
+// transitions directly to gameplay.
 // =============================================================================
 
 import Phaser from 'phaser';
@@ -10,6 +10,7 @@ import { ENEMY_SPRITES } from '../sprites/enemies.js';
 import { TOWER_SPRITES } from '../sprites/towers.js';
 import { PROJECTILE_SPRITES } from '../sprites/projectiles.js';
 import { TILE_SPRITES, DECORATION_SPRITES } from '../sprites/tiles.js';
+import { gameState } from '../core/GameState.js';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -59,7 +60,9 @@ export class BootScene extends Phaser.Scene {
       }
     }
 
-    // Transition to menu
-    this.scene.start('MenuScene');
+    // Boot directly into gameplay
+    gameState.setLevel(0);
+    this.scene.start('GameScene');
+    this.scene.launch('UIScene');
   }
 }

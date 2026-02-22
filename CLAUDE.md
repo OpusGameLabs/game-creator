@@ -97,19 +97,17 @@ tests/
   fixtures/game-test.js      # Custom fixture: waits for boot, provides startPlaying()
   helpers/seed-random.js     # Mulberry32 seeded PRNG for deterministic tests
   e2e/game.spec.js           # 10 tests: boot, scenes, input, scoring, restart
-  e2e/visual.spec.js         # 2 tests: menu + game over screenshots (3000px tolerance)
+  e2e/visual.spec.js         # 2 tests: initial gameplay + game over screenshots (3000px tolerance)
   e2e/perf.spec.js           # 3 tests: load time, FPS, canvas dimensions
 ```
 
 ### Audio integration
 
 Strudel audio requires user interaction to start (browser autoplay policy). The flow:
-1. MenuScene first tap → `AUDIO_INIT` event → `initStrudel()` called
-2. MenuScene first tap → `MUSIC_MENU` event → menu theme plays
-3. MenuScene second tap → `MUSIC_STOP` → transition to GameScene
-4. GameScene `startPlaying()` → `MUSIC_GAMEPLAY` → gameplay BGM
-5. Bird dies → `BIRD_DIED` (death SFX) + `MUSIC_STOP`
-6. GameOverScene create → `MUSIC_GAMEOVER` → somber theme
+1. GameScene first input → `AUDIO_INIT` event → `initStrudel()` called
+2. GameScene `startPlaying()` → `MUSIC_GAMEPLAY` → gameplay BGM
+3. Bird dies → `BIRD_DIED` (death SFX) + `MUSIC_STOP`
+4. GameOverScene create → `MUSIC_GAMEOVER` → somber theme
 
 SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners.
 

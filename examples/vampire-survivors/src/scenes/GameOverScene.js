@@ -89,7 +89,8 @@ export class GameOverScene extends Phaser.Scene {
   restartGame() {
     eventBus.emit(Events.MUSIC_STOP);
     eventBus.emit(Events.GAME_RESTART);
-    this.scene.start('MenuScene');
+    this.scene.start('GameScene');
+    this.scene.launch('UIScene');
   }
 }
 

@@ -7,27 +7,24 @@ test.describe('Flappy Bird — Game Tests', () => {
     await expect(canvas).toBeVisible();
   });
 
-  test('starts on MenuScene', async ({ gamePage: page }) => {
+  test('starts on GameScene', async ({ gamePage: page }) => {
     const sceneKey = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.getScenes(true);
       return scenes[0]?.scene?.key;
     });
-    expect(sceneKey).toBe('MenuScene');
+    expect(sceneKey).toBe('GameScene');
   });
 
-  test('transitions to GameScene on input', async ({ gamePage: page }) => {
-    // First tap: audio init
-    await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
-    // Second tap: start game
+  test('starts playing on first input', async ({ gamePage: page }) => {
     await page.keyboard.press('Space');
     await page.waitForTimeout(500);
 
-    const sceneKey = await page.evaluate(() => {
-      const scenes = window.__GAME__.scene.getScenes(true);
-      return scenes.map(s => s.scene.key);
-    });
-    expect(sceneKey).toContain('GameScene');
+    const state = await page.evaluate(() => ({
+      started: window.__GAME_STATE__.started,
+      gameOver: window.__GAME_STATE__.gameOver,
+    }));
+    expect(state.started).toBe(true);
+    expect(state.gameOver).toBe(false);
   });
 
   test('GameScene shows GET READY before first input', async ({ gamePage: page }) => {
@@ -117,7 +114,7 @@ test.describe('Flappy Bird — Game Tests', () => {
     expect(sceneKeys).toContain('GameOverScene');
   });
 
-  test('restart returns to MenuScene', async ({ gamePage: page }) => {
+  test('restart returns to GameScene', async ({ gamePage: page }) => {
     await startPlaying(page);
 
     await page.evaluate(() => {
@@ -134,7 +131,7 @@ test.describe('Flappy Bird — Game Tests', () => {
       const scenes = window.__GAME__.scene.getScenes(true);
       return scenes.map(s => s.scene.key);
     });
-    expect(sceneKeys).toContain('MenuScene');
+    expect(sceneKeys).toContain('GameScene');
   });
 
   test('best score persists across restarts', async ({ gamePage: page }) => {

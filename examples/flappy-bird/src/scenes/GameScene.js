@@ -11,11 +11,13 @@ import { ParticleSystem } from '../systems/Particles.js';
 export class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
+    this.audioInitialized = false;
   }
 
   create() {
     gameState.reset();
     this.playing = false;
+    this.audioInitialized = false;
 
     // Background (sky, clouds, ground)
     this.background = new Background(this);
@@ -110,6 +112,11 @@ export class GameScene extends Phaser.Scene {
 
   handleInput() {
     if (gameState.gameOver) return;
+
+    if (!this.audioInitialized) {
+      this.audioInitialized = true;
+      eventBus.emit(Events.AUDIO_INIT);
+    }
 
     if (!this.playing) {
       this.startPlaying();
