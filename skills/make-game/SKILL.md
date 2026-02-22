@@ -326,6 +326,12 @@ Launch a `Task` subagent with these instructions:
 > - How the player wins
 > - How the player loses
 > - Confirm both outcomes are realistically achievable with the current Constants.js values
+> ## Entity Interactions
+> For each visible entity (enemies, projectiles, collectibles, environmental objects):
+> - **Name**: what it is
+> - **Behavior**: what it does (moves, falls, spawns, etc.)
+> - **Player interaction**: how the player interacts with it (dodge, collect, tap, block, or "none — background/decoration")
+> - **AI/opponent interaction**: how the opponent interacts with it, if applicable
 > ```
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.

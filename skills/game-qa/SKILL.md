@@ -476,6 +476,24 @@ test('player wins with active input', async ({ gamePage }) => {
 
 Adapt field names (`result`, `opponentScore`, constant names) to match the specific game's GameState and Constants. The patterns above are templates — read the actual game code to determine the correct fields and thresholds.
 
+### 6. Entity Interaction Audit
+
+Audit collision and interaction logic for asymmetries. A first-time player
+expects consistent rules: if visible objects interact with some entities, they
+expect them to interact with all relevant entities.
+
+**What to check**: Read all collision handlers in GameScene.js. Map
+entity→entity interactions. Flag any visible moving entity that interacts with
+one side but not the other.
+
+**Using design-brief.md**: If an "Entity Interactions" section exists, verify
+each documented interaction matches the code. Flag any entity documented as
+"no player interaction" that isn't clearly background/decoration.
+
+**Output**: Add `// QA FLAG: asymmetric interaction` comments in game.spec.js
+for any flagged entity. This is informational — the flag surfaces the issue
+for human review, it doesn't fail the test suite.
+
 ## When Adding QA to a Game
 
 1. Install Playwright: `npm install -D @playwright/test @axe-core/playwright && npx playwright install chromium`
