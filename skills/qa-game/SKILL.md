@@ -24,6 +24,7 @@ First, load the game-qa skill to get the full testing patterns and fixtures.
 - Read `src/core/EventBus.js` to understand what events exist
 - Read `src/core/Constants.js` to understand game parameters (rates, speeds, durations, max values)
 - Read all scene files to understand the game flow
+- Read `design-brief.md` if it exists — it documents expected mechanics, magnitudes, and win/lose reachability
 
 ### Step 2: Setup Playwright
 
@@ -59,17 +60,28 @@ Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()`
 Add a `test.describe('Design Intent')` block to game.spec.js. These tests catch
 mechanics that technically exist but are too weak to matter.
 
-1. **Lose condition**: If the game has a fail/lose state, test that the player
-   can actually LOSE. Start the game, provide NO input, let it run to completion
-   (use `page.waitForFunction` with the round duration from Constants.js).
-   Assert the outcome is a loss — not a win. If a player wins by doing nothing,
-   the game has no challenge.
+1. **Lose condition**: Detect deterministically whether the game has a lose state.
+   Read `GameState.js` — if it has a `won`, `result`, or similar boolean/enum
+   field, the game distinguishes win from loss. Also check `render_game_to_text()`
+   in `main.js` — if it returns distinct outcome modes (e.g., `'win'` vs
+   `'game_over'`), the game has a lose state.
+
+   If a lose state exists: start the game, provide NO input, let it run to
+   completion (use `page.waitForFunction` with the round duration from
+   Constants.js). Assert the outcome is the losing one (e.g., `won === false`,
+   `mode === 'game_over'`).
+
+   **This assertion is non-negotiable.** Do NOT write a test that passes when the
+   player wins by doing nothing. If the current game behavior is "player wins
+   with no input," that is a bug — write the test to catch it.
 
 2. **Opponent/AI pressure**: If an AI-driven mechanic exists (auto-climbing bar,
    enemy spawning, difficulty ramp), test that it produces substantial state
    changes. Run the game for half its duration without player input. Assert the
-   opponent's state reaches at least 25% of its maximum. Use Constants.js values
-   to calculate expected magnitude.
+   opponent's state reaches at least 25% of its maximum. If `design-brief.md`
+   exists, use its expected magnitudes for thresholds. Otherwise, derive from
+   Constants.js: calculate `rate * duration` and assert it reaches meaningful
+   levels.
 
 3. **Win condition**: Test that active player input leads to a win. Provide rapid
    input throughout the round and assert the outcome is a win.

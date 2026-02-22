@@ -312,6 +312,22 @@ Launch a `Task` subagent with these instructions:
 > ]
 > ```
 >
+> Before returning, write `<project-dir>/design-brief.md`:
+> ```
+> # Design Brief
+> ## Concept
+> One-line game concept.
+> ## Core Mechanics
+> For each mechanic:
+> - **Name**: what it does
+> - **State field**: which GameState field it affects
+> - **Expected magnitude**: how much/fast it should change (e.g., "reaches 50-70% of max within the round duration without player input")
+> ## Win/Lose Conditions
+> - How the player wins
+> - How the player loses
+> - Confirm both outcomes are realistically achievable with the current Constants.js values
+> ```
+>
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 
 **After subagent returns**, run the Verification Protocol.

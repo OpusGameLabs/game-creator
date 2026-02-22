@@ -402,6 +402,12 @@ test('render_game_to_text returns valid game state', async ({ gamePage }) => {
 
 Tests that catch mechanics which technically exist but are too weak to affect gameplay. These use values from `Constants.js` to set meaningful thresholds instead of trivial `> 0` checks.
 
+**Detecting win/lose state**: Read `GameState.js` for `won`, `result`, or similar boolean/enum fields. Check `render_game_to_text()` in `main.js` for distinct outcome modes (`'win'` vs `'game_over'`). If either exists, the game has a lose state — write lose-condition tests.
+
+**Using design-brief.md**: If `design-brief.md` exists in the project root, read it for expected magnitudes, rates, and win/lose reachability. Use these values to set test thresholds instead of deriving from Constants.js alone.
+
+**Non-negotiable assertion**: The no-input lose test must assert the losing outcome. Never write a passing test for a no-input win — if the player wins by doing nothing, that is a bug, and the test exists to catch it.
+
 **Lose condition** — verify the player can actually lose:
 
 ```js
