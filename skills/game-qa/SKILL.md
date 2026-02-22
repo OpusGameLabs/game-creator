@@ -398,6 +398,78 @@ test('render_game_to_text returns valid game state', async ({ gamePage }) => {
 });
 ```
 
+### 5. Design Intent
+
+Tests that catch mechanics which technically exist but are too weak to affect gameplay. These use values from `Constants.js` to set meaningful thresholds instead of trivial `> 0` checks.
+
+**Lose condition** — verify the player can actually lose:
+
+```js
+test('player loses when providing no input', async ({ gamePage }) => {
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started);
+
+  await gamePage.waitForFunction(
+    () => window.__GAME_STATE__.gameOver,
+    null,
+    { timeout: 45000 }
+  );
+
+  const result = await gamePage.evaluate(() => window.__GAME_STATE__.result);
+  expect(result).toBe('lose');
+});
+```
+
+**Opponent/AI pressure** — verify AI mechanics produce substantial state changes:
+
+```js
+test('opponent reaches 25% within half the round duration', async ({ gamePage }) => {
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started);
+
+  const { halfDuration, maxValue } = await gamePage.evaluate(() => {
+    return {
+      halfDuration: window.Constants?.ROUND_DURATION_MS / 2 || 15000,
+      maxValue: window.Constants?.MAX_VALUATION || 100,
+    };
+  });
+
+  await gamePage.waitForTimeout(halfDuration);
+
+  const opponentValue = await gamePage.evaluate(() => {
+    return window.__GAME_STATE__.opponentScore;
+  });
+
+  expect(opponentValue).toBeGreaterThanOrEqual(maxValue * 0.25);
+});
+```
+
+**Win condition** — verify active input leads to a win:
+
+```js
+test('player wins with active input', async ({ gamePage }) => {
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started);
+
+  const inputInterval = setInterval(async () => {
+    await gamePage.keyboard.press('Space').catch(() => {});
+  }, 100);
+
+  await gamePage.waitForFunction(
+    () => window.__GAME_STATE__.gameOver,
+    null,
+    { timeout: 45000 }
+  );
+
+  clearInterval(inputInterval);
+
+  const result = await gamePage.evaluate(() => window.__GAME_STATE__.result);
+  expect(result).toBe('win');
+});
+```
+
+Adapt field names (`result`, `opponentScore`, constant names) to match the specific game's GameState and Constants. The patterns above are templates — read the actual game code to determine the correct fields and thresholds.
+
 ## When Adding QA to a Game
 
 1. Install Playwright: `npm install -D @playwright/test @axe-core/playwright && npx playwright install chromium`

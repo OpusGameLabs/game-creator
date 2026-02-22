@@ -22,6 +22,7 @@ First, load the game-qa skill to get the full testing patterns and fixtures.
 - Read `src/main.js` to check if `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` are exposed
 - Read `src/core/GameState.js` to understand what state is available
 - Read `src/core/EventBus.js` to understand what events exist
+- Read `src/core/Constants.js` to understand game parameters (rates, speeds, durations, max values)
 - Read all scene files to understand the game flow
 
 ### Step 2: Setup Playwright
@@ -53,14 +54,34 @@ Write tests based on what the game actually does:
 
 Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()` to read game state. Use `page.keyboard.press()` for input.
 
-### Step 4: Run and verify
+### Step 4: Design-intent tests
+
+Add a `test.describe('Design Intent')` block to game.spec.js. These tests catch
+mechanics that technically exist but are too weak to matter.
+
+1. **Lose condition**: If the game has a fail/lose state, test that the player
+   can actually LOSE. Start the game, provide NO input, let it run to completion
+   (use `page.waitForFunction` with the round duration from Constants.js).
+   Assert the outcome is a loss — not a win. If a player wins by doing nothing,
+   the game has no challenge.
+
+2. **Opponent/AI pressure**: If an AI-driven mechanic exists (auto-climbing bar,
+   enemy spawning, difficulty ramp), test that it produces substantial state
+   changes. Run the game for half its duration without player input. Assert the
+   opponent's state reaches at least 25% of its maximum. Use Constants.js values
+   to calculate expected magnitude.
+
+3. **Win condition**: Test that active player input leads to a win. Provide rapid
+   input throughout the round and assert the outcome is a win.
+
+### Step 5: Run and verify
 
 1. Run `npx playwright test` to execute all tests
 2. If visual tests fail on first run, that's expected — generate baselines with `npx playwright test --update-snapshots`
 3. Run again to verify all tests pass
 4. Summarize results
 
-### Step 5: Report
+### Step 6: Report
 
 Tell the user in plain English:
 
