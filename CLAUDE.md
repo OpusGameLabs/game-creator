@@ -97,7 +97,7 @@ tests/
   fixtures/game-test.js      # Custom fixture: waits for boot, provides startPlaying()
   helpers/seed-random.js     # Mulberry32 seeded PRNG for deterministic tests
   e2e/game.spec.js           # 10 tests: boot, scenes, input, scoring, restart
-  e2e/visual.spec.js         # 2 tests: menu + game over screenshots (3000px tolerance)
+  e2e/visual.spec.js         # 2 tests: initial gameplay + game over screenshots (3000px tolerance)
   e2e/perf.spec.js           # 3 tests: load time, FPS, canvas dimensions
 ```
 

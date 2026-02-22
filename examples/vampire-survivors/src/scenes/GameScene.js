@@ -24,12 +24,15 @@ export class GameScene extends Phaser.Scene {
     this.levelingUp = false;
 
     // Init audio on first user interaction (browser autoplay policy)
-    this.input.once('pointerdown', () => {
+    this.audioInitialized = false;
+    const initAudio = () => {
+      if (this.audioInitialized) return;
+      this.audioInitialized = true;
       eventBus.emit(Events.AUDIO_INIT);
-    });
-    this.input.keyboard.once('keydown', () => {
-      eventBus.emit(Events.AUDIO_INIT);
-    });
+      eventBus.emit(Events.MUSIC_GAMEPLAY);
+    };
+    this.input.once('pointerdown', initAudio);
+    this.input.keyboard.once('keydown', initAudio);
 
     // World bounds
     this.physics.world.setBounds(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
@@ -63,8 +66,7 @@ export class GameScene extends Phaser.Scene {
     };
     eventBus.on(Events.ENEMY_KILLED, this.onEnemyKilled);
 
-    // Music
-    eventBus.emit(Events.MUSIC_GAMEPLAY);
+    // Music starts after first user interaction (see initAudio above)
   }
 
   drawArena() {

@@ -168,8 +168,42 @@ export class LevelCompleteScene extends Phaser.Scene {
         });
       });
       nextBtn.on('pointerdown', () => this.nextLevel());
-    }
+    } else {
+      const againBtn = this.add.rectangle(cx, cy + 110, 150, 44, COLORS.BUTTON, 0.9);
+      againBtn.setStrokeStyle(2, COLORS.BUTTON_HOVER);
+      againBtn.setInteractive({ useHandCursor: true });
 
+      const againText = this.add.text(cx, cy + 110, 'PLAY AGAIN', {
+        fontSize: UI.FONT_SIZE_MEDIUM,
+        fontFamily: UI.FONT_FAMILY,
+        color: COLORS.UI_TEXT,
+        fontStyle: 'bold',
+        stroke: EFFECTS.TEXT_STROKE_COLOR,
+        strokeThickness: EFFECTS.TEXT_STROKE_THICKNESS,
+      }).setOrigin(0.5);
+
+      againBtn.on('pointerover', () => {
+        againBtn.setFillStyle(COLORS.BUTTON_HOVER, 1);
+        this.tweens.add({
+          targets: [againBtn, againText],
+          scaleX: EFFECTS.BUTTON_HOVER_SCALE,
+          scaleY: EFFECTS.BUTTON_HOVER_SCALE,
+          duration: EFFECTS.BUTTON_HOVER_DURATION,
+          ease: 'Quad.easeOut',
+        });
+      });
+      againBtn.on('pointerout', () => {
+        againBtn.setFillStyle(COLORS.BUTTON, 0.9);
+        this.tweens.add({
+          targets: [againBtn, againText],
+          scaleX: 1,
+          scaleY: 1,
+          duration: EFFECTS.BUTTON_HOVER_DURATION,
+          ease: 'Quad.easeOut',
+        });
+      });
+      againBtn.on('pointerdown', () => this.restartGame());
+    }
 
     // Confetti celebration effect
     this.createCelebration();
@@ -246,6 +280,19 @@ export class LevelCompleteScene extends Phaser.Scene {
     gameState.setLevel(nextLevelIndex);
     eventBus.emit(Events.LEVEL_SELECT, { level: nextLevelIndex });
     eventBus.emit(Events.GAME_START);
+
+    this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0, (camera, progress) => {
+      if (progress === 1) {
+        this.scene.start('GameScene');
+        this.scene.launch('UIScene');
+      }
+    });
+  }
+
+  restartGame() {
+    eventBus.emit(Events.MUSIC_STOP);
+    gameState.setLevel(0);
+    eventBus.emit(Events.GAME_RESTART);
 
     this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0, (camera, progress) => {
       if (progress === 1) {
