@@ -19,7 +19,18 @@ const WAIT_MS = 3000;
 
 async function verify() {
   const errors = [];
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      '--enable-webgl',
+      '--enable-webgl2',
+      '--use-gl=angle',
+      '--use-angle=swiftshader',
+      '--ignore-gpu-blocklist',
+      '--enable-gpu-rasterization',
+      '--disable-gpu-sandbox',
+    ],
+  });
   const page = await browser.newPage();
 
   page.on('pageerror', (err) => errors.push(`PAGE ERROR: ${err.message}`));

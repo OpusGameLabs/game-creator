@@ -1,6 +1,7 @@
 // =============================================================================
 // EnemyManager.js — Wave spawning, enemy pool management
 // Manages all active enemies, handles wave progression, emits events.
+// Enemies now have death animations (they linger while fading).
 // =============================================================================
 
 import { ENEMY, WAVE } from '../core/Constants.js';
@@ -74,7 +75,7 @@ export class EnemyManager {
       const enemy = this.enemies[i];
       enemy.update(delta);
 
-      if (!enemy.alive) {
+      if (!enemy.alive && !enemy.dying) {
         if (enemy.reachedCastle) {
           eventBus.emit(Events.ENEMY_REACHED_CASTLE);
           this.enemiesDeadThisWave++;
@@ -94,7 +95,7 @@ export class EnemyManager {
     // Add small random offset within lane
     const jitter = (Math.random() - 0.5) * laneWidth * 0.6;
 
-    const enemy = new Enemy(this.scene, x + jitter, this.currentSpeed);
+    const enemy = new Enemy(this.scene, x + jitter, this.currentSpeed, gameState.wave);
     this.enemies.push(enemy);
     this.enemiesSpawnedThisWave++;
 
@@ -116,7 +117,7 @@ export class EnemyManager {
 
   /** Get positions of all alive enemies (used by projectile splash and Space key) */
   getAliveEnemies() {
-    return this.enemies.filter(e => e.alive);
+    return this.enemies.filter(e => e.alive && !e.dying);
   }
 
   destroyAll() {

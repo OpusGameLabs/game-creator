@@ -8,6 +8,9 @@ import { GAME, CAMERA, COLORS } from './Constants.js';
 import { eventBus, Events } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
+import { ParticleSystem } from '../systems/ParticleSystem.js';
+import { CameraShake } from '../systems/CameraShake.js';
+import { ScreenEffects } from '../systems/ScreenEffects.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Castle } from '../gameplay/Castle.js';
 import { EnemyManager } from '../gameplay/EnemyManager.js';
@@ -26,6 +29,8 @@ export class Game {
     this.renderer.setClearColor(COLORS.SKY);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.1;
     document.body.prepend(this.renderer.domElement);
 
     // Scene
@@ -41,10 +46,15 @@ export class Game {
     this.camera.position.set(CAMERA.POSITION_X, CAMERA.POSITION_Y, CAMERA.POSITION_Z);
     this.camera.lookAt(CAMERA.LOOK_AT_X, CAMERA.LOOK_AT_Y, CAMERA.LOOK_AT_Z);
 
-    // Systems & UI
+    // Systems
     this.input = new InputSystem();
     this.input.setCamera(this.camera);
     this.level = new LevelBuilder(this.scene);
+    this.particleSystem = new ParticleSystem(this.scene);
+    this.cameraShake = new CameraShake(this.camera);
+    this.screenEffects = new ScreenEffects();
+
+    // UI
     this.menu = new Menu();
     this.hud = new HUD();
 
@@ -74,7 +84,9 @@ export class Game {
     // Create gameplay objects
     this.castle = new Castle(this.scene);
     this.enemyManager = new EnemyManager(this.scene);
-    this.projectileManager = new ProjectileManager(this.scene, this.enemyManager);
+    this.projectileManager = new ProjectileManager(
+      this.scene, this.enemyManager, this.particleSystem
+    );
 
     // Wire up input
     this.input.setEnemyManager(this.enemyManager);
@@ -108,6 +120,11 @@ export class Game {
       this.projectileManager.destroyAll();
       this.projectileManager = null;
     }
+    // Particle system persists but deactivates all particles
+    if (this.particleSystem) {
+      this.particleSystem.destroy();
+      this.particleSystem = new ParticleSystem(this.scene);
+    }
 
     this.startGame();
   }
@@ -123,6 +140,11 @@ export class Game {
       if (this.enemyManager) this.enemyManager.update(delta);
       if (this.projectileManager) this.projectileManager.update(delta);
     }
+
+    // Visual systems always update (particles can still fade out after game over)
+    if (this.particleSystem) this.particleSystem.update(delta);
+    if (this.cameraShake) this.cameraShake.update(delta);
+    if (this.screenEffects) this.screenEffects.update(delta);
 
     this.renderer.render(this.scene, this.camera);
   }

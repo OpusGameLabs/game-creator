@@ -1,7 +1,8 @@
 // =============================================================================
 // Castle.js — Build castle geometry, handle damage, visual feedback
 // An impressive medieval castle built from composed Three.js geometries:
-// main keep, 4 corner towers with cone roofs, connecting walls, battlements, gate.
+// main keep, 4 corner towers with cone roofs, connecting walls, battlements,
+// gate, torches, banners. Damage darkens materials progressively.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -19,6 +20,13 @@ export class Castle {
     this.originalMaterials = [];
     this.flashMaterials = [];
     this.allMeshes = [];
+    this.torchLights = [];
+    this.banners = [];
+    this.gateGlowLight = null;
+    this.elapsedTime = 0;
+
+    // Store original colors for damage darkening
+    this._origColors = [];
 
     this.buildKeep();
     this.buildTowers();
@@ -26,6 +34,8 @@ export class Castle {
     this.buildBattlements();
     this.buildGate();
     this.buildBanners();
+    this.buildTorches();
+    this.buildGateGlow();
 
     this.scene.add(this.group);
 
@@ -187,8 +197,8 @@ export class Castle {
   }
 
   buildBanners() {
-    // Small banner flags on tower tops
-    const bannerGeo = new THREE.PlaneGeometry(1.2, 2);
+    // Banner flags on tower tops — with wave animation
+    const bannerGeo = new THREE.PlaneGeometry(1.2, 2, 4, 4); // segments for wave deformation
     const bannerMat = new THREE.MeshLambertMaterial({
       color: 0xcc0000,
       side: THREE.DoubleSide,
@@ -208,11 +218,55 @@ export class Castle {
       pole.position.set(x, poleY, z);
       this.group.add(pole);
 
-      const banner = new THREE.Mesh(bannerGeo, bannerMat.clone());
+      const banner = new THREE.Mesh(bannerGeo.clone(), bannerMat.clone());
       banner.position.set(x + 0.7, poleY + 0.5, z);
       this.group.add(banner);
       this._trackMesh(banner);
+      this.banners.push(banner);
     }
+  }
+
+  buildTorches() {
+    // Flickering point lights on tower tops
+    const towerPositions = [
+      [-CASTLE.TOWER_SPREAD_X, CASTLE.TOWER_HEIGHT + 1, -CASTLE.TOWER_SPREAD_Z],
+      [CASTLE.TOWER_SPREAD_X, CASTLE.TOWER_HEIGHT + 1, -CASTLE.TOWER_SPREAD_Z],
+      [-CASTLE.TOWER_SPREAD_X, CASTLE.TOWER_HEIGHT + 1, CASTLE.TOWER_SPREAD_Z],
+      [CASTLE.TOWER_SPREAD_X, CASTLE.TOWER_HEIGHT + 1, CASTLE.TOWER_SPREAD_Z],
+    ];
+
+    for (const [x, y, z] of towerPositions) {
+      const light = new THREE.PointLight(
+        CASTLE.TORCH_COLOR,
+        CASTLE.TORCH_INTENSITY,
+        CASTLE.TORCH_DISTANCE
+      );
+      light.position.set(x, y, z);
+      this.group.add(light);
+      this.torchLights.push({
+        light,
+        baseIntensity: CASTLE.TORCH_INTENSITY,
+        phase: Math.random() * Math.PI * 2, // random phase offset
+      });
+
+      // Small flame mesh (emissive sphere)
+      const flameGeo = new THREE.SphereGeometry(0.2, 4, 4);
+      const flameMat = new THREE.MeshBasicMaterial({ color: CASTLE.TORCH_COLOR });
+      const flame = new THREE.Mesh(flameGeo, flameMat);
+      flame.position.set(x, y, z);
+      this.group.add(flame);
+    }
+  }
+
+  buildGateGlow() {
+    // Glow light at gate — activates when enemies approach
+    this.gateGlowLight = new THREE.PointLight(
+      CASTLE.GATE_GLOW_COLOR,
+      0, // starts off
+      CASTLE.GATE_GLOW_DISTANCE
+    );
+    this.gateGlowLight.position.set(0, CASTLE.GATE_HEIGHT / 2, -CASTLE.TOWER_SPREAD_Z - 1);
+    this.group.add(this.gateGlowLight);
   }
 
   // --- Damage & Flash ---
@@ -235,22 +289,79 @@ export class Castle {
       mesh.material.color.setHex(CASTLE.DAMAGE_FLASH_COLOR);
     }
 
+    // Apply progressive darkening based on damage taken
+    this._applyDamageDarkening();
+
     if (gameState.castleHealth <= 0) {
       eventBus.emit(Events.CASTLE_DESTROYED);
     }
   }
 
+  _applyDamageDarkening() {
+    const healthPct = gameState.castleHealth / gameState.maxCastleHealth;
+    const darkenAmount = (1 - healthPct) * CASTLE.DAMAGE_DARKEN_FACTOR;
+
+    for (let i = 0; i < this.allMeshes.length; i++) {
+      const mesh = this.allMeshes[i];
+      if (mesh._origColor === undefined) continue;
+
+      // Store the darkened color so flash restore uses it
+      const orig = new THREE.Color(mesh._origColor);
+      const darkened = orig.clone().multiplyScalar(1 - darkenAmount);
+      mesh._darkenedColor = darkened.getHex();
+    }
+  }
+
   update(delta) {
+    this.elapsedTime += delta;
+
+    // Damage flash timer
     if (this.flashTimer > 0) {
       this.flashTimer -= delta;
       if (this.flashTimer <= 0) {
-        // Restore original colors
+        // Restore to darkened colors (not original, if damaged)
         for (const mesh of this.allMeshes) {
-          if (mesh._origColor !== undefined) {
+          if (mesh._darkenedColor !== undefined) {
+            mesh.material.color.setHex(mesh._darkenedColor);
+          } else if (mesh._origColor !== undefined) {
             mesh.material.color.setHex(mesh._origColor);
           }
         }
       }
+    }
+
+    // Torch flickering
+    for (const torch of this.torchLights) {
+      const flicker = Math.sin(this.elapsedTime * CASTLE.TORCH_FLICKER_SPEED + torch.phase) *
+        CASTLE.TORCH_FLICKER_AMOUNT;
+      const noise = Math.sin(this.elapsedTime * 17 + torch.phase * 3) * 0.15;
+      torch.light.intensity = torch.baseIntensity + flicker + noise;
+    }
+
+    // Banner wave animation
+    for (const banner of this.banners) {
+      const geo = banner.geometry;
+      const positions = geo.attributes.position;
+      const originalPositions = geo.attributes.position.array;
+
+      // Only animate X vertices based on their distance from the pole
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        // Offset based on distance from left edge (pole attachment)
+        const distFromPole = (x + 0.6); // plane goes from -0.6 to 0.6
+        const wave = Math.sin(this.elapsedTime * CASTLE.BANNER_WAVE_SPEED + y * 2 + distFromPole * 3) *
+          CASTLE.BANNER_WAVE_AMOUNT * distFromPole;
+        positions.setZ(i, wave);
+      }
+      positions.needsUpdate = true;
+    }
+
+    // Gate glow — pulse when game is active
+    if (this.gateGlowLight && gameState.started && !gameState.gameOver) {
+      // Subtle pulsing glow
+      const pulse = 0.3 + Math.sin(this.elapsedTime * 2) * 0.15;
+      this.gateGlowLight.intensity = pulse;
     }
   }
 
@@ -268,4 +379,3 @@ export class Castle {
     });
   }
 }
-

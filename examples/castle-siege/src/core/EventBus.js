@@ -29,6 +29,12 @@ export const Events = {
   // Score
   SCORE_CHANGED: 'score:changed',
 
+  // Visual effects
+  CAMERA_SHAKE: 'camera:shake',
+  SPAWN_PARTICLES: 'particles:spawn',
+  ENEMY_DUST: 'enemy:dust',
+  KILL_COMBO: 'ui:kill_combo',
+
   // Audio (used by /add-audio)
   AUDIO_INIT: 'audio:init',
   MUSIC_MENU: 'music:menu',

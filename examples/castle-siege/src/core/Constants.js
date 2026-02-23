@@ -31,6 +31,13 @@ export const CAMERA = {
   LOOK_AT_X: 0,
   LOOK_AT_Y: 0,
   LOOK_AT_Z: -5,
+  // Camera shake
+  SHAKE_IMPACT_INTENSITY: 0.3,
+  SHAKE_IMPACT_DURATION: 0.15,
+  SHAKE_CASTLE_HIT_INTENSITY: 0.7,
+  SHAKE_CASTLE_HIT_DURATION: 0.3,
+  SHAKE_DECAY: 5.0,         // exponential decay rate
+  SHAKE_FREQUENCY: 30,      // oscillation speed
 };
 
 // ---------------------------------------------------------------------------
@@ -41,9 +48,27 @@ export const LEVEL = {
   GROUND_COLOR: 0x4a7c2e,
   PATH_COLOR: 0x8B7355,
   PATH_WIDTH: 12,
-  FOG_COLOR: 0x87ceeb,
+  FOG_COLOR: 0x6a4f7a,       // dramatic purple-tinted fog
   FOG_NEAR: 60,
-  FOG_FAR: 200,
+  FOG_FAR: 180,
+  FOG_NEAR_WAVE_DECREASE: 3, // fog gets closer per wave (tension)
+  FOG_MIN_NEAR: 30,
+  // Scorch marks
+  SCORCH_COLOR: 0x222211,
+  SCORCH_RADIUS: 1.5,
+  SCORCH_OPACITY: 0.6,
+  SCORCH_FADE_SPEED: 0.02,   // fade per second
+  MAX_SCORCH_MARKS: 30,
+};
+
+// ---------------------------------------------------------------------------
+// Sky / Atmosphere
+// ---------------------------------------------------------------------------
+export const SKY = {
+  ZENITH_COLOR_TOP: 0x0a0a2e,    // deep night blue at top
+  ZENITH_COLOR_MID: 0x1a1a4e,    // dark blue
+  HORIZON_COLOR: 0xd4602a,       // warm orange sunset
+  HORIZON_GLOW: 0xff7744,        // bright glow near horizon
 };
 
 // ---------------------------------------------------------------------------
@@ -88,23 +113,58 @@ export const CASTLE = {
   // Damage feedback
   DAMAGE_FLASH_DURATION: 0.15,
   DAMAGE_FLASH_COLOR: 0xff3333,
+
+  // Torch lights on towers
+  TORCH_COLOR: 0xff6622,
+  TORCH_INTENSITY: 1.2,
+  TORCH_DISTANCE: 15,
+  TORCH_FLICKER_SPEED: 8,
+  TORCH_FLICKER_AMOUNT: 0.4,
+
+  // Gate glow when enemies near
+  GATE_GLOW_COLOR: 0xff2200,
+  GATE_GLOW_INTENSITY: 2.0,
+  GATE_GLOW_DISTANCE: 10,
+  GATE_GLOW_TRIGGER_DISTANCE: 20, // how close enemies must be
+
+  // Damage darkening
+  DAMAGE_DARKEN_FACTOR: 0.4,  // at 0 health, colors darken by this factor
+
+  // Banner wave animation
+  BANNER_WAVE_SPEED: 2.0,
+  BANNER_WAVE_AMOUNT: 0.15,
 };
 
 // ---------------------------------------------------------------------------
 // Enemies
 // ---------------------------------------------------------------------------
 export const ENEMY = {
-  // Body dimensions
-  BODY_WIDTH: 0.8,
-  BODY_HEIGHT: 1.6,
-  BODY_DEPTH: 0.6,
-  HEAD_RADIUS: 0.35,
-  HEAD_Y_OFFSET: 1.3,
+  // Body dimensions — slightly larger for visibility
+  BODY_WIDTH: 1.0,
+  BODY_HEIGHT: 2.0,
+  BODY_DEPTH: 0.8,
+  HEAD_RADIUS: 0.45,
+  HEAD_Y_OFFSET: 1.65,
 
-  // Colors
+  // Colors per wave tier (cycles through)
   BODY_COLOR: 0x8B0000,
   HEAD_COLOR: 0xd4a574,
   SHIELD_COLOR: 0x555555,
+  WAVE_COLORS: [
+    0x8B0000,  // dark red — wave 1
+    0x006400,  // dark green — wave 2
+    0x00008B,  // dark blue — wave 3
+    0x4B0082,  // indigo — wave 4
+    0x8B4513,  // saddle brown — wave 5
+    0x2F4F4F,  // dark slate — wave 6+
+  ],
+
+  // Shield/weapon details
+  SHIELD_WIDTH: 0.7,
+  SHIELD_HEIGHT: 0.9,
+  SWORD_LENGTH: 1.2,
+  SWORD_COLOR: 0xaaaaaa,
+  SWORD_HANDLE_COLOR: 0x4a3728,
 
   // Movement
   BASE_SPEED: 4,
@@ -125,7 +185,15 @@ export const ENEMY = {
   KILL_POINTS: 10,
 
   // Y position (half body height)
-  GROUND_Y: 0.8,
+  GROUND_Y: 1.0,
+
+  // Death animation
+  DEATH_FLASH_COLOR: 0xffffff,
+  DEATH_FADE_DURATION: 0.5,
+
+  // Dust particles while marching
+  DUST_INTERVAL: 0.25,        // seconds between dust puffs
+  DUST_COLOR: 0x9B8B6B,
 };
 
 // ---------------------------------------------------------------------------
@@ -148,6 +216,64 @@ export const PROJECTILE = {
   IMPACT_RADIUS: 2.0,
   IMPACT_DURATION: 0.3,
   IMPACT_COLOR: 0xff6600,
+
+  // Fire trail
+  TRAIL_PARTICLE_COUNT: 8,
+  TRAIL_COLORS: [0xff8800, 0xff4400, 0xff2200, 0xffaa00],
+  TRAIL_SIZE: 0.2,
+  TRAIL_FADE_SPEED: 3.0,
+  TRAIL_SPREAD: 0.15,
+};
+
+// ---------------------------------------------------------------------------
+// Particle system
+// ---------------------------------------------------------------------------
+export const PARTICLES = {
+  // Pool sizes
+  MAX_PARTICLES: 300,
+
+  // Explosion burst on projectile impact
+  EXPLOSION_COUNT: 18,
+  EXPLOSION_COLORS: [0xff8800, 0xff4400, 0xff2200, 0xffcc00, 0xff6600],
+  EXPLOSION_SPEED_MIN: 4,
+  EXPLOSION_SPEED_MAX: 12,
+  EXPLOSION_SIZE_MIN: 0.15,
+  EXPLOSION_SIZE_MAX: 0.4,
+  EXPLOSION_LIFETIME: 0.8,
+  EXPLOSION_GRAVITY: -15,
+
+  // Enemy death fragments
+  DEATH_COUNT: 10,
+  DEATH_COLORS: [0x8B0000, 0x444444, 0x666666, 0xd4a574],
+  DEATH_SPEED_MIN: 3,
+  DEATH_SPEED_MAX: 8,
+  DEATH_SIZE_MIN: 0.1,
+  DEATH_SIZE_MAX: 0.3,
+  DEATH_LIFETIME: 0.7,
+  DEATH_GRAVITY: -12,
+
+  // Dust puffs at enemy feet
+  DUST_COUNT: 3,
+  DUST_COLOR: 0x9B8B6B,
+  DUST_SPEED: 1.5,
+  DUST_SIZE: 0.2,
+  DUST_LIFETIME: 0.5,
+  DUST_RISE_SPEED: 1.0,
+
+  // Castle hit sparks / debris
+  CASTLE_HIT_COUNT: 12,
+  CASTLE_HIT_COLORS: [0x999999, 0x777777, 0xaaaaaa, 0x888888],
+  CASTLE_HIT_SPEED_MIN: 2,
+  CASTLE_HIT_SPEED_MAX: 7,
+  CASTLE_HIT_SIZE_MIN: 0.1,
+  CASTLE_HIT_SIZE_MAX: 0.25,
+  CASTLE_HIT_LIFETIME: 0.6,
+  CASTLE_HIT_GRAVITY: -10,
+
+  // Impact flash
+  IMPACT_FLASH_SIZE: 3.0,
+  IMPACT_FLASH_DURATION: 0.12,
+  IMPACT_FLASH_COLOR: 0xffff88,
 };
 
 // ---------------------------------------------------------------------------
@@ -162,15 +288,54 @@ export const WAVE = {
 };
 
 // ---------------------------------------------------------------------------
+// UI Juice
+// ---------------------------------------------------------------------------
+export const UI_JUICE = {
+  // Floating damage numbers
+  DAMAGE_NUMBER_RISE_SPEED: 60,  // px per second
+  DAMAGE_NUMBER_LIFETIME: 1.2,
+  DAMAGE_NUMBER_COLOR: '#ff4444',
+  DAMAGE_NUMBER_FONT_SIZE: 28,
+
+  // Kill combo
+  COMBO_WINDOW: 1.5,         // seconds to chain kills
+  COMBO_MIN_KILLS: 2,        // minimum for combo text
+  COMBO_COLORS: ['#ffaa00', '#ff6600', '#ff0000', '#ff00ff'],
+  COMBO_FONT_SIZE: 36,
+  COMBO_LIFETIME: 1.5,
+
+  // Health bar pulse
+  HEALTH_PULSE_THRESHOLD: 25, // percent
+  HEALTH_PULSE_SPEED: 4,
+  HEALTH_PULSE_SCALE: 1.08,
+
+  // Wave banner slide
+  BANNER_SLIDE_DURATION: 400, // ms
+
+  // Screen effects
+  VIGNETTE_FLASH_DURATION: 0.3,
+  VIGNETTE_FLASH_OPACITY: 0.4,
+
+  // Screen tint as health drops
+  SCREEN_TINT_START_HEALTH: 50, // below this %, tint starts
+  SCREEN_TINT_MAX_OPACITY: 0.15,
+
+  // Victory glow
+  VICTORY_GLOW_DURATION: 1.0,
+  VICTORY_GLOW_COLOR: '#ffdd44',
+  VICTORY_GLOW_OPACITY: 0.25,
+};
+
+// ---------------------------------------------------------------------------
 // Colors
 // ---------------------------------------------------------------------------
 export const COLORS = {
-  SKY: 0x87ceeb,
-  AMBIENT_LIGHT: 0xffffff,
-  AMBIENT_INTENSITY: 0.7,
-  DIR_LIGHT: 0xfff5e0,
-  DIR_INTENSITY: 1.0,
-  HEMISPHERE_SKY: 0x87ceeb,
-  HEMISPHERE_GROUND: 0x4a7c2e,
+  SKY: 0x1a1a3e,              // dark dramatic sky (matches sunset theme)
+  AMBIENT_LIGHT: 0xffeedd,
+  AMBIENT_INTENSITY: 0.4,     // lower ambient for more dramatic lighting
+  DIR_LIGHT: 0xffa060,        // warm sunset directional
+  DIR_INTENSITY: 1.2,
+  HEMISPHERE_SKY: 0xff7744,   // sunset orange above
+  HEMISPHERE_GROUND: 0x2a4a1e, // dark green ground bounce
   HEMISPHERE_INTENSITY: 0.3,
 };

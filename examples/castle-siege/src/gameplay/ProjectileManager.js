@@ -1,6 +1,7 @@
 // =============================================================================
 // ProjectileManager.js — Launch projectiles, manage active projectiles
 // Handles cooldown, impact detection (splash damage), and visual effects.
+// Now spawns fire trail particles via the ParticleSystem.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -10,9 +11,10 @@ import { gameState } from '../core/GameState.js';
 import { Projectile } from './Projectile.js';
 
 export class ProjectileManager {
-  constructor(scene, enemyManager) {
+  constructor(scene, enemyManager, particleSystem) {
     this.scene = scene;
     this.enemyManager = enemyManager;
+    this.particleSystem = particleSystem;
     this.projectiles = [];
     this.impactEffects = [];
     this.cooldownTimer = 0;
@@ -47,6 +49,11 @@ export class ProjectileManager {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const proj = this.projectiles[i];
       proj.update(delta);
+
+      // Spawn fire trail particles while projectile is alive
+      if (proj.alive && this.particleSystem) {
+        this.particleSystem.spawnTrail(proj.getPosition().clone());
+      }
 
       if (!proj.alive) {
         if (proj.impacted) {
