@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, COLORS, UI, TRANSITION, SAFE_ZONE } from '../core/Constants.js';
+import { GAME, COLORS, UI, TRANSITION, SAFE_ZONE, EFFECTS, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 
@@ -22,6 +22,9 @@ export class GameOverScene extends Phaser.Scene {
     // --- Gradient background ---
     this.drawGradient(w, h, COLORS.BG_TOP, COLORS.BG_BOTTOM);
 
+    // --- Ambient stars on game over screen ---
+    this._drawGameOverStars(w, h);
+
     // --- "GAME OVER" title ---
     const titleSize = Math.round(h * UI.TITLE_RATIO);
     const title = this.add.text(cx, safeTop + usableH * 0.15, 'GAME OVER', {
@@ -32,11 +35,21 @@ export class GameOverScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 3, color: 'rgba(0,0,0,0.5)', blur: 8, fill: true },
     }).setOrigin(0.5);
 
+    // Title slide-in from above
+    title.setAlpha(0);
+    title.y -= 30 * PX;
+    this.tweens.add({
+      targets: title,
+      y: safeTop + usableH * 0.15,
+      alpha: 1,
+      duration: 500,
+      ease: 'Back.easeOut',
+    });
 
     // --- Score panel ---
     const panelW = w * 0.6;
-    const panelH = h * 0.2;
-    const panelY = safeTop + usableH * 0.35;
+    const panelH = h * 0.25;
+    const panelY = safeTop + usableH * 0.37;
 
     const panel = this.add.graphics();
     panel.fillStyle(0x000000, 0.35);
@@ -46,25 +59,24 @@ export class GameOverScene extends Phaser.Scene {
 
     // Score label
     const labelSize = Math.round(h * UI.SMALL_RATIO);
-    const scoreLabel = this.add.text(cx, panelY - panelH * 0.22, 'SCORE', {
+    this.add.text(cx, panelY - panelH * 0.30, 'SCORE', {
       fontSize: labelSize + 'px',
       fontFamily: UI.FONT,
       color: COLORS.MUTED_TEXT,
       letterSpacing: 4,
     }).setOrigin(0.5);
 
-
-    // Score value (large, gold)
+    // Score value (large, gold) -- starts at 0, counts up
     const scoreSize = Math.round(h * UI.HEADING_RATIO * 1.2);
-    const scoreText = this.add.text(cx, panelY + panelH * 0.05, `${gameState.score}`, {
+    const finalScore = gameState.score;
+    const scoreText = this.add.text(cx, panelY - panelH * 0.05, '0', {
       fontSize: scoreSize + 'px',
       fontFamily: UI.FONT,
       color: COLORS.SCORE_GOLD,
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-
-    // Scale-in animation for score
+    // Scale-in then count-up animation for score
     scoreText.setScale(0);
     this.tweens.add({
       targets: scoreText,
@@ -73,19 +85,71 @@ export class GameOverScene extends Phaser.Scene {
       duration: 400,
       delay: 200,
       ease: 'Back.easeOut',
+      onComplete: () => {
+        // Count up from 0 to final score
+        if (finalScore > 0) {
+          const counter = { val: 0 };
+          this.tweens.add({
+            targets: counter,
+            val: finalScore,
+            duration: Math.min(EFFECTS.SCORE_COUNTUP_DURATION, finalScore * 50),
+            delay: EFFECTS.SCORE_COUNTUP_DELAY,
+            ease: 'Quad.easeOut',
+            onUpdate: () => {
+              scoreText.setText(Math.round(counter.val).toString());
+            },
+            onComplete: () => {
+              scoreText.setText(finalScore.toString());
+              // Pop effect when count finishes
+              this.tweens.add({
+                targets: scoreText,
+                scaleX: 1.2,
+                scaleY: 1.2,
+                duration: 100,
+                yoyo: true,
+                ease: 'Quad.easeOut',
+              });
+            },
+          });
+        }
+      },
     });
 
     // Best score
     const bestSize = Math.round(h * UI.SMALL_RATIO);
-    const best = this.add.text(cx, panelY + panelH * 0.35, `Best: ${gameState.bestScore}`, {
+    const bestText = this.add.text(cx, panelY + panelH * 0.20, `Best: ${gameState.bestScore}`, {
       fontSize: bestSize + 'px',
       fontFamily: UI.FONT,
       color: COLORS.MUTED_TEXT,
     }).setOrigin(0.5);
 
+    // --- "NEW BEST" indicator ---
+    if (gameState.isNewBest && finalScore > 0) {
+      const newBestSize = Math.round(h * UI.SMALL_RATIO * 1.1);
+      const newBestText = this.add.text(cx, panelY + panelH * 0.38, 'NEW BEST!', {
+        fontSize: newBestSize + 'px',
+        fontFamily: UI.FONT,
+        color: COLORS.NEW_BEST,
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: Math.max(2, Math.round(2 * PX)),
+      }).setOrigin(0.5);
+
+      // Pulsing glow effect on "NEW BEST"
+      this.tweens.add({
+        targets: newBestText,
+        scaleX: 1.15,
+        scaleY: 1.15,
+        alpha: 0.7,
+        duration: 600,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     // --- Play Again button ---
-    this.createButton(cx, safeTop + usableH * 0.6, 'PLAY AGAIN', () => this.restartGame());
+    this.createButton(cx, safeTop + usableH * 0.65, 'PLAY AGAIN', () => this.restartGame());
 
     // --- Keyboard shortcut ---
     if (this.input.keyboard) {
@@ -106,6 +170,31 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('GameScene');
     });
+  }
+
+  // --- Ambient stars for game over screen ---
+
+  _drawGameOverStars(w, h) {
+    const starCount = Math.floor((w * h) / 60000);
+    for (let i = 0; i < starCount; i++) {
+      const sx = Math.random() * w;
+      const sy = Math.random() * h;
+      const size = 1 + Math.random() * 2;
+      const alpha = 0.3 + Math.random() * 0.5;
+      const star = this.add.circle(sx, sy, size * PX, 0xffffff, alpha);
+      star.setDepth(1);
+
+      // Twinkle
+      this.tweens.add({
+        targets: star,
+        alpha: alpha * 0.3,
+        duration: 1500 + Math.random() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: Math.random() * 2000,
+      });
+    }
   }
 
   // --- Helpers ---
