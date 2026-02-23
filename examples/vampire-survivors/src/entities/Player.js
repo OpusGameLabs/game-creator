@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER, GAME } from '../core/Constants.js';
+import { PLAYER, GAME, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 import { renderSpriteSheet } from '../core/PixelRenderer.js';
@@ -11,8 +11,8 @@ export class Player {
     this.scene = scene;
     this.invulnerable = false;
 
-    // Generate pixel art spritesheet
-    const scale = 2;
+    // Generate pixel art spritesheet — PX-aware scale
+    const scale = Math.max(2, Math.round(2 * PX));
     renderSpriteSheet(scene, PLAYER_FRAMES, PALETTE, 'player-sheet', scale);
 
     if (!scene.anims.exists('player-walk')) {

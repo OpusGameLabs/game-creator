@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY, WAVE, GAME } from '../core/Constants.js';
+import { ENEMY, WAVE, GAME, PX } from '../core/Constants.js';
 import { gameState } from '../core/GameState.js';
 import { Enemy } from '../entities/Enemy.js';
 
@@ -59,9 +59,10 @@ export class EnemySpawner {
     let x = playerX + Math.cos(angle) * dist;
     let y = playerY + Math.sin(angle) * dist;
 
-    // Clamp to world bounds
-    x = Phaser.Math.Clamp(x, 20, GAME.WORLD_WIDTH - 20);
-    y = Phaser.Math.Clamp(y, 20, GAME.WORLD_HEIGHT - 20);
+    // Clamp to world bounds — margin scaled with PX
+    const margin = 20 * PX;
+    x = Phaser.Math.Clamp(x, margin, GAME.WORLD_WIDTH - margin);
+    y = Phaser.Math.Clamp(y, margin, GAME.WORLD_HEIGHT - margin);
 
     const enemy = new Enemy(this.scene, x, y, typeKey, hpScale);
     this.enemies.push(enemy);

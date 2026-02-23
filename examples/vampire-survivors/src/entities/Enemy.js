@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY, WAVE } from '../core/Constants.js';
+import { ENEMY, WAVE, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { renderSpriteSheet } from '../core/PixelRenderer.js';
 import { ENEMY_SPRITES } from '../sprites/enemies.js';
@@ -18,10 +18,10 @@ export class Enemy {
     this.alive = true;
     this.damageFlashTime = 0;
 
-    // Generate pixel art spritesheet if not cached
+    // Generate pixel art spritesheet if not cached — PX-aware scale
     const texKey = `enemy-${typeKey}`;
     const spriteData = ENEMY_SPRITES[typeKey];
-    const scale = 2;
+    const scale = Math.max(2, Math.round(2 * PX));
     renderSpriteSheet(scene, spriteData.frames, PALETTE, texKey, scale);
 
     const animKey = `${typeKey}-anim`;

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WEAPONS, PLAYER } from '../core/Constants.js';
+import { WEAPONS, PLAYER, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 import { renderPixelArt } from '../core/PixelRenderer.js';
@@ -47,12 +47,12 @@ export class WeaponSystem {
         const dx = enemy.sprite.x - proj.sprite.x;
         const dy = enemy.sprite.y - proj.sprite.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const hitDist = (proj.size || 6) + (enemy.sprite.width / 2);
+        const hitDist = (proj.size || 6 * PX) + (enemy.sprite.width / 2);
 
         if (dist < hitDist) {
           const level = gameState.weaponLevels[proj.weaponKey] || 1;
           const dmg = proj.damage + (level - 1) * 3;
-          enemy.hit(dmg, dx / dist * 100, dy / dist * 100);
+          enemy.hit(dmg, dx / dist * 100 * PX, dy / dist * 100 * PX);
           proj.pierceLeft--;
           if (proj.pierceLeft <= 0) {
             proj.sprite.destroy();
@@ -128,7 +128,7 @@ export class WeaponSystem {
     const dir = nearest ? Math.atan2(nearest.sprite.y - py, nearest.sprite.x - px) : 0;
     const gfx = this.scene.add.graphics();
     gfx.setDepth(15);
-    gfx.lineStyle(3, cfg.color, 0.8);
+    gfx.lineStyle(3 * PX, cfg.color, 0.8);
     gfx.beginPath();
     gfx.arc(px, py, cfg.range, dir - 0.8, dir + 0.8, false);
     gfx.strokePath();
@@ -178,8 +178,9 @@ export class WeaponSystem {
     const dy = nearest.sprite.y - py;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    // Create pixel art projectile
-    renderPixelArt(this.scene, MAGIC_BOLT, PALETTE, 'proj-magic-bolt', 2);
+    // Create pixel art projectile — PX-aware scale
+    const projScale = Math.max(2, Math.round(2 * PX));
+    renderPixelArt(this.scene, MAGIC_BOLT, PALETTE, 'proj-magic-bolt', projScale);
     const projSprite = this.scene.add.sprite(px, py, 'proj-magic-bolt');
     projSprite.setDepth(15);
     this.scene.physics.add.existing(projSprite);
@@ -200,12 +201,12 @@ export class WeaponSystem {
   }
 
   fireGarlic(cfg, level, px, py) {
-    const radius = cfg.radius + level * 10;
+    const radius = cfg.radius + level * 10 * PX;
     const gfx = this.scene.add.graphics();
     gfx.setDepth(4);
     gfx.fillStyle(cfg.color, 0.2);
     gfx.fillCircle(px, py, radius);
-    gfx.lineStyle(2, cfg.color, 0.5);
+    gfx.lineStyle(2 * PX, cfg.color, 0.5);
     gfx.strokeCircle(px, py, radius);
 
     this.aoeEffects.push({
@@ -242,7 +243,9 @@ export class WeaponSystem {
     const dy = nearest.sprite.y - py;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    renderPixelArt(this.scene, FIREBALL, PALETTE, 'proj-fireball', 2);
+    // PX-aware scale for projectile sprite
+    const projScale = Math.max(2, Math.round(2 * PX));
+    renderPixelArt(this.scene, FIREBALL, PALETTE, 'proj-fireball', projScale);
     const fbSprite = this.scene.add.sprite(px, py, 'proj-fireball');
     fbSprite.setDepth(15);
     this.scene.physics.add.existing(fbSprite);

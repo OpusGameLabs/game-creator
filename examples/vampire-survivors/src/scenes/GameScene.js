@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, PLAYER, ENEMY, COLORS, TRANSITION, XP } from '../core/Constants.js';
+import { GAME, PLAYER, ENEMY, COLORS, TRANSITION, XP, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 import { Player } from '../entities/Player.js';
@@ -70,14 +70,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawArena() {
-    // Render tile textures (only once — renderPixelArt skips if key exists)
-    const scale = 2;
+    // Pixel art scale factor — PX-aware
+    const scale = Math.max(2, Math.round(2 * PX));
     renderPixelArt(this, GROUND_BASE, PALETTE, 'tile-ground-0', scale);
     renderPixelArt(this, GROUND_VAR1, PALETTE, 'tile-ground-1', scale);
     renderPixelArt(this, GROUND_VAR2, PALETTE, 'tile-ground-2', scale);
 
     // Tile the world with randomized ground variants
-    const tileSize = 16 * scale; // 32px
+    const tileSize = 16 * scale;
     const tileKeys = ['tile-ground-0', 'tile-ground-1', 'tile-ground-2'];
     for (let y = 0; y < GAME.WORLD_HEIGHT; y += tileSize) {
       for (let x = 0; x < GAME.WORLD_WIDTH; x += tileSize) {
@@ -96,6 +96,7 @@ export class GameScene extends Phaser.Scene {
     // Scatter decorative elements across the world
     const totalDecoWeight = DECORATIONS.reduce((sum, d) => sum + d.weight, 0);
     const decoCount = 60;
+    const margin = 80 * PX;
     for (let i = 0; i < decoCount; i++) {
       // Weighted random selection
       let roll = Math.random() * totalDecoWeight;
@@ -105,8 +106,8 @@ export class GameScene extends Phaser.Scene {
         if (roll <= 0) { decoIdx = d; break; }
       }
 
-      const dx = Phaser.Math.Between(80, GAME.WORLD_WIDTH - 80);
-      const dy = Phaser.Math.Between(80, GAME.WORLD_HEIGHT - 80);
+      const dx = Phaser.Math.Between(margin, GAME.WORLD_WIDTH - margin);
+      const dy = Phaser.Math.Between(margin, GAME.WORLD_HEIGHT - margin);
       const deco = this.add.image(dx, dy, `deco-${decoIdx}`);
       deco.setDepth(-5);
       deco.setAlpha(0.4 + Math.random() * 0.35);
@@ -115,10 +116,12 @@ export class GameScene extends Phaser.Scene {
     // Subtle vignette border around the world edges
     const borderGfx = this.add.graphics();
     borderGfx.setDepth(-3);
-    borderGfx.lineStyle(4, 0x0d0520, 0.8);
+    const borderThin = Math.max(2, 4 * PX);
+    const borderThick = Math.max(4, 8 * PX);
+    borderGfx.lineStyle(borderThin, 0x0d0520, 0.8);
     borderGfx.strokeRect(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
-    borderGfx.lineStyle(8, 0x0d0520, 0.4);
-    borderGfx.strokeRect(-4, -4, GAME.WORLD_WIDTH + 8, GAME.WORLD_HEIGHT + 8);
+    borderGfx.lineStyle(borderThick, 0x0d0520, 0.4);
+    borderGfx.strokeRect(-borderThin, -borderThin, GAME.WORLD_WIDTH + borderThin * 2, GAME.WORLD_HEIGHT + borderThin * 2);
   }
 
   update(time, delta) {
@@ -148,10 +151,10 @@ export class GameScene extends Phaser.Scene {
       }
       gem.magnetTo(px, py, delta);
 
-      // Check pickup
+      // Check pickup — PLAYER.SIZE is already PX-scaled
       const dx = px - gem.sprite.x;
       const dy = py - gem.sprite.y;
-      if (Math.sqrt(dx * dx + dy * dy) < PLAYER.SIZE + 8) {
+      if (Math.sqrt(dx * dx + dy * dy) < PLAYER.SIZE + 8 * PX) {
         gem.collect();
         eventBus.emit(Events.PARTICLES_EMIT, { type: 'xpPickup', x: gem.sprite.x, y: gem.sprite.y });
         const leveled = gameState.addXp(gem.amount);
@@ -168,7 +171,7 @@ export class GameScene extends Phaser.Scene {
       const dx = px - enemy.sprite.x;
       const dy = py - enemy.sprite.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const hitDist = PLAYER.SIZE + (enemy.sprite.width / 2) - 5;
+      const hitDist = PLAYER.SIZE + (enemy.sprite.width / 2) - 5 * PX;
       if (dist < hitDist) {
         this.player.takeDamage(enemy.damage);
         if (gameState.hp <= 0) {

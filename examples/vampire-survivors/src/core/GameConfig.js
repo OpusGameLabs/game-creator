@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, COLORS } from './Constants.js';
+import { GAME, COLORS, DPR } from './Constants.js';
 import { BootScene } from '../scenes/BootScene.js';
 import { GameScene } from '../scenes/GameScene.js';
 import { UIScene } from '../scenes/UIScene.js';
@@ -11,6 +11,14 @@ export const GameConfig = {
   height: GAME.HEIGHT,
   parent: 'game-container',
   backgroundColor: COLORS.BG,
+  roundPixels: true,
+  antialias: true,
+  render: { preserveDrawingBuffer: true },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    zoom: 1 / DPR,
+  },
   physics: {
     default: 'arcade',
     arcade: {

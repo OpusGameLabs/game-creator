@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { XP, PLAYER } from '../core/Constants.js';
+import { XP, PLAYER, PX } from '../core/Constants.js';
 import { renderPixelArt } from '../core/PixelRenderer.js';
 import { GEM_SMALL, GEM_BIG } from '../sprites/items.js';
 import { PALETTE } from '../sprites/palette.js';
@@ -13,17 +13,18 @@ export class XpGem {
     const isBig = amount >= 3;
     const texKey = `gem-${isBig ? 'big' : 'small'}`;
     const pixels = isBig ? GEM_BIG : GEM_SMALL;
-    renderPixelArt(scene, pixels, PALETTE, texKey, 2);
+    const scale = Math.max(2, Math.round(2 * PX));
+    renderPixelArt(scene, pixels, PALETTE, texKey, scale);
 
     this.sprite = scene.physics.add.sprite(x, y, texKey);
     this.sprite.body.setAllowGravity(false);
     this.sprite.setDepth(3);
     this.sprite.setData('gem', this);
 
-    // Bob animation
+    // Bob animation — distance scaled with PX
     scene.tweens.add({
       targets: this.sprite,
-      y: y - 4,
+      y: y - 4 * PX,
       duration: 600,
       yoyo: true,
       repeat: -1,

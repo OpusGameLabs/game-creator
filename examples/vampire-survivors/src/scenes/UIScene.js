@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, COLORS, WEAPONS, TRANSITION } from '../core/Constants.js';
+import { GAME, COLORS, WEAPONS, TRANSITION, SAFE_ZONE, UI, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 
@@ -9,35 +9,56 @@ export class UIScene extends Phaser.Scene {
   }
 
   create() {
+    const pad = 10 * PX;
+    const hpBarW = 200 * PX;
+    const hpBarH = 16 * PX;
+    const xpBarH = 8 * PX;
+
     // HP Bar (bottom left)
-    this.hpBg = this.add.rectangle(10, GAME.HEIGHT - 30, 200, 16, COLORS.HP_BAR_BG).setOrigin(0, 0.5).setScrollFactor(0);
-    this.hpBar = this.add.rectangle(10, GAME.HEIGHT - 30, 200, 16, COLORS.HP_BAR).setOrigin(0, 0.5).setScrollFactor(0);
-    this.hpText = this.add.text(110, GAME.HEIGHT - 30, '100/100', {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: '#ffffff',
-      stroke: '#000000', strokeThickness: 2,
+    const hpY = GAME.HEIGHT - 30 * PX;
+    this.hpBarWidth = hpBarW;
+    this.hpBg = this.add.rectangle(pad, hpY, hpBarW, hpBarH, COLORS.HP_BAR_BG).setOrigin(0, 0.5).setScrollFactor(0);
+    this.hpBar = this.add.rectangle(pad, hpY, hpBarW, hpBarH, COLORS.HP_BAR).setOrigin(0, 0.5).setScrollFactor(0);
+    this.hpText = this.add.text(pad + hpBarW / 2, hpY, '100/100', {
+      fontSize: `${Math.round(GAME.HEIGHT * UI.SMALL_RATIO)}px`,
+      fontFamily: UI.FONT,
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 2 * PX,
     }).setOrigin(0.5).setScrollFactor(0);
 
-    // XP Bar (top, full width)
-    this.xpBg = this.add.rectangle(0, 0, GAME.WIDTH, 8, COLORS.XP_BAR_BG).setOrigin(0, 0).setScrollFactor(0);
-    this.xpBar = this.add.rectangle(0, 0, 0, 8, COLORS.XP_BAR).setOrigin(0, 0).setScrollFactor(0);
+    // XP Bar (below SAFE_ZONE.TOP, full width)
+    const xpY = SAFE_ZONE.TOP;
+    this.xpBg = this.add.rectangle(0, xpY, GAME.WIDTH, xpBarH, COLORS.XP_BAR_BG).setOrigin(0, 0).setScrollFactor(0);
+    this.xpBar = this.add.rectangle(0, xpY, 0, xpBarH, COLORS.XP_BAR).setOrigin(0, 0).setScrollFactor(0);
 
-    // Level text
-    this.levelText = this.add.text(GAME.WIDTH / 2, 16, 'LV 1', {
-      fontSize: '14px', fontFamily: 'Arial Black, Arial, sans-serif', color: '#00ccff',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5).setScrollFactor(0);
+    // Level text (below XP bar)
+    const levelY = xpY + xpBarH + pad;
+    this.levelText = this.add.text(GAME.WIDTH / 2, levelY, 'LV 1', {
+      fontSize: `${Math.round(GAME.HEIGHT * UI.BODY_RATIO)}px`,
+      fontFamily: UI.FONT,
+      color: '#00ccff',
+      stroke: '#000000',
+      strokeThickness: 3 * PX,
+    }).setOrigin(0.5, 0).setScrollFactor(0);
 
-    // Timer (top right)
-    this.timerText = this.add.text(GAME.WIDTH - 10, 16, '0:00', {
-      fontSize: '20px', fontFamily: 'Arial Black, Arial, sans-serif', color: COLORS.TIMER_TEXT,
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(1, 0.5).setScrollFactor(0);
+    // Timer (top right, below SAFE_ZONE)
+    this.timerText = this.add.text(GAME.WIDTH - pad, levelY, '0:00', {
+      fontSize: `${Math.round(GAME.HEIGHT * UI.HEADING_RATIO)}px`,
+      fontFamily: UI.FONT,
+      color: COLORS.TIMER_TEXT,
+      stroke: '#000000',
+      strokeThickness: 3 * PX,
+    }).setOrigin(1, 0).setScrollFactor(0);
 
-    // Kill count (top left)
-    this.killText = this.add.text(10, 16, 'Kills: 0', {
-      fontSize: '14px', fontFamily: 'Arial, sans-serif', color: COLORS.KILL_TEXT,
-      stroke: '#000000', strokeThickness: 2,
-    }).setOrigin(0, 0.5).setScrollFactor(0);
+    // Kill count (top left, below SAFE_ZONE)
+    this.killText = this.add.text(pad, levelY, 'Kills: 0', {
+      fontSize: `${Math.round(GAME.HEIGHT * UI.BODY_RATIO)}px`,
+      fontFamily: UI.FONT,
+      color: COLORS.KILL_TEXT,
+      stroke: '#000000',
+      strokeThickness: 2 * PX,
+    }).setOrigin(0, 0).setScrollFactor(0);
 
     // Event listeners
     this.onDamaged = () => this.updateHP();
@@ -67,7 +88,7 @@ export class UIScene extends Phaser.Scene {
 
   updateHP() {
     const pct = gameState.hp / gameState.maxHp;
-    this.hpBar.width = 200 * pct;
+    this.hpBar.width = this.hpBarWidth * pct;
     this.hpBar.setFillStyle(pct < 0.3 ? COLORS.HP_BAR_DANGER : COLORS.HP_BAR);
     this.hpText.setText(`${Math.ceil(gameState.hp)}/${gameState.maxHp}`);
   }
@@ -82,36 +103,44 @@ export class UIScene extends Phaser.Scene {
     this.levelUpBg = this.add.rectangle(GAME.WIDTH / 2, GAME.HEIGHT / 2, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.7)
       .setScrollFactor(0).setDepth(300);
 
-    this.add.text(GAME.WIDTH / 2, 80, 'LEVEL UP!', {
-      fontSize: '36px', fontFamily: 'Arial Black, Arial, sans-serif',
-      color: '#ffcc00', stroke: '#000000', strokeThickness: 5,
+    const titleFontSize = Math.round(GAME.HEIGHT * UI.TITLE_RATIO);
+    this.add.text(GAME.WIDTH / 2, SAFE_ZONE.TOP + 40 * PX, 'LEVEL UP!', {
+      fontSize: `${titleFontSize}px`,
+      fontFamily: UI.FONT,
+      color: '#ffcc00', stroke: '#000000', strokeThickness: 5 * PX,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
 
     // Generate choices
     const choices = this.generateChoices();
-    const startY = 180;
-    const cardH = 100;
-    const gap = 15;
+    const startY = SAFE_ZONE.TOP + 120 * PX;
+    const cardH = 100 * PX;
+    const cardW = 400 * PX;
+    const gap = 15 * PX;
+    const iconR = 16 * PX;
+    const headingSize = Math.round(GAME.HEIGHT * UI.BODY_RATIO);
+    const bodySize = Math.round(GAME.HEIGHT * UI.SMALL_RATIO);
 
     choices.forEach((choice, i) => {
       const y = startY + i * (cardH + gap);
-      const card = this.add.rectangle(GAME.WIDTH / 2, y, 400, cardH, COLORS.LEVEL_UP_BG, 1)
+      const card = this.add.rectangle(GAME.WIDTH / 2, y, cardW, cardH, COLORS.LEVEL_UP_BG, 1)
         .setInteractive({ useHandCursor: true })
         .setScrollFactor(0).setDepth(301);
-      this.add.rectangle(GAME.WIDTH / 2, y, 400, cardH)
-        .setStrokeStyle(2, COLORS.LEVEL_UP_BORDER)
+      this.add.rectangle(GAME.WIDTH / 2, y, cardW, cardH)
+        .setStrokeStyle(2 * PX, COLORS.LEVEL_UP_BORDER)
         .setScrollFactor(0).setDepth(301);
 
-      const icon = this.add.circle(GAME.WIDTH / 2 - 160, y, 16, choice.color || 0xffffff, 1)
+      const icon = this.add.circle(GAME.WIDTH / 2 - cardW * 0.4, y, iconR, choice.color || 0xffffff, 1)
         .setScrollFactor(0).setDepth(302);
 
-      this.add.text(GAME.WIDTH / 2 - 120, y - 15, choice.title, {
-        fontSize: '18px', fontFamily: 'Arial Black, Arial, sans-serif',
-        color: '#ffffff', stroke: '#000000', strokeThickness: 2,
+      this.add.text(GAME.WIDTH / 2 - cardW * 0.3, y - 15 * PX, choice.title, {
+        fontSize: `${headingSize}px`,
+        fontFamily: UI.FONT,
+        color: '#ffffff', stroke: '#000000', strokeThickness: 2 * PX,
       }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
 
-      this.add.text(GAME.WIDTH / 2 - 120, y + 12, choice.desc, {
-        fontSize: '13px', fontFamily: 'Arial, sans-serif',
+      this.add.text(GAME.WIDTH / 2 - cardW * 0.3, y + 12 * PX, choice.desc, {
+        fontSize: `${bodySize}px`,
+        fontFamily: UI.FONT,
         color: '#aaaacc',
       }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
 

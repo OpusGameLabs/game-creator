@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PARTICLES, ENEMY, XP } from '../core/Constants.js';
+import { PARTICLES, ENEMY, XP, PX } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 
 export class ParticleSystem {
@@ -39,19 +39,19 @@ export class ParticleSystem {
   }
 
   burstEnemyDeath(x, y, color) {
-    this.burst(x, y, PARTICLES.ENEMY_DEATH_COUNT, color || 0xff4444, 50, 3);
+    this.burst(x, y, PARTICLES.ENEMY_DEATH_COUNT, color || 0xff4444, 50 * PX, 3 * PX);
   }
 
   burstXpPickup(x, y) {
-    this.burst(x, y, PARTICLES.XP_PICKUP_COUNT, [XP.GEM_COLOR, 0xffffff], 30, 2);
+    this.burst(x, y, PARTICLES.XP_PICKUP_COUNT, [XP.GEM_COLOR, 0xffffff], 30 * PX, 2 * PX);
   }
 
   burstPlayerHit(x, y) {
-    this.burst(x, y, PARTICLES.PLAYER_HIT_COUNT, [0xff4444, 0xff8888], 40, 3);
+    this.burst(x, y, PARTICLES.PLAYER_HIT_COUNT, [0xff4444, 0xff8888], 40 * PX, 3 * PX);
   }
 
   burstLevelUp(x, y) {
-    this.burst(x, y, PARTICLES.LEVELUP_COUNT, [0x00ccff, 0x44ffff, 0xffffff], 80, 4);
+    this.burst(x, y, PARTICLES.LEVELUP_COUNT, [0x00ccff, 0x44ffff, 0xffffff], 80 * PX, 4 * PX);
   }
 
   destroy() {
