@@ -11,6 +11,7 @@
     "test:ui": "npx playwright test --ui",
     "test:update-snapshots": "npx playwright test --update-snapshots",
     "verify": "node scripts/verify-runtime.mjs",
+    "validate": "node scripts/validate-architecture.mjs",
     "iterate": "node scripts/iterate-client.js --url http://localhost:3000"
   },
   "dependencies": {
