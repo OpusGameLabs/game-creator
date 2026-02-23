@@ -1,6 +1,6 @@
 # game-creator
 
-The game studio for the agent internet. Build, monetize, and ship 2D (Phaser) and 3D (Three.js) browser games with one command. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **40+ AI coding agents**. Share your games on [Moltbook](https://www.moltbook.com/).
+The game studio for the agent internet. Build, monetize, and ship 2D (Phaser 3) and 3D (Three.js) browser games with one command. QA runs after every step. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **40+ AI coding agents** (via `npx skills add`). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
 
 **Owner**: [OpusGameLabs](https://github.com/OpusGameLabs)
 
@@ -13,175 +13,192 @@ npx skills add OpusGameLabs/game-creator
 Target a specific agent:
 
 ```bash
-npx skills add OpusGameLabs/game-creator -a antigravity
 npx skills add OpusGameLabs/game-creator -a claude-code
 npx skills add OpusGameLabs/game-creator -a cursor
 npx skills add OpusGameLabs/game-creator -a codex
+npx skills add OpusGameLabs/game-creator -a antigravity
 ```
 
 ## Quick Start
 
 ```bash
-# Build a complete 2D game (scaffold → design → audio → deploy → monetize)
-# QA (build + visual review + autofix) runs after every step
+# Build a complete 2D game (scaffold → pixel art → design → audio → deploy → monetize)
+# QA subagent runs after every step (build, runtime, gameplay, architecture, visual)
 /game-creator:make-game 2d my-game
 
-# Or run individual steps:
-/game-creator:design-game
+# Build from a tweet
+/game-creator:make-game https://x.com/user/status/123456
 
-# Add chiptune music and sound effects
-/game-creator:add-audio
-
-# Monetize with Play.fun (OpenGameProtocol)
-/game-creator:monetize-game
+# Or run individual steps on an existing game:
+/game-creator:add-assets          # Replace shapes with pixel art sprites
+/game-creator:design-game         # Add visual polish (particles, juice, transitions)
+/game-creator:add-audio           # Add chiptune music and sound effects
+/game-creator:add-feature jetpack # Add a gameplay feature
+/game-creator:improve-game        # Audit + implement highest-impact improvements
+/game-creator:monetize-game       # Register on Play.fun, add SDK, get monetized URL
+/game-creator:review-game         # Code review for architecture + best practices
+/game-creator:qa-game             # Add Playwright QA tests
 ```
+
+## How It Works
+
+`/make-game` is an orchestrator that delegates all code writing to subagents and runs a QA subagent after every code-modifying step:
+
+```
+Step 0  Parse args, create task list                           ← main thread
+Step 1  Scaffold game from template                            ← code subagent → QA subagent
+Step 1.5 Add pixel art sprites (2D only)                       ← code subagent → QA subagent
+Step 2  Visual polish (particles, juice, transitions)          ← code subagent → QA subagent
+Step 3  Audio (Strudel.cc BGM + SFX)                           ← code subagent → QA subagent
+Step 4  Deploy to GitHub Pages                                 ← main thread (interactive auth)
+Step 5  Monetize with Play.fun                                 ← main thread (interactive auth)
+```
+
+The QA subagent runs 5 phases per step: build check, runtime check (headless Chromium), gameplay verification (iterate client with game-specific actions), architecture validation, and visual review (Playwright MCP screenshots). If any phase fails, an autofix subagent patches the code and QA re-runs (up to 3 attempts per step).
 
 ## Architecture
 
-Every game scaffolded by this plugin follows the same architecture, whether 2D or 3D:
+Every game follows the same architecture, whether 2D or 3D:
 
 ```
 src/
 ├── core/
 │   ├── EventBus.js       # Singleton pub/sub — all cross-module communication
-│   ├── GameState.js      # Centralized state singleton
+│   ├── GameState.js      # Centralized state with reset() for clean restarts
 │   ├── Constants.js      # Every magic number, color, timing, speed
 │   └── GameConfig.js     # Engine config (Phaser or Three.js)
 ├── scenes/               # Scene lifecycle (Phaser) or states (Three.js)
 ├── entities/             # Game objects (player, enemies, obstacles)
-├── systems/              # Engine systems (background, particles, spawners)
+├── systems/              # Background, particles, spawners
+├── sprites/              # Pixel art data (palette, matrices, tiles)
 ├── audio/                # Strudel.cc procedural audio
 │   ├── AudioManager.js   # Init, play, stop wrapper
-│   ├── AudioBridge.js    # Wires EventBus to AudioManager
+│   ├── AudioBridge.js    # Wires EventBus → AudioManager
 │   ├── music.js          # Background music patterns
 │   └── sfx.js            # Sound effect patterns
-└── main.js               # Entry point
+├── playfun.js            # Play.fun SDK integration
+└── main.js               # Entry point + render_game_to_text() + advanceTime()
 ```
 
-### Core Patterns
+**EventBus** — Modules never import each other. All communication via pub/sub with `domain:action` event names.
 
-**EventBus** — Modules never import each other. All communication flows through a singleton EventBus with predefined event constants:
+**GameState** — Single source of truth. `reset()` gives a clean slate for restarts.
 
-```js
-eventBus.emit(Events.BIRD_FLAP);
-eventBus.on(Events.SCORE_CHANGED, ({ score }) => { ... });
-```
+**Constants** — Zero hardcoded values in game logic. Sizes are proportional (`GAME.WIDTH * ratio`), with DPR-aware scaling for retina displays.
 
-**GameState** — Single source of truth. Systems read from it, events mutate it:
-
-```js
-gameState.addScore();     // increments score, updates bestScore
-gameState.reset();        // clean slate for restart
-```
-
-**Constants** — Zero hardcoded values in game logic. Every tunable lives here:
-
-```js
-export const BIRD_CONFIG = { flapVelocity: -380, maxVelocity: 600, ... };
-export const PIPE_CONFIG = { speed: 180, gapSize: 150, ... };
-export const COLORS = { sky: 0x4ec0ca, bird: 0xf5d742, ... };
-```
+**`render_game_to_text()`** — Every game exposes `window.render_game_to_text()` returning a JSON string of current game state, so AI agents can read the game without interpreting pixels.
 
 ## Skills
 
+### Reference Skills (loaded automatically by Claude when relevant)
+
 | Skill | Purpose |
 |-------|---------|
-| `phaser` | 2D game architecture with Phaser 3 (scene-based, arcade physics, TypeScript) |
-| `threejs-game` | 3D game architecture with Three.js (event-driven, modular systems) |
-| `game-designer` | Visual polish — sky gradients, particles, screen shake, transitions, juice |
-| `game-audio` | Procedural audio with Strudel.cc — chiptune BGM, retro SFX |
-| `game-qa` | Playwright testing — gameplay verification, visual regression, performance |
-| `game-architecture` | Reference patterns for event-driven game architecture |
-| `game-deploy` | Deployment to GitHub Pages, Vercel, Netlify, itch.io |
-| `playdotfun` | Play.fun (OpenGameProtocol) monetization — SDK, API, auth, leaderboards |
+| `phaser` | 2D game patterns — Phaser 3 scenes, arcade physics, high-DPI rendering |
+| `threejs-game` | 3D game patterns — Three.js event-driven architecture, modular systems |
+| `game-assets` | Pixel art sprites — `renderPixelArt()`, `renderSpriteSheet()`, palette system |
+| `game-designer` | Visual polish — gradients, particles, screen shake, transitions, juice |
+| `game-audio` | Procedural audio — Strudel.cc BGM patterns + Web Audio SFX |
+| `game-qa` | Playwright testing — gameplay, visual regression, performance, accessibility |
+| `game-architecture` | Reference architecture patterns for event-driven games |
+| `game-deploy` | Deployment — GitHub Pages, Vercel, Netlify, itch.io |
+| `playdotfun` | Play.fun (OpenGameProtocol) — SDK, API, auth, leaderboards |
+| `fetch-tweet` | Fetch tweet content for tweet-to-game conversion |
 
-## Commands
+### Slash Commands (user-invocable)
 
 | Command | Description |
 |---------|-------------|
-| `/game-creator:make-game [2d\|3d] [name]` | Full pipeline: scaffold, design, audio, deploy, monetize (QA at every step) |
-| `/game-creator:improve-game [focus]` | Deep audit + implement highest-impact improvements |
-| `/game-creator:design-game [path]` | Audit and improve visual polish |
-| `/game-creator:add-feature [description]` | Add a feature following architecture patterns |
-| `/game-creator:add-audio [path]` | Add Strudel.cc music and sound effects |
-| `/game-creator:monetize-game [path]` | Register on Play.fun, add SDK, get monetized URL |
+| `/make-game [2d\|3d] [name]` | Full pipeline: scaffold, pixel art, design, audio, deploy, monetize |
+| `/improve-game [focus]` | Deep audit + implement highest-impact improvements |
+| `/design-game [path]` | Audit and improve visual polish |
+| `/add-feature [description]` | Add a gameplay feature following architecture patterns |
+| `/add-assets [path]` | Replace geometric shapes with pixel art sprites |
+| `/add-audio [path]` | Add Strudel.cc music and sound effects |
+| `/monetize-game [path]` | Register on Play.fun, add SDK, get monetized URL |
+| `/qa-game [path]` | Add Playwright QA tests |
+| `/review-game [path]` | Code review for architecture + best practices |
+
+All commands are prefixed with `game-creator:` when installed as a plugin (e.g., `/game-creator:make-game`).
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
+| `game-creator` | Autonomous end-to-end pipeline with build/visual gates (no user confirmation between steps) |
 | `game-reviewer` | Reviews codebases for architecture compliance, performance, and monetization readiness |
-| `game-creator` | Autonomous end-to-end game creation pipeline with build/visual gates |
+| `game-qa-runner` | Runs Playwright test suites, diagnoses failures, fixes code, and re-runs until green |
 | `game-deploy` | Deploys games to GitHub Pages, Vercel, or itch.io with pre/post validation |
 
-## Example: Flappy Bird
+## Examples
 
-A complete 2D game in `examples/flappy-bird/` demonstrating every pattern:
+8 complete example games in `examples/`, demonstrating both engines:
 
-- **5 scenes**: Boot, Menu, Game, UI (parallel overlay), Game Over
-- **2 entities**: Bird (composite graphics, wing animation, tilt) and Pipe (random gaps, collision zones)
-- **4 systems**: Background (sky gradient, parallax clouds, grass), PipeSpawner, ScoreSystem, Particles (tween-based bursts)
-- **Procedural audio**: Chiptune menu theme, gameplay BGM, game over theme, flap/score/death SFX
-- **15 Playwright tests**: Boot flow, scene transitions, input, scoring, restart, visual regression, performance
-- **All procedural graphics** — no image assets, no external audio files
+| Game | Engine | Description |
+|------|--------|-------------|
+| `flappy-bird` | Phaser 3 | Classic flappy clone — 5 scenes, 15 Playwright tests, full audio |
+| `barn-defense` | Phaser 3 | Tower defense game |
+| `vampire-survivors` | Phaser 3 | Survivors-like auto-attacking game |
+| `example-game` | Phaser 3 | Asteroid dodger (generated by `/make-game` test run) |
+| `flappy-bird-3d` | Three.js | 3D flappy bird variant |
+| `flight-simulator` | Three.js | Flight sim with terrain |
+| `labyrinth` | Three.js | 3D maze game |
+| `singularity-run` | Three.js | Endless runner with matrix rain effects |
 
 ```bash
 cd examples/flappy-bird
 npm install
 npm run dev        # http://localhost:3000
-npm run test       # run all 15 Playwright tests
-npm run build      # production build
+npm run test       # Playwright tests
+npm run build      # Production build to dist/
 ```
 
 ## Templates
 
-The `/make-game` command copies a runnable starter project from `templates/` instead of generating files from scratch. Both templates include all dependencies pre-configured, EventBus/GameState/Constants architecture, and procedural graphics (no asset files needed).
+`/make-game` copies a runnable starter project from `templates/` — not generated from scratch. Both templates include all dependencies, the full EventBus/GameState/Constants architecture, QA scripts, and procedural graphics (no asset files).
 
-| Template | Engine | Contents |
+| Template | Engine | Includes |
 |----------|--------|----------|
-| `phaser-2d` | Phaser 3 | 5 scenes (Boot, Menu, Game, UI, GameOver), Player entity, ScoreSystem, arcade physics |
-| `threejs-3d` | Three.js | Game orchestrator, Player mesh, LevelBuilder (ground + fog + lighting), HTML overlays for menus, InputSystem |
+| `phaser-2d` | Phaser 3 | Boot/Game/GameOver scenes, Player entity, ScoreSystem, arcade physics, high-DPI support |
+| `threejs-3d` | Three.js | Game orchestrator, Player mesh, LevelBuilder, HTML overlays, InputSystem (touch + keyboard) |
+
+Both templates ship with `scripts/verify-runtime.mjs` (headless runtime check), `scripts/iterate-client.js` (action replay + screenshots), `scripts/validate-architecture.mjs` (pattern validator), and `scripts/example-actions.json` (default test actions).
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| 2D Engine | Phaser 3 |
-| 3D Engine | Three.js |
-| Audio | Strudel.cc (`@strudel/web`) |
-| Build | Vite |
-| Testing | Playwright + axe-core |
+| 2D Engine | Phaser 3 (`^3.90.0`) |
+| 3D Engine | Three.js (`^0.183.0`) |
+| Audio | Strudel.cc (`@strudel/web ^1.3.0`) — AGPL-3.0 |
+| Build | Vite (`^7.3.1`) |
+| Testing | Playwright (`^1.58.0`) + axe-core (`^4.11.0`) |
 | Monetization | [Play.fun](https://play.fun) (OpenGameProtocol) |
 | Language | JavaScript ES modules |
 
-## Audio
-
-Background music and sound effects are procedurally generated using [Strudel.cc](https://strudel.cc/), a browser-based live coding music tool. No audio files needed.
-
-```js
-// Chiptune gameplay BGM
-stack(
-  note("e4 g4 a4 g4 e4 d4 e4 c4").s("square").gain(0.22).lpf(2200),
-  note("c2 c2 g2 g2 a2 a2 g2 g2").s("triangle").gain(0.3).lpf(500),
-  s("bd ~ sd ~, hh*8").gain(0.35)
-).cpm(130).play();
-```
-
-Strudel is AGPL-3.0 licensed. Projects using `@strudel/web` must be open source under a compatible license.
-
 ## Quality Assurance
 
-QA is built into every step of the pipeline, not a separate step:
+QA is built into every code-modifying step of the pipeline via a dedicated QA subagent:
 
-1. **Build check**: `npm run build` catches compilation errors
-2. **Runtime check**: Headless Chromium checks for WebGL errors, exceptions, and console errors
-3. **Visual review**: Playwright MCP takes screenshots and identifies visual issues
-4. **Autofix**: Any issues found trigger a fix subagent that automatically repairs the code
+1. **Build** — `npm run build` catches compilation errors
+2. **Runtime** — Headless Chromium checks for WebGL errors, uncaught exceptions, console errors
+3. **Gameplay** — Iterate client replays game-specific actions, verifies scoring works and death triggers
+4. **Architecture** — Validates EventBus/GameState/Constants patterns, flags magic numbers
+5. **Visual** — Playwright MCP screenshots check entity visibility, safe zone compliance, button labels
 
-This approach catches problems immediately when they're introduced, not at the end of the pipeline.
+If any phase fails, an autofix subagent patches the code and QA re-runs (up to 3 attempts). Problems are caught when introduced, not at the end of the pipeline.
 
-For interactive visual QA during development, add the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) to your agent.
+## Play.fun Integration
+
+The `/monetize-game` command (and Step 5 of `/make-game`) registers games on [Play.fun](https://play.fun) and integrates the browser SDK:
+
+1. Authenticate via web callback or manual paste
+2. Register game with anti-cheat limits based on scoring system
+3. Add CDN script + `src/playfun.js` (wires EventBus to `addPoints()`/`savePoints()`)
+4. Rebuild and redeploy
+
+The SDK is non-blocking — if it fails to load, the game still works. Points buffer locally during gameplay and sync on game over.
 
 ## License
 
-MIT
+MIT (games using `@strudel/web` for audio must use an AGPL-3.0-compatible license)
