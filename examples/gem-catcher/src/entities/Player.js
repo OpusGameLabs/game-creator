@@ -1,49 +1,63 @@
 import Phaser from 'phaser';
-import { PLAYER, GAME, COLORS } from '../core/Constants.js';
+import { PLAYER, GAME } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
+import { renderSpriteSheet } from '../core/PixelRenderer.js';
+import { BASKET_FRAMES, BASKET_PALETTE } from '../sprites/player.js';
 
 export class Player {
   constructor(scene) {
     this.scene = scene;
 
-    const key = 'basket_tex';
-    const texW = Math.ceil(PLAYER.WIDTH + 8);
-    const rimH = PLAYER.HEIGHT * 0.3;
-    const texH = Math.ceil(PLAYER.HEIGHT + rimH + 4);
+    const texKey = 'basket-sheet';
+    const scale = PLAYER.PIXEL_SCALE;
 
-    // Only generate the texture once (survives scene restarts)
-    if (!scene.textures.exists(key)) {
-      const gfx = scene.add.graphics();
+    // Render the basket spritesheet (idle, left-tilt, idle, right-tilt)
+    renderSpriteSheet(scene, BASKET_FRAMES, BASKET_PALETTE, texKey, scale);
 
-      // Offset all drawing so it starts from (0,0) in positive space
-      const ox = texW / 2;
-      const oy = rimH + 2;
-
-      // Main basket body
-      gfx.fillStyle(PLAYER.COLOR, 1);
-      gfx.fillRoundedRect(
-        ox - PLAYER.WIDTH / 2, oy,
-        PLAYER.WIDTH, PLAYER.HEIGHT,
-        4
-      );
-
-      // Darker rim at top edge
-      gfx.fillStyle(COLORS.PLAYER_RIM, 1);
-      gfx.fillRoundedRect(
-        ox - PLAYER.WIDTH / 2 - 2, oy - rimH * 0.5,
-        PLAYER.WIDTH + 4, rimH,
-        3
-      );
-
-      gfx.generateTexture(key, texW, texH);
-      gfx.destroy();
+    // Create animations
+    if (!scene.anims.exists('basket-idle')) {
+      scene.anims.create({
+        key: 'basket-idle',
+        frames: [{ key: texKey, frame: 0 }],
+        frameRate: 1,
+        repeat: 0,
+      });
+    }
+    if (!scene.anims.exists('basket-left')) {
+      scene.anims.create({
+        key: 'basket-left',
+        frames: [{ key: texKey, frame: 1 }],
+        frameRate: 1,
+        repeat: 0,
+      });
+    }
+    if (!scene.anims.exists('basket-right')) {
+      scene.anims.create({
+        key: 'basket-right',
+        frames: [{ key: texKey, frame: 3 }],
+        frameRate: 1,
+        repeat: 0,
+      });
     }
 
     // Create physics-enabled sprite
-    this.sprite = scene.physics.add.sprite(PLAYER.START_X, PLAYER.START_Y, key);
-    this.sprite.body.setSize(PLAYER.WIDTH, PLAYER.HEIGHT);
+    this.sprite = scene.physics.add.sprite(PLAYER.START_X, PLAYER.START_Y, texKey, 0);
+
+    // Scale the sprite to match the desired PLAYER.WIDTH
+    const frameW = BASKET_FRAMES[0][0].length * scale;
+    const frameH = BASKET_FRAMES[0].length * scale;
+    const displayScale = PLAYER.WIDTH / frameW;
+    this.sprite.setScale(displayScale);
+
+    // Adjust physics body to match the visible basket area
+    const bodyW = PLAYER.WIDTH;
+    const bodyH = frameH * displayScale * 0.65; // tighter body for the basket opening
+    this.sprite.body.setSize(frameW * 0.85, frameH * 0.65);
+    this.sprite.body.setOffset(frameW * 0.075, frameH * 0.2);
     this.sprite.body.setAllowGravity(false);
     this.sprite.body.setCollideWorldBounds(true);
+
+    this._lastDir = 'idle';
   }
 
   update(left, right) {
@@ -52,10 +66,22 @@ export class Player {
     // Horizontal-only movement
     if (left) {
       body.setVelocityX(-PLAYER.SPEED);
+      if (this._lastDir !== 'left') {
+        this.sprite.play('basket-left');
+        this._lastDir = 'left';
+      }
     } else if (right) {
       body.setVelocityX(PLAYER.SPEED);
+      if (this._lastDir !== 'right') {
+        this.sprite.play('basket-right');
+        this._lastDir = 'right';
+      }
     } else {
       body.setVelocityX(0);
+      if (this._lastDir !== 'idle') {
+        this.sprite.play('basket-idle');
+        this._lastDir = 'idle';
+      }
     }
 
     // No vertical movement at all
@@ -65,6 +91,8 @@ export class Player {
   reset() {
     this.sprite.setPosition(PLAYER.START_X, PLAYER.START_Y);
     this.sprite.body.setVelocity(0, 0);
+    this._lastDir = 'idle';
+    this.sprite.play('basket-idle');
   }
 
   destroy() {

@@ -32,7 +32,7 @@ window.render_game_to_text = () => {
 
   // Add player info when in gameplay
   const gameScene = game.scene.getScene('GameScene');
-  if (gameState.started && gameScene?.player?.sprite) {
+  if (gameState.started && gameScene?.player?.sprite?.body) {
     const s = gameScene.player.sprite;
     const body = s.body;
     payload.player = {

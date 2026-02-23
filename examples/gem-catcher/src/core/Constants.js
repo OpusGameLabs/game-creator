@@ -54,28 +54,28 @@ export const SAFE_ZONE = {
 export const PLAYER = {
   START_X: GAME.WIDTH * 0.5,
   START_Y: GAME.HEIGHT * 0.88,
-  WIDTH: GAME.WIDTH * 0.12,
-  HEIGHT: GAME.HEIGHT * 0.04,
+  WIDTH: GAME.WIDTH * 0.14,
+  HEIGHT: GAME.WIDTH * 0.10,   // proportional to width for the basket shape
   SPEED: 350 * PX,
-  COLOR: 0x8b5e3c, // warm brown basket color
+  PIXEL_SCALE: 3,              // pixel art scale factor
 };
 
 // --- Gems ---
 
 export const GEM = {
-  SIZE: GAME.WIDTH * 0.04,
+  SIZE: GAME.WIDTH * 0.06,     // increased for visibility
   FALL_SPEED: 150 * PX,
-  SPAWN_INTERVAL: 1200,   // ms between spawns (initial)
-  COLORS: [0x00ff88, 0x44ddff, 0xffaa00, 0xff44aa, 0xffff44], // green, cyan, orange, pink, yellow
+  SPAWN_INTERVAL: 1200,        // ms between spawns (initial)
+  PIXEL_SCALE: 3,              // pixel art scale factor
 };
 
 // --- Skulls ---
 
 export const SKULL = {
-  SIZE: GAME.WIDTH * 0.04,
-  FALL_SPEED: 120 * PX,   // slightly slower than gems
-  SPAWN_CHANCE: 0.15,      // 15% chance per spawn cycle
-  COLOR: 0xff3333,
+  SIZE: GAME.WIDTH * 0.06,     // increased for visibility
+  FALL_SPEED: 120 * PX,        // slightly slower than gems
+  SPAWN_CHANCE: 0.15,          // 15% chance per spawn cycle
+  PIXEL_SCALE: 3,              // pixel art scale factor
 };
 
 // --- Difficulty ---

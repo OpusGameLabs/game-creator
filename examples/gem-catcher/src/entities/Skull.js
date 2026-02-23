@@ -1,37 +1,56 @@
 import Phaser from 'phaser';
-import { SKULL, COLORS } from '../core/Constants.js';
+import { SKULL } from '../core/Constants.js';
+import { renderSpriteSheet } from '../core/PixelRenderer.js';
+import { SKULL_FRAMES, SKULL_PALETTE } from '../sprites/skull.js';
 
-export class Skull extends Phaser.GameObjects.Graphics {
+export class Skull extends Phaser.GameObjects.Sprite {
   constructor(scene, x, y, fallSpeed) {
-    super(scene);
+    const sheetKey = 'skull-sheet';
+    const scale = SKULL.PIXEL_SCALE;
 
-    this.scene = scene;
+    // Render the spritesheet if not already cached
+    renderSpriteSheet(scene, SKULL_FRAMES, SKULL_PALETTE, sheetKey, scale);
+
+    // Create animation if not already cached
+    if (!scene.anims.exists('skull-glow')) {
+      scene.anims.create({
+        key: 'skull-glow',
+        frames: scene.anims.generateFrameNumbers(sheetKey, {
+          start: 0,
+          end: SKULL_FRAMES.length - 1,
+        }),
+        frameRate: 3,
+        repeat: -1,
+      });
+    }
+
+    super(scene, x, y, sheetKey, 0);
     scene.add.existing(this);
 
-    const size = SKULL.SIZE;
-    const half = size / 2;
+    // Scale sprite to match desired SKULL.SIZE
+    const frameW = SKULL_FRAMES[0][0].length * scale;
+    const displayScale = SKULL.SIZE / frameW;
+    this.setScale(displayScale);
 
-    // Draw skull body (rounded rectangle)
-    this.fillStyle(SKULL.COLOR, 1);
-    this.fillRoundedRect(-half, -half, size, size, half * 0.3);
-
-    // Draw eye sockets (dark circles)
-    this.fillStyle(0x000000, 0.8);
-    const eyeR = half * 0.2;
-    this.fillCircle(-half * 0.35, -half * 0.15, eyeR);
-    this.fillCircle(half * 0.35, -half * 0.15, eyeR);
-
-    // Draw mouth (small dark rectangle)
-    this.fillStyle(0x000000, 0.6);
-    this.fillRect(-half * 0.3, half * 0.2, half * 0.6, half * 0.15);
-
-    this.setPosition(x, y);
+    // Play glow animation
+    this.play('skull-glow');
 
     // Enable physics
     scene.physics.add.existing(this);
-    this.body.setSize(size, size);
-    this.body.setOffset(-half, -half);
+    const frameH = SKULL_FRAMES[0].length * scale;
+    this.body.setSize(frameW * 0.75, frameH * 0.75);
+    this.body.setOffset(frameW * 0.125, frameH * 0.125);
     this.body.setAllowGravity(false);
     this.body.setVelocityY(fallSpeed);
+
+    // Add a sinister wobble tween
+    scene.tweens.add({
+      targets: this,
+      angle: { from: -8, to: 8 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 }

@@ -2,10 +2,12 @@ import Phaser from 'phaser';
 import { GAME, PLAYER, COLORS, PX, TRANSITION, SAFE_ZONE, GEM, SKULL, DIFFICULTY, LIVES, UI } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
+import { renderPixelArt } from '../core/PixelRenderer.js';
 import { Player } from '../entities/Player.js';
 import { Gem } from '../entities/Gem.js';
 import { Skull } from '../entities/Skull.js';
 import { ScoreSystem } from '../systems/ScoreSystem.js';
+import { SKY_BASE, SKY_VAR1, SKY_VAR2, STAR_CLUSTER, BRIGHT_STAR, NEBULA_PUFF, TILE_PALETTE } from '../sprites/tiles.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -19,8 +21,8 @@ export class GameScene extends Phaser.Scene {
     this.isMobile = this.sys.game.device.os.android ||
       this.sys.game.device.os.iOS || this.sys.game.device.os.iPad;
 
-    // --- Night sky gradient background ---
-    this.drawGradient();
+    // --- Night sky pixel art background ---
+    this.drawBackground();
 
     // --- Player (basket) ---
     this.player = new Player(this);
@@ -273,10 +275,11 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // --- Background ---
+  // --- Background: Pixel art night sky ---
 
-  drawGradient() {
-    const bg = this.add.graphics();
+  drawBackground() {
+    // 1. Draw a gradient base layer for smooth color transition
+    const gradBg = this.add.graphics();
     const top = Phaser.Display.Color.IntegerToColor(COLORS.SKY_TOP);
     const bot = Phaser.Display.Color.IntegerToColor(COLORS.SKY_BOTTOM);
     const steps = 64;
@@ -287,10 +290,71 @@ export class GameScene extends Phaser.Scene {
       const r = Math.round(top.red + (bot.red - top.red) * t);
       const g = Math.round(top.green + (bot.green - top.green) * t);
       const b = Math.round(top.blue + (bot.blue - top.blue) * t);
-      bg.fillStyle(Phaser.Display.Color.GetColor(r, g, b));
-      bg.fillRect(0, i * bandH, GAME.WIDTH, bandH + 1);
+      gradBg.fillStyle(Phaser.Display.Color.GetColor(r, g, b));
+      gradBg.fillRect(0, i * bandH, GAME.WIDTH, bandH + 1);
+    }
+    gradBg.setDepth(-20);
+
+    // 2. Render tile textures for the night sky overlay
+    const tileScale = 2;
+    renderPixelArt(this, SKY_BASE, TILE_PALETTE, 'tile-sky-0', tileScale);
+    renderPixelArt(this, SKY_VAR1, TILE_PALETTE, 'tile-sky-1', tileScale);
+    renderPixelArt(this, SKY_VAR2, TILE_PALETTE, 'tile-sky-2', tileScale);
+
+    // 3. Lay a random tile grid over the gradient for texture
+    const tileSize = 16 * tileScale;
+    for (let y = 0; y < GAME.HEIGHT; y += tileSize) {
+      for (let x = 0; x < GAME.WIDTH; x += tileSize) {
+        const rnd = Math.random();
+        const variant = rnd < 0.6 ? 'tile-sky-0'
+                      : rnd < 0.85 ? 'tile-sky-1'
+                      : 'tile-sky-2';
+        const tile = this.add.image(x + tileSize / 2, y + tileSize / 2, variant);
+        tile.setDepth(-15);
+        tile.setAlpha(0.3); // subtle overlay, lets gradient show through
+      }
     }
 
-    bg.setDepth(-1);
+    // 4. Render decoration textures
+    renderPixelArt(this, STAR_CLUSTER, TILE_PALETTE, 'deco-star-cluster', 2);
+    renderPixelArt(this, BRIGHT_STAR, TILE_PALETTE, 'deco-bright-star', 2);
+    renderPixelArt(this, NEBULA_PUFF, TILE_PALETTE, 'deco-nebula', 2);
+
+    // 5. Scatter bright stars across the sky
+    const starCount = Math.floor((GAME.WIDTH * GAME.HEIGHT) / 40000);
+    for (let i = 0; i < starCount; i++) {
+      const sx = Phaser.Math.Between(10, GAME.WIDTH - 10);
+      const sy = Phaser.Math.Between(10, GAME.HEIGHT - 10);
+      const type = Math.random() < 0.6 ? 'deco-star-cluster' : 'deco-bright-star';
+      const star = this.add.image(sx, sy, type);
+      star.setDepth(-10);
+      star.setAlpha(0.4 + Math.random() * 0.5);
+      const starScale = 0.5 + Math.random() * 1.0;
+      star.setScale(starScale);
+
+      // Twinkle animation for bright stars
+      if (type === 'deco-bright-star') {
+        this.tweens.add({
+          targets: star,
+          alpha: { from: star.alpha, to: star.alpha * 0.3 },
+          duration: 1500 + Math.random() * 2000,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+          delay: Math.random() * 2000,
+        });
+      }
+    }
+
+    // 6. Scatter nebula puffs (fewer, larger, very faint)
+    const nebulaCount = Math.floor(starCount * 0.15);
+    for (let i = 0; i < nebulaCount; i++) {
+      const nx = Phaser.Math.Between(50, GAME.WIDTH - 50);
+      const ny = Phaser.Math.Between(50, GAME.HEIGHT - 50);
+      const nebula = this.add.image(nx, ny, 'deco-nebula');
+      nebula.setDepth(-8);
+      nebula.setAlpha(0.15 + Math.random() * 0.15);
+      nebula.setScale(2 + Math.random() * 3);
+    }
   }
 }
