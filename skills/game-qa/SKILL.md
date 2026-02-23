@@ -7,6 +7,15 @@ description: Game QA testing with Playwright — visual regression, gameplay ver
 
 You are an expert QA engineer for browser games. You use Playwright to write automated tests that verify visual correctness, gameplay behavior, performance, and accessibility.
 
+## Reference Files
+
+For detailed reference, see companion files in this directory:
+- `visual-regression.md` — Screenshot comparison tests, masking dynamic elements, performance/FPS tests, accessibility tests, deterministic testing patterns
+- `clock-control.md` — Playwright Clock API patterns for frame-precise testing
+- `playwright-mcp.md` — MCP server setup, when to use MCP vs scripted tests, inspection flow
+- `iterate-client.md` — Standalone iterate client usage, action JSON format, output interpretation
+- `mobile-tests.md` — Mobile input simulation and responsive layout test patterns
+
 ## Tech Stack
 
 - **Test Runner**: Playwright Test (`@playwright/test`)
@@ -286,362 +295,6 @@ test('score increments when passing pipes', async ({ gamePage }) => {
 });
 ```
 
-### 4. Visual Regression
-
-Screenshot-based tests to catch unintended visual changes.
-
-```js
-test('gameplay scene renders correctly', async ({ gamePage }) => {
-  // Wait a beat for animations to settle
-  await gamePage.waitForTimeout(500);
-  await expect(gamePage.locator('canvas')).toHaveScreenshot('gameplay-scene.png', {
-    maxDiffPixels: 300,
-  });
-});
-
-test('game over scene renders correctly', async ({ gamePage }) => {
-
-  // Let bird die
-  await gamePage.waitForFunction(
-    () => window.__GAME_STATE__.gameOver,
-    null,
-    { timeout: 10000 }
-  );
-
-  // Wait for game over scene
-  await gamePage.waitForFunction(() => {
-    const scenes = window.__GAME__.scene.getScenes(true);
-    return scenes.some(s => s.scene.key === 'GameOverScene');
-  });
-  await gamePage.waitForTimeout(600); // transitions
-
-  await expect(gamePage.locator('canvas')).toHaveScreenshot('game-over-scene.png', {
-    maxDiffPixels: 300,
-  });
-});
-```
-
-**Masking dynamic elements** — use `screenshot.css` to hide particles, clouds, or animated elements that cause non-deterministic screenshots:
-
-```css
-/* tests/fixtures/screenshot.css */
-/* No CSS rules needed for canvas games — canvas is opaque to CSS.
-   Instead, use window.__TEST_MODE__ flag in game code to freeze animations. */
-```
-
-### 5. Performance & FPS
-
-```js
-test('game loads within 3 seconds', async ({ page }) => {
-  const start = Date.now();
-  await page.goto('/');
-  await page.waitForFunction(() => {
-    const g = window.__GAME__;
-    return g && g.isBooted && g.canvas;
-  });
-  const loadTime = Date.now() - start;
-  expect(loadTime).toBeLessThan(3000);
-});
-
-test('game maintains 30+ FPS during gameplay', async ({ gamePage }) => {
-  await gamePage.keyboard.press('Space');
-  await gamePage.waitForFunction(() => window.__GAME_STATE__.started);
-
-  const avgFps = await gamePage.evaluate(() => {
-    return new Promise((resolve) => {
-      let frames = 0;
-      const start = performance.now();
-      function countFrame() {
-        frames++;
-        if (performance.now() - start < 2000) {
-          requestAnimationFrame(countFrame);
-        } else {
-          resolve(frames / ((performance.now() - start) / 1000));
-        }
-      }
-      requestAnimationFrame(countFrame);
-    });
-  });
-
-  expect(avgFps).toBeGreaterThan(30);
-});
-```
-
-### 6. Accessibility
-
-Canvas games are inherently opaque to screen readers, but test the surrounding HTML:
-
-```js
-import AxeBuilder from '@axe-core/playwright';
-
-test('page has no accessibility violations', async ({ gamePage }) => {
-  const results = await new AxeBuilder({ page: gamePage })
-    .exclude('canvas')
-    .analyze();
-  expect(results.violations).toEqual([]);
-});
-```
-
-## Deterministic Testing
-
-For reproducible tests, seed the game's RNG before page load:
-
-```js
-// tests/helpers/seed-random.js
-// Mulberry32 seeded PRNG — inject via page.addInitScript()
-(function() {
-  let seed = 42;
-  Math.random = function() {
-    seed |= 0;
-    seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-})();
-```
-
-Use it in tests:
-
-```js
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript({ path: './tests/helpers/seed-random.js' });
-});
-```
-
-Phaser also supports seeded RNG via config:
-
-```js
-const config = {
-  seed: ['qa-test-seed'],
-  // ...
-};
-```
-
-## Clock Control for Frame-Precise Testing
-
-Playwright's Clock API controls `requestAnimationFrame`, giving you frame-precise game control:
-
-```js
-test('bird falls after 1 second without input', async ({ page }) => {
-  await page.clock.install();
-  await page.goto('/');
-  await page.waitForFunction(() => window.__GAME__?.isBooted);
-
-  // Start game
-  await page.keyboard.press('Space');
-  await page.waitForFunction(() => window.__GAME_STATE__.started);
-
-  const yBefore = await page.evaluate(() => {
-    return window.__GAME__.scene.getScene('GameScene').bird.y;
-  });
-
-  // Advance exactly 1 second
-  await page.clock.runFor(1000);
-
-  const yAfter = await page.evaluate(() => {
-    return window.__GAME__.scene.getScene('GameScene').bird.y;
-  });
-
-  expect(yAfter).toBeGreaterThan(yBefore); // bird fell
-});
-```
-
-## When Adding QA to a Game
-
-1. Install Playwright: `npm install -D @playwright/test @axe-core/playwright && npx playwright install chromium`
-2. Create `playwright.config.js` with the game's dev server port
-3. Expose `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` in `main.js`
-4. Create `tests/fixtures/game-test.js` with the `gamePage` fixture
-5. Create `tests/helpers/seed-random.js` for deterministic behavior
-6. Write tests in `tests/e2e/`:
-   - `game.spec.js` — boot, scene flow, input, scoring, game over
-   - `visual.spec.js` — screenshot regression for each scene
-   - `perf.spec.js` — load time, FPS budget
-7. Add npm scripts: `test`, `test:ui`, `test:headed`, `test:update-snapshots`
-8. Generate initial baselines: `npm run test:update-snapshots`
-
-## Playwright MCP — Interactive Visual QA
-
-In addition to automated tests, use the **Playwright MCP** for interactive visual inspection. This gives your agent direct browser control for screenshots, element inspection, and real visual evaluation.
-
-### Setup
-
-Install the Playwright MCP server so your agent can use `browser_navigate`, `browser_take_screenshot`, `browser_snapshot`, `browser_evaluate`, and other browser control tools:
-
-```bash
-claude mcp add playwright npx @playwright/mcp@latest
-```
-
-**After running this command, the user must restart their agent (e.g., restart Claude Code) for the MCP server to take effect.** Prompt them:
-
-> Playwright MCP has been added. Please restart Claude Code for it to take effect, then tell me to continue.
-
-To verify it's working, try calling `browser_navigate` to any URL. If the tool is not available, the MCP server hasn't loaded yet.
-
-### When to Use MCP vs Automated Tests
-
-| Task | Use |
-|------|-----|
-| "Does this look right?" | **MCP** — take a screenshot, analyze visually |
-| "Did this change break boot flow?" | **Automated test** — assert scene transitions |
-| "Are the colors cohesive?" | **MCP** — screenshot + visual judgment |
-| "Does scoring still work?" | **Automated test** — assert gameState.score |
-| "How does the death animation feel?" | **MCP** — navigate, die, watch in real-time |
-| "Regression after refactor" | **Automated test** — run full suite |
-| "Check FPS on real browser" | **MCP** — headed browser gives accurate FPS |
-| "CI/CD gate" | **Automated test** — headless, pass/fail |
-| "Evaluate visual polish" | **MCP** — designer uses screenshots to judge atmosphere |
-| "Active gameplay screenshot" | **MCP** — animated scenes are unstable for automated screenshots |
-| "Check Play.fun widget overlay" | **MCP** — inspect iframe computed styles |
-
-### MCP Visual Inspection Flow
-
-When using MCP for QA:
-
-1. **`browser_navigate`** to the game URL (e.g., `http://localhost:3000`)
-2. **`browser_wait_for`** — wait 2 seconds for the game to fully render
-3. **`browser_take_screenshot`** — capture gameplay (game starts immediately, no title screen)
-4. **Assess visually**: Check rendering, entity sizing, background, atmosphere
-5. **Check safe zone**: Verify no UI elements are hidden behind the top ~8% of the screen (Play.fun widget area at 75px). If deployed, inspect the widget directly:
-   ```js
-   // browser_evaluate — inspect Play.fun widget iframe
-   const iframe = document.querySelector('iframe[src*="widget.play.fun"]');
-   if (iframe) {
-     const styles = window.getComputedStyle(iframe);
-     return { position: styles.position, top: styles.top, height: styles.height, zIndex: styles.zIndex };
-   }
-   return 'No Play.fun widget found';
-   ```
-6. **Check buttons**: If game over is visible, verify button labels (text) are readable — not blank rectangles
-7. Let the player die, **`browser_take_screenshot`** — check game-over screen polish and score display
-8. **`browser_press_key`** (Space) — restart and verify transitions
-9. Report findings with specific visual observations
-
-### MCP + Automated: Best of Both
-
-The recommended workflow is:
-
-1. **Write automated tests** for all objective checks (boot, scenes, input, scoring, game over, regression, gameplay invariants)
-2. **Use MCP** for subjective visual evaluation (does it look good? feel right? color palette working? safe zone respected? entity sizes appropriate?)
-3. Run automated tests in CI; run MCP inspections during design passes
-
-## Mobile Input & Responsive Layout Tests
-
-Use the `mobile-chrome` project (Pixel 5 emulation) to test touch input and responsive layout:
-
-```js
-test('game canvas fills mobile viewport', async ({ gamePage }) => {
-  const { width, height } = await gamePage.evaluate(() => {
-    const canvas = document.querySelector('canvas');
-    return { width: canvas.clientWidth, height: canvas.clientHeight };
-  });
-  const viewport = gamePage.viewportSize();
-  expect(width).toBeGreaterThanOrEqual(viewport.width * 0.9);
-  expect(height).toBeGreaterThanOrEqual(viewport.height * 0.9);
-});
-
-test('virtual joystick appears on touch device', async ({ gamePage }) => {
-  // Start the game
-  await gamePage.tap('#play-btn');
-  await gamePage.waitForTimeout(1000);
-  // Joystick should be visible (if gyro is unavailable in emulation)
-  const joystick = await gamePage.$('#virtual-joystick');
-  // On emulated devices without gyro, joystick should appear
-  if (joystick) {
-    const visible = await joystick.isVisible();
-    expect(visible).toBe(true);
-  }
-});
-
-test('touch tap registers as input', async ({ gamePage }) => {
-  await gamePage.tap('#play-btn');
-  await gamePage.waitForFunction(() => window.__GAME_STATE__?.started);
-  // Tap on the canvas
-  const canvas = gamePage.locator('canvas');
-  await canvas.tap();
-  // Game should still be running (no crash from touch input)
-  const running = await gamePage.evaluate(() => window.__GAME_STATE__?.started);
-  expect(running).toBe(true);
-});
-```
-
-## Iterate Client — Quick Feedback Loop
-
-The standalone iterate client (`scripts/iterate-client.js`) is designed for tight implement→test cycles during development. Use it after **every meaningful code change** to catch issues immediately, rather than waiting for the full `@playwright/test` suite.
-
-### When to Use
-
-| Task | Tool |
-|------|------|
-| Verify a code change didn't break anything | **Iterate client** — fast, captures state + errors |
-| Full regression suite for CI/CD | **`npm run test`** — comprehensive Playwright Test suite |
-| Subjective visual evaluation | **Playwright MCP** — human judgment of aesthetics |
-| During subagent implementation steps | **Iterate client** — run after each small change |
-
-### Usage
-
-```bash
-# Basic: press space 3 times, capture screenshots each time
-node scripts/iterate-client.js --url http://localhost:3000 \
-  --actions-json '[{"buttons":["space"],"frames":4}]' \
-  --iterations 3
-
-# With action file
-node scripts/iterate-client.js --url http://localhost:3000 \
-  --actions-file scripts/example-actions.json --iterations 5
-
-# Click a start button first, then perform actions
-node scripts/iterate-client.js --url http://localhost:3000 \
-  --click-selector "#play-btn" \
-  --actions-json '[{"buttons":["right"],"frames":30},{"buttons":["space","right"],"frames":10}]'
-
-# Debug: run headed (visible browser)
-node scripts/iterate-client.js --url http://localhost:3000 \
-  --actions-json '[{"buttons":["space"],"frames":4}]' \
-  --headless false
-```
-
-### Action Format
-
-```json
-{
-  "steps": [
-    { "buttons": ["space"], "frames": 4 },
-    { "buttons": [], "frames": 30 },
-    { "buttons": ["right"], "frames": 30 },
-    { "buttons": ["space", "right"], "frames": 10 },
-    { "buttons": ["left_mouse_button"], "frames": 2, "mouse_x": 480, "mouse_y": 270 }
-  ]
-}
-```
-
-Supported buttons: `up`, `down`, `left`, `right`, `space`, `enter`, `escape`, `w`, `a`, `s`, `d`, `f`, `m`, `left_mouse_button`, `right_mouse_button`.
-
-### Output
-
-```
-output/iterate/
-├── shot-0.png          # Canvas screenshot after iteration 0
-├── state-0.json        # render_game_to_text() output
-├── shot-1.png
-├── state-1.json
-├── errors-0.json       # Console errors (only if errors occurred)
-└── errors-boot.json    # Boot-time errors (only if errors occurred)
-```
-
-The client **breaks on the first new console error** — fix it before continuing.
-
-### Integration with AI Agents
-
-The iterate client is the primary feedback mechanism for AI agents during game development:
-
-1. Agent makes a code change
-2. Agent runs iterate client with relevant actions
-3. Agent reads screenshots (visually) and state JSON (structurally) to verify the change
-4. If errors detected, agent reads the error JSON and fixes
-5. Repeat until stable
-
 ## Core Gameplay Invariants
 
 Every game built through the pipeline **must** pass these minimum gameplay checks. These verify the game is actually playable, not just renders without errors.
@@ -743,6 +396,20 @@ test('render_game_to_text returns valid game state', async ({ gamePage }) => {
   expect(typeof state.score).toBe('number');
 });
 ```
+
+## When Adding QA to a Game
+
+1. Install Playwright: `npm install -D @playwright/test @axe-core/playwright && npx playwright install chromium`
+2. Create `playwright.config.js` with the game's dev server port
+3. Expose `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` in `main.js`
+4. Create `tests/fixtures/game-test.js` with the `gamePage` fixture
+5. Create `tests/helpers/seed-random.js` for deterministic behavior
+6. Write tests in `tests/e2e/`:
+   - `game.spec.js` — boot, scene flow, input, scoring, game over
+   - `visual.spec.js` — screenshot regression for each scene
+   - `perf.spec.js` — load time, FPS budget
+7. Add npm scripts: `test`, `test:ui`, `test:headed`, `test:update-snapshots`
+8. Generate initial baselines: `npm run test:update-snapshots`
 
 ## What NOT to Test (Automated)
 

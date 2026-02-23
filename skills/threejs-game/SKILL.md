@@ -9,6 +9,12 @@ You are an expert Three.js game developer. Follow these opinionated patterns whe
 
 > **Reference**: See `reference/llms.txt` (quick guide) and `reference/llms-full.txt` (full API + TSL) for official Three.js LLM documentation. Prefer patterns from those files when they conflict with this skill.
 
+## Reference Files
+
+For detailed reference, see companion files in this directory:
+- `tsl-guide.md` — Three.js Shading Language reference (NodeMaterial classes, when to use TSL)
+- `input-patterns.md` — Gyroscope input, virtual joystick implementation, input priority system
+
 ## Tech Stack
 
 - **Renderer**: Three.js (`three@0.183.0+`, ESM imports)
@@ -343,39 +349,7 @@ const renderer = new THREE.WebGPURenderer({ antialias: true });
 await renderer.init();
 ```
 
-**When to pick WebGPU**: You need TSL custom shaders, compute shaders, or node-based materials. Otherwise, stick with WebGL.
-
-## TSL (Three.js Shading Language)
-
-TSL is Three.js's cross-backend shading language — write shader logic in JavaScript instead of raw GLSL/WGSL. Works with both WebGL and WebGPU backends.
-
-### Basic example
-
-```js
-import { texture, uv, color } from 'three/tsl';
-
-const material = new THREE.MeshStandardNodeMaterial();
-material.colorNode = texture(myTexture).mul(color(0xff0000));
-```
-
-### NodeMaterial classes (for TSL)
-
-Use node-based material variants when writing TSL shaders:
-
-- `MeshBasicNodeMaterial`
-- `MeshStandardNodeMaterial`
-- `MeshPhysicalNodeMaterial`
-- `LineBasicNodeMaterial`
-- `SpriteNodeMaterial`
-
-### When to use TSL
-
-- Custom animated materials (color cycling, vertex displacement)
-- Procedural textures (noise, patterns)
-- Compute shaders for particle systems or physics
-- Cross-backend compatibility (same code on WebGL and WebGPU)
-
-For the full TSL specification, functions, and node types, see `reference/llms-full.txt`.
+**When to pick WebGPU**: You need TSL custom shaders, compute shaders, or node-based materials. Otherwise, stick with WebGL. See `tsl-guide.md` for TSL details.
 
 ## Play.fun Safe Zone
 
@@ -500,64 +474,7 @@ class InputSystem {
 }
 ```
 
-### Gyroscope Input Pattern
-
-For tilt-controlled games (marble, balance, racing):
-
-```js
-class GyroscopeInput {
-  constructor() {
-    this.available = false;
-    this.moveX = 0;
-    this.moveZ = 0;
-    this.calibBeta = null;
-    this.calibGamma = null;
-  }
-
-  async requestPermission() {
-    // iOS 13+: DeviceOrientationEvent.requestPermission()
-    // Must be called from a user gesture handler
-  }
-
-  recalibrate() {
-    // Capture current orientation as neutral position
-  }
-
-  update() {
-    // Apply deadzone, normalize to -1..1, smooth with EMA
-  }
-}
-```
-
-### Virtual Joystick Pattern
-
-DOM-based circle-in-circle touch joystick for non-gyro devices:
-
-```js
-class VirtualJoystick {
-  constructor() {
-    this.active = false;
-    this.moveX = 0;  // -1..1
-    this.moveZ = 0;  // -1..1
-  }
-
-  show() {
-    // Create outer circle + inner knob DOM elements
-    // Track touch by identifier to handle multi-touch correctly
-    // Clamp knob movement to maxDistance from center
-    // Normalize displacement to -1..1
-  }
-
-  hide() { /* Remove DOM, reset values */ }
-}
-```
-
-### Input Priority
-
-1. On mobile: try gyroscope first (request permission from PLAY button tap)
-2. If gyro denied/unavailable: show virtual joystick
-3. Keyboard always active as fallback/override on any platform
-4. Game logic consumes only `input.moveX` and `input.moveZ` -- never knows the source
+For detailed gyroscope input, virtual joystick implementation, and input priority patterns, see `input-patterns.md`.
 
 ## When Adding Features
 
