@@ -19,6 +19,10 @@
 //   node scripts/iterate-client.js --url http://localhost:3000 \
 //     --click 480,270 --iterations 2
 //
+// Multi-restart testing:
+//   node scripts/iterate-client.js --url http://localhost:3000 \
+//     --restart-cycles 3 --restart-key Space
+//
 // Outputs:
 //   <screenshot-dir>/shot-<i>.png     — canvas screenshot per iteration
 //   <screenshot-dir>/state-<i>.json   — render_game_to_text() output per iteration
@@ -46,6 +50,8 @@ function parseArgs(argv) {
     clickSelector: null,
     waitForGame: true,        // Wait for window.__GAME__ to be ready
     timeoutMs: 10000,         // Max wait for game boot
+    restartCycles: 0,         // Number of restart cycles (0 = disabled)
+    restartKey: 'Space',      // Key to press to restart the game
   };
 
   for (let i = 2; i < argv.length; i++) {
@@ -68,6 +74,8 @@ function parseArgs(argv) {
     else if (arg === '--click-selector' && next) { args.clickSelector = next; i++; }
     else if (arg === '--no-wait') { args.waitForGame = false; }
     else if (arg === '--timeout' && next) { args.timeoutMs = parseInt(next, 10); i++; }
+    else if (arg === '--restart-cycles' && next) { args.restartCycles = parseInt(next, 10); i++; }
+    else if (arg === '--restart-key' && next) { args.restartKey = next; i++; }
   }
 
   if (!args.url) {
@@ -88,7 +96,11 @@ Options:
   --screenshot-dir <dir>       Output directory (default: output/iterate)
   --click-selector <sel>       CSS selector to click before starting actions
   --no-wait                    Don't wait for window.__GAME__ to be ready
-  --timeout <ms>               Max wait for game boot (default: 10000)`);
+  --timeout <ms>               Max wait for game boot (default: 10000)
+
+Restart testing:
+  --restart-cycles <n>         Number of restart cycles to test (default: 0 = disabled)
+  --restart-key <key>          Key to press to restart (default: Space)`);
     process.exit(1);
   }
 
@@ -387,6 +399,9 @@ async function main() {
 
   console.log(`iterate-client: ${args.url}`);
   console.log(`  actions: ${steps.length} steps, ${args.iterations} iterations`);
+  if (args.restartCycles > 0) {
+    console.log(`  restart: ${args.restartCycles} cycles, key: ${args.restartKey}`);
+  }
   console.log(`  output:  ${args.screenshotDir}/`);
 
   const browser = await chromium.launch({
@@ -492,6 +507,151 @@ async function main() {
       console.error(`  [${i}] ERRORS (${freshErrors.length}): see ${errPath}`);
       hadErrors = true;
       break; // Stop on first new error — fix before continuing
+    }
+  }
+
+  // --- Restart cycle testing ---
+  if (!hadErrors && args.restartCycles > 0) {
+    console.log(`\n--- Restart cycle testing (${args.restartCycles} cycles, key: ${args.restartKey}) ---`);
+    const restartIssues = [];
+
+    for (let cycle = 0; cycle < args.restartCycles; cycle++) {
+      console.log(`\n  [cycle ${cycle + 1}/${args.restartCycles}]`);
+
+      // Step 1: Run actions to play the game
+      if (!canvas) canvas = await getCanvasHandle(page);
+      await runActions(page, canvas, steps);
+      await sleep(args.pauseMs);
+
+      // Step 2: Wait for game_over state (poll render_game_to_text every 500ms, timeout 15s)
+      let gameOverReached = false;
+      const pollStart = Date.now();
+      const pollTimeout = 15000;
+
+      while (Date.now() - pollStart < pollTimeout) {
+        const stateStr = await page.evaluate(() => {
+          if (typeof window.render_game_to_text === 'function') {
+            return window.render_game_to_text();
+          }
+          if (window.__GAME_STATE__) {
+            return JSON.stringify(window.__GAME_STATE__);
+          }
+          return null;
+        });
+
+        if (stateStr) {
+          try {
+            const state = JSON.parse(stateStr);
+            if (state.mode === 'game_over' || state.gameOver === true) {
+              gameOverReached = true;
+              console.log(`    game_over reached (${Date.now() - pollStart}ms)`);
+              break;
+            }
+          } catch { /* ignore parse errors */ }
+        }
+
+        // Advance time and wait before next poll
+        await page.evaluate(async () => {
+          if (typeof window.advanceTime === 'function') {
+            await window.advanceTime(500);
+          }
+        });
+        await sleep(500);
+      }
+
+      if (!gameOverReached) {
+        console.warn('    warn: game_over not reached within 15s, pressing restart anyway');
+      }
+
+      // Capture pre-restart screenshot
+      const preRestartPath = path.join(args.screenshotDir, `restart-${cycle}-pre.png`);
+      await captureScreenshot(page, canvas, preRestartPath);
+
+      // Step 3: Press the restart key
+      const restartKeyMapped = KEY_MAP[args.restartKey.toLowerCase()] || args.restartKey;
+      await page.keyboard.press(restartKeyMapped);
+      console.log(`    pressed ${args.restartKey}`);
+
+      // Small delay for game to process restart
+      await sleep(500);
+
+      // Also advance a few frames for the game loop to process
+      await page.evaluate(async () => {
+        if (typeof window.advanceTime === 'function') {
+          await window.advanceTime(500);
+        }
+      });
+      await sleep(250);
+
+      // Step 4: Verify state after restart
+      const postStateStr = await page.evaluate(() => {
+        if (typeof window.render_game_to_text === 'function') {
+          return window.render_game_to_text();
+        }
+        if (window.__GAME_STATE__) {
+          return JSON.stringify(window.__GAME_STATE__);
+        }
+        return null;
+      });
+
+      // Capture post-restart screenshot
+      const postRestartPath = path.join(args.screenshotDir, `restart-${cycle}-post.png`);
+      await captureScreenshot(page, canvas, postRestartPath);
+
+      if (postStateStr) {
+        try {
+          const postState = JSON.parse(postStateStr);
+          const issues = [];
+
+          // Check score reset to 0
+          if (typeof postState.score === 'number' && postState.score !== 0) {
+            issues.push(`score not reset: expected 0, got ${postState.score}`);
+          }
+
+          // Check mode is not game_over (should be playing, menu, or similar)
+          if (postState.mode === 'game_over') {
+            issues.push(`mode still game_over after restart`);
+          }
+
+          if (issues.length > 0) {
+            console.error(`    ISSUES: ${issues.join('; ')}`);
+            restartIssues.push({
+              cycle: cycle + 1,
+              issues,
+              preRestartScreenshot: preRestartPath,
+              postRestartScreenshot: postRestartPath,
+              postState: postState,
+            });
+          } else {
+            const mode = postState.mode || 'unknown';
+            const score = postState.score ?? 'n/a';
+            console.log(`    OK — mode: ${mode}, score: ${score}`);
+          }
+        } catch (err) {
+          console.warn(`    warn: could not parse post-restart state: ${err.message}`);
+        }
+      } else {
+        console.warn('    warn: render_game_to_text() returned null after restart');
+      }
+
+      // Check for console errors during this cycle
+      const cycleErrors = errors.drain();
+      if (cycleErrors.length) {
+        const errPath = path.join(args.screenshotDir, `errors-restart-${cycle}.json`);
+        fs.writeFileSync(errPath, JSON.stringify(cycleErrors, null, 2));
+        console.error(`    ERRORS (${cycleErrors.length}): see ${errPath}`);
+        hadErrors = true;
+        break;
+      }
+    }
+
+    // Write issues file if there were any
+    if (restartIssues.length > 0) {
+      const issuesPath = path.join(args.screenshotDir, `restart-${args.restartCycles}-issues.json`);
+      fs.writeFileSync(issuesPath, JSON.stringify(restartIssues, null, 2));
+      console.error(`\n  Restart issues written to ${issuesPath}`);
+    } else if (!hadErrors) {
+      console.log(`\n  All ${args.restartCycles} restart cycles passed`);
     }
   }
 
