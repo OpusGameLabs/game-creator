@@ -7,4 +7,5 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  base: '/game-creator/gem-catcher/',
 });
