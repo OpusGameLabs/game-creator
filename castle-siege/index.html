@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Castle Siege Defense</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    canvas { display: block; cursor: crosshair; }
+
+    /* Score HUD omitted — Play.fun widget displays score in a deadzone at the top */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 20;
+      color: #fff;
+      padding: 20px;
+      padding-top: max(20px, 8vh); /* Safe zone: Play.fun widget bar is ~75px at top */
+    }
+    .overlay.hidden { display: none; }
+
+    .overlay h1 {
+      font-size: clamp(28px, 7vmin, 56px);
+      margin-bottom: clamp(10px, 2vmin, 24px);
+      text-align: center;
+      color: #ff4444;
+      text-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+    }
+    .overlay p {
+      font-size: clamp(14px, 2.5vmin, 22px);
+      margin-bottom: 8px;
+      color: #aaa;
+      text-align: center;
+    }
+    .overlay .score-display {
+      font-size: clamp(18px, 4vmin, 32px);
+      margin: 8px 0;
+    }
+    .overlay .wave-display {
+      font-size: clamp(16px, 3vmin, 28px);
+      margin: 4px 0;
+      color: #ffaa44;
+    }
+    .overlay .best-display {
+      font-size: clamp(14px, 2.5vmin, 22px);
+      color: #aaa;
+    }
+    .overlay button {
+      margin-top: clamp(16px, 3vmin, 32px);
+      padding: clamp(10px, 2vmin, 16px) clamp(28px, 6vmin, 48px);
+      font-size: clamp(16px, 2.5vmin, 22px);
+      font-family: inherit;
+      font-weight: bold;
+      color: #fff;
+      background: #8B0000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 120px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .overlay button:hover { background: #a52a2a; transform: scale(1.05); }
+    .overlay button:active { background: #6a0000; transform: scale(0.95); }
+
+    /* Wave announcement banner — slides in/out */
+    #wave-banner {
+      position: fixed;
+      top: max(80px, 9vh); /* Below safe zone */
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #ffaa44;
+      padding: 14px 40px;
+      border-radius: 8px;
+      font-size: clamp(18px, 3.5vmin, 32px);
+      font-weight: bold;
+      text-align: center;
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 170, 68, 0.3);
+      text-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
+    }
+    #wave-banner.visible { opacity: 1; }
+
+    /* Castle health bar */
+    #health-bar-container {
+      position: fixed;
+      bottom: max(16px, 2vh);
+      left: 50%;
+      transform: translateX(-50%);
+      width: clamp(200px, 40vw, 400px);
+      height: clamp(16px, 2.5vmin, 24px);
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 15;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    #health-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, #44cc44, #88ff88);
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+    #health-bar-label {
+      position: fixed;
+      bottom: max(42px, 5vh);
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-size: clamp(12px, 1.8vmin, 16px);
+      z-index: 15;
+      pointer-events: none;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    /* Mute toggle button — bottom-right, above health bar */
+    #mute-btn {
+      position: fixed;
+      bottom: max(52px, 6vh);
+      right: max(16px, 2vw);
+      width: clamp(40px, 6vmin, 56px);
+      height: clamp(40px, 6vmin, 56px);
+      background: rgba(0, 0, 0, 0.6);
+      color: #ccc;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      font-size: clamp(10px, 1.5vmin, 14px);
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, border-color 0.2s;
+      min-height: 36px;
+      min-width: 36px;
+      user-select: none;
+      -webkit-user-select: none;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    #mute-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    #mute-btn:active {
+      background: rgba(60, 60, 60, 0.8);
+      transform: scale(0.9);
+    }
+  </style>
+  <script type="module" crossorigin src="/game-creator/castle-siege/assets/index-C9NIgVaL.js"></script>
+</head>
+<body>
+  <div id="gameover-overlay" class="overlay hidden">
+    <h1>CASTLE FALLEN!</h1>
+    <div class="wave-display" id="final-wave">Wave: 0</div>
+    <div class="score-display" id="final-score">Score: 0</div>
+    <div class="best-display" id="best-score">Best: 0</div>
+    <p>Tap or click to fire projectiles at the invaders!</p>
+    <button id="restart-btn">DEFEND AGAIN</button>
+  </div>
+
+  <div id="wave-banner"></div>
+
+  <div id="health-bar-label">Castle Health</div>
+  <div id="health-bar-container">
+    <div id="health-bar-fill"></div>
+  </div>
+
+  <button id="mute-btn" title="Mute (M)">SOUND</button>
+
+</body>
+</html>
