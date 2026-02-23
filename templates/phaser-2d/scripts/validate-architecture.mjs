@@ -198,6 +198,8 @@ for (const { path: filePath, rel } of allJsFiles) {
       const num = parseFloat(match[1]);
       if (allowedNumbers.has(num)) continue;
       if (isNaN(num)) continue;
+      // Skip proportional values (alpha, scale, ratio)
+      if (Math.abs(num) > 0 && Math.abs(num) < 1) continue;
       // Skip hex color literals (0x...)
       if (/0x[0-9a-fA-F]+/.test(match[0])) continue;
       const before = line.substring(0, match.index);

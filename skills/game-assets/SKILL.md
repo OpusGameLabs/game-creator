@@ -103,7 +103,7 @@ export function renderSpriteSheet(scene, frames, palette, key, scale = 2) {
     }
   });
 
-  scene.textures.addSpriteSheet(key, scene.textures.addCanvas(`${key}-canvas`, canvas).source[0], {
+  scene.textures.addSpriteSheet(key, canvas, {
     frameWidth: frameW,
     frameHeight: frameH,
   });

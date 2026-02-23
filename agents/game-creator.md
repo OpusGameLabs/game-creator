@@ -52,60 +52,112 @@ Each subagent receives: step instructions, relevant skill name, project path, en
 
 ## Verification Protocol
 
-Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). It has three phases:
+Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). It delegates all QA work to a subagent to minimize main-thread context usage.
 
-### Phase 1 — Build Check
+### QA Subagent
 
-```bash
-cd <project-dir> && npm run build
+Launch a `Task` subagent with these instructions:
+
+> You are the QA subagent for the game creation pipeline.
+>
+> **Project path**: `<project-dir>`
+> **Dev server port**: `<port>`
+> **Step being verified**: `<step name>`
+>
+> Run these phases in order. Stop early if a phase fails critically (build or runtime).
+>
+> **Phase 1 — Build Check**
+> ```bash
+> cd <project-dir> && npm run build
+> ```
+> If the build fails, report FAIL immediately with the error output.
+>
+> **Phase 2 — Runtime Check**
+> ```bash
+> cd <project-dir> && node scripts/verify-runtime.mjs
+> ```
+> If the runtime check fails, report FAIL immediately with the error details.
+>
+> **Phase 3 — Gameplay Verification**
+> ```bash
+> cd <project-dir> && node scripts/iterate-client.js \
+>   --url http://localhost:<port> \
+>   --actions-file scripts/example-actions.json \
+>   --iterations 3 --screenshot-dir output/iterate
+> ```
+> After running, read the state JSON files (`output/iterate/state-*.json`) and error files (`output/iterate/errors-*.json`):
+> - **Scoring**: At least one state file should show `score > 0`
+> - **Death**: At least one state file should show `mode: "game_over"`
+> - **Errors**: No critical errors in error files
+>
+> Skip this phase if `scripts/iterate-client.js` is not present.
+>
+> **Phase 4 — Architecture Validation**
+> ```bash
+> cd <project-dir> && node scripts/validate-architecture.mjs
+> ```
+> Report any warnings but don't fail on architecture issues alone.
+>
+> **Phase 5 — Visual Review via Playwright MCP**
+> Use Playwright MCP to visually review the game. If MCP tools are not available, fall back to reading iterate screenshots from `output/iterate/`.
+>
+> With MCP:
+> 1. `browser_navigate` to `http://localhost:<port>`
+> 2. `browser_wait_for` — wait 2 seconds for the game to load
+> 3. `browser_take_screenshot` — save as `output/qa-gameplay.png`
+> 4. Assess: Are entities visible? Is the game rendering correctly?
+> 5. Check safe zone: Is any UI hidden behind the top ~8% (Play.fun widget area)?
+> 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
+> 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
+> 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
+>
+> Without MCP (fallback):
+> 1. Read the iterate screenshots from `output/iterate/shot-*.png`
+> 2. Assess visual quality from those screenshots
+>
+> **Return your results in this exact format (text only, no images):**
+> ```
+> QA RESULT: PASS|FAIL
+>
+> Phase 1 (Build): PASS|FAIL
+> Phase 2 (Runtime): PASS|FAIL
+> Phase 3 (Gameplay): Iterate PASS|FAIL, Scoring PASS|FAIL|SKIPPED, Death PASS|FAIL|SKIPPED, Errors PASS|FAIL
+> Phase 4 (Architecture): PASS — N/N checks
+> Phase 5 (Visual): PASS|FAIL — <issues if any>
+>
+> ISSUES:
+> - <issue descriptions, or "None">
+>
+> SCREENSHOTS: output/qa-gameplay.png, output/qa-gameover.png
+> ```
+
+### Orchestrator Flow
+
 ```
-
-If the build fails, proceed to autofix.
-
-### Phase 2 — Runtime Check
-
-```bash
-cd <project-dir> && node scripts/verify-runtime.mjs
+Launch QA subagent → read text result
+  If PASS → proceed to next step
+  If FAIL → launch autofix subagent with ISSUES list → re-run QA subagent
+  Max 3 attempts per step
 ```
-
-This script launches headless Chromium, loads the game, and checks for runtime errors (WebGL failures, uncaught exceptions, console errors). It exits 0 on success, 1 on failure with error details.
-
-If the runtime check fails, proceed to autofix.
-
-### Phase 2.5 — Iterate Check (screenshots + game state)
-
-```bash
-cd <project-dir> && node scripts/iterate-client.js \
-  --url http://localhost:<port> \
-  --actions-json '[{"buttons":["space"],"frames":4}]' \
-  --iterations 2 --screenshot-dir output/iterate
-```
-
-This produces screenshots (`output/iterate/shot-*.png`), game state JSON (`output/iterate/state-*.json`), and error files (`output/iterate/errors-*.json`). Feed these to the autofix subagent for richer context when issues are found.
-
-**Skip this phase** if `scripts/iterate-client.js` is not present (backward compatibility with existing projects).
-
-### Phase 3 — Visual Review via Playwright MCP
-
-Use the Playwright MCP to visually review the game:
-
-1. **Take a screenshot** of the game running in the browser
-2. **Assess visually**: Is the game rendering correctly? Are there visual bugs, layout issues, or broken elements?
-3. **Identify issues**: Note any visual problems that need fixing (e.g., elements off-screen, missing graphics, broken UI, wrong colors)
-
-If visual issues are found, proceed to autofix.
 
 ### Autofix Logic
 
-When any phase fails or visual issues are found:
+When the QA subagent reports FAIL:
 
-1. Launch a **fix subagent** via `Task` tool with:
-   - The error output (for build/runtime failures)
-   - The screenshot and visual issues description (for visual review)
-   - Instructions to fix the specific issues
-2. Re-run the Verification Protocol (all three phases)
-3. Up to **3 total attempts** per step (1 original + 2 retries)
-4. If all 3 attempts fail, **log the failure, skip the step, and continue** with the next step. Include the failure details in the final report.
+1. **Read `output/autofix-history.json`** to see what fixes were already attempted. If a previous entry matches the same `issue` and `fix_attempted` with `result: "failure"`, instruct the subagent to try a different approach.
+2. Launch a **fix subagent** via `Task` tool with:
+   - The ISSUES list from the QA result
+   - The phase that failed (build errors, runtime errors, gameplay issues, visual problems)
+   - Any relevant failed attempts from `output/autofix-history.json` so the subagent knows what NOT to repeat
+3. **After each autofix attempt**, append an entry to `output/autofix-history.json`:
+   ```json
+   { "step": "<step name>", "issue": "<what failed>", "fix_attempted": "<what was tried>", "result": "success|failure", "timestamp": "<ISO date>" }
+   ```
+4. Re-run the QA subagent (all phases)
+5. Up to **3 total attempts** per step (1 original + 2 retries)
+6. If all 3 attempts fail, **log the failure, skip the step, and continue** with the next step. Include the failure details in the final report.
+
+**Important**: Always fix issues before proceeding to the next step. The autofix loop ensures each step produces working, visually correct output.
 
 ## Pipeline
 
@@ -201,9 +253,40 @@ Launch a `Task` subagent with these instructions:
 >
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After each chunk of work (e.g., input wired up, collision added, scoring working), run:
 > ```
-> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '<relevant actions>' --iterations 3
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-file scripts/example-actions.json --iterations 3
 > ```
 > Inspect the output screenshots and `state-*.json` files. Fix errors before moving on.
+>
+> **Generate game-specific test actions:**
+> After implementing the core loop, overwrite `scripts/example-actions.json` with actions tailored to this game. Requirements:
+> - Use the game's actual input keys (e.g., ArrowLeft/ArrowRight for dodger, space for flappy, w/a/s/d for top-down)
+> - Include enough gameplay to score at least 1 point
+> - Include a long idle period (60+ frames with no input) to let the fail condition trigger
+> - Total should be at least 150 frames of gameplay
+>
+> Example for a dodge game (arrow keys):
+> ```json
+> [
+>   {"buttons":["ArrowRight"],"frames":20},
+>   {"buttons":["ArrowLeft"],"frames":20},
+>   {"buttons":["ArrowRight"],"frames":15},
+>   {"buttons":[],"frames":10},
+>   {"buttons":["ArrowLeft"],"frames":20},
+>   {"buttons":[],"frames":80}
+> ]
+> ```
+>
+> Example for a platformer (space to jump):
+> ```json
+> [
+>   {"buttons":["space"],"frames":4},
+>   {"buttons":[],"frames":25},
+>   {"buttons":["space"],"frames":4},
+>   {"buttons":[],"frames":25},
+>   {"buttons":["space"],"frames":4},
+>   {"buttons":[],"frames":80}
+> ]
+> ```
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 
@@ -241,7 +324,7 @@ Launch a `Task` subagent:
 >
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After updating sprites/backgrounds, run:
 > ```
-> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4}]' --iterations 3
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-file scripts/example-actions.json --iterations 3
 > ```
 > Inspect screenshots to verify sprites render correctly. Fix visual issues before moving on.
 >
@@ -278,7 +361,7 @@ Launch a `Task` subagent:
 >
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After adding visual effects, run:
 > ```
-> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4},{"buttons":[],"frames":60}]' --iterations 3
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-file scripts/example-actions.json --iterations 3
 > ```
 > Inspect screenshots to verify visual improvements look correct. Fix issues before moving on.
 >
@@ -315,7 +398,7 @@ Launch a `Task` subagent:
 >
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After wiring audio, run:
 > ```
-> node scripts/iterate-client.js --url http://localhost:<port> --actions-json '[{"buttons":["space"],"frames":4}]' --iterations 2
+> node scripts/iterate-client.js --url http://localhost:<port> --actions-file scripts/example-actions.json --iterations 2
 > ```
 > Check `state-*.json` and error logs — audio init issues often show as console errors.
 >
