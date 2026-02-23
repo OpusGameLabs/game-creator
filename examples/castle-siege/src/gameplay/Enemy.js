@@ -9,7 +9,7 @@ import { ENEMY, CASTLE } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 
 export class Enemy {
-  constructor(scene, x, speed, wave) {
+  constructor(scene, x, speed, wave, zJitter = 0) {
     this.scene = scene;
     this.alive = true;
     this.reachedCastle = false;
@@ -64,8 +64,8 @@ export class Enemy {
     // Collect all meshes for death animation
     this.meshes = [this.body, this.head, shield, sword, handle];
 
-    // Position at spawn
-    this.group.position.set(x, 0, ENEMY.SPAWN_Z);
+    // Position at spawn (with optional Z jitter for gate streaming effect)
+    this.group.position.set(x, 0, ENEMY.SPAWN_Z + zJitter);
 
     // Dust timer
     this.dustTimer = Math.random() * ENEMY.DUST_INTERVAL;

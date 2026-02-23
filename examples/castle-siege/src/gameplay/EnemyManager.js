@@ -88,14 +88,16 @@ export class EnemyManager {
   }
 
   _spawnEnemy() {
-    // Distribute enemies across lanes
+    // Distribute enemies across lanes — they emerge from the enemy castle gate
     const laneIndex = this.enemiesSpawnedThisWave % ENEMY.LANE_COUNT;
     const laneWidth = (ENEMY.SPAWN_X_RANGE * 2) / ENEMY.LANE_COUNT;
     const x = -ENEMY.SPAWN_X_RANGE + laneWidth * laneIndex + laneWidth / 2;
     // Add small random offset within lane
     const jitter = (Math.random() - 0.5) * laneWidth * 0.6;
+    // Small Z jitter so enemies stream out of the gate, not all on one line
+    const zJitter = -Math.random() * 2;
 
-    const enemy = new Enemy(this.scene, x + jitter, this.currentSpeed, gameState.wave);
+    const enemy = new Enemy(this.scene, x + jitter, this.currentSpeed, gameState.wave, zJitter);
     this.enemies.push(enemy);
     this.enemiesSpawnedThisWave++;
 

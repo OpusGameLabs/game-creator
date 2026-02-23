@@ -51,6 +51,13 @@ window.render_game_to_text = () => {
     payload.activeProjectiles = game.projectileManager.projectiles.length;
   }
 
+  // Enemy castle presence
+  if (game.enemyCastle) {
+    payload.enemyCastle = {
+      z: Math.round(game.enemyCastle.group.position.z * 10) / 10,
+    };
+  }
+
   return JSON.stringify(payload);
 };
 

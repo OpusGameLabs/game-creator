@@ -13,6 +13,7 @@ import { CameraShake } from '../systems/CameraShake.js';
 import { ScreenEffects } from '../systems/ScreenEffects.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Castle } from '../gameplay/Castle.js';
+import { EnemyCastle } from '../gameplay/EnemyCastle.js';
 import { EnemyManager } from '../gameplay/EnemyManager.js';
 import { ProjectileManager } from '../gameplay/ProjectileManager.js';
 import { Menu } from '../ui/Menu.js';
@@ -60,6 +61,7 @@ export class Game {
 
     // Gameplay objects (created in startGame)
     this.castle = null;
+    this.enemyCastle = null;
     this.enemyManager = null;
     this.projectileManager = null;
 
@@ -83,6 +85,7 @@ export class Game {
 
     // Create gameplay objects
     this.castle = new Castle(this.scene);
+    this.enemyCastle = new EnemyCastle(this.scene);
     this.enemyManager = new EnemyManager(this.scene);
     this.projectileManager = new ProjectileManager(
       this.scene, this.enemyManager, this.particleSystem
@@ -112,6 +115,10 @@ export class Game {
       this.castle.destroy();
       this.castle = null;
     }
+    if (this.enemyCastle) {
+      this.enemyCastle.destroy();
+      this.enemyCastle = null;
+    }
     if (this.enemyManager) {
       this.enemyManager.destroyAll();
       this.enemyManager = null;
@@ -137,6 +144,7 @@ export class Game {
     if (gameState.started && !gameState.gameOver) {
       // Update all gameplay systems
       if (this.castle) this.castle.update(delta);
+      if (this.enemyCastle) this.enemyCastle.update(delta);
       if (this.enemyManager) this.enemyManager.update(delta);
       if (this.projectileManager) this.projectileManager.update(delta);
     }
