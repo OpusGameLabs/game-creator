@@ -60,8 +60,8 @@ export class InputSystem {
   _onPointer(e) {
     if (!this.gameActive || gameState.gameOver || !this.camera) return;
 
-    // Ignore clicks on overlay elements
-    if (e.target.closest('.overlay') || e.target.closest('#joystick-zone')) return;
+    // Ignore clicks on overlay elements or UI buttons
+    if (e.target.closest('.overlay') || e.target.closest('#joystick-zone') || e.target.closest('#mute-btn')) return;
 
     const ndc = new THREE.Vector2(
       (e.clientX / window.innerWidth) * 2 - 1,
@@ -75,8 +75,8 @@ export class InputSystem {
     if (!this.gameActive || gameState.gameOver || !this.camera) return;
     if (!IS_MOBILE) return;
 
-    // Ignore touches on overlay elements
-    if (e.target.closest('.overlay') || e.target.closest('#joystick-zone')) return;
+    // Ignore touches on overlay elements or UI buttons
+    if (e.target.closest('.overlay') || e.target.closest('#joystick-zone') || e.target.closest('#mute-btn')) return;
 
     e.preventDefault();
     const touch = e.touches[0];

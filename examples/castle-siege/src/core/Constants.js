@@ -400,6 +400,34 @@ export const UI_JUICE = {
 };
 
 // ---------------------------------------------------------------------------
+// Audio
+// ---------------------------------------------------------------------------
+export const AUDIO = {
+  // BGM tempos (cycles per minute)
+  GAMEPLAY_CPM: 120,
+  GAMEOVER_CPM: 60,
+
+  // BGM gain levels (keep low — BGM should not overpower gameplay)
+  BGM_LEAD_GAIN: 0.14,
+  BGM_PAD_GAIN: 0.10,
+  BGM_BASS_GAIN: 0.18,
+  BGM_DRUMS_GAIN: 0.22,
+  BGM_ARP_GAIN: 0.05,
+
+  // SFX gain levels
+  SFX_LAUNCH_GAIN: 0.25,
+  SFX_EXPLOSION_GAIN: 0.3,
+  SFX_ENEMY_DEATH_GAIN: 0.2,
+  SFX_CASTLE_HIT_GAIN: 0.3,
+  SFX_WAR_HORN_GAIN: 0.2,
+  SFX_CASTLE_DESTROYED_GAIN: 0.35,
+  SFX_SCORE_GAIN: 0.2,
+
+  // Fanfare duration (ms) before resuming gameplay BGM
+  FANFARE_DURATION: 2500,
+};
+
+// ---------------------------------------------------------------------------
 // Colors
 // ---------------------------------------------------------------------------
 export const COLORS = {

@@ -126,6 +126,41 @@
       pointer-events: none;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     }
+    /* Mute toggle button — bottom-right, above health bar */
+    #mute-btn {
+      position: fixed;
+      bottom: max(52px, 6vh);
+      right: max(16px, 2vw);
+      width: clamp(40px, 6vmin, 56px);
+      height: clamp(40px, 6vmin, 56px);
+      background: rgba(0, 0, 0, 0.6);
+      color: #ccc;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      font-size: clamp(10px, 1.5vmin, 14px);
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, border-color 0.2s;
+      min-height: 36px;
+      min-width: 36px;
+      user-select: none;
+      -webkit-user-select: none;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    #mute-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    #mute-btn:active {
+      background: rgba(60, 60, 60, 0.8);
+      transform: scale(0.9);
+    }
   </style>
 </head>
 <body>
@@ -144,6 +179,8 @@
   <div id="health-bar-container">
     <div id="health-bar-fill"></div>
   </div>
+
+  <button id="mute-btn" title="Mute (M)">SOUND</button>
 
   <script type="module" src="/src/main.js"></script>
 </body>

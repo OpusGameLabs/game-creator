@@ -99,6 +99,7 @@ export class Game {
     this.enemyManager.startFirstWave();
 
     eventBus.emit(Events.GAME_START);
+    eventBus.emit(Events.MUSIC_GAMEPLAY);
   }
 
   onGameOver() {
@@ -107,6 +108,7 @@ export class Game {
     this.input.setGameActive(false);
     eventBus.emit(Events.GAME_OVER, { score: gameState.score });
     eventBus.emit(Events.MUSIC_STOP);
+    eventBus.emit(Events.MUSIC_GAMEOVER);
   }
 
   restart() {

@@ -6,8 +6,56 @@
 import { Game } from './core/Game.js';
 import { eventBus, Events } from './core/EventBus.js';
 import { gameState } from './core/GameState.js';
+import { initAudioBridge } from './audio/AudioBridge.js';
+
+// --- Audio system init ---
+// Wire EventBus events to audio playback (BGM + SFX).
+// Must happen before Game constructor so events are caught.
+initAudioBridge();
 
 const game = new Game();
+
+// --- Audio unlock on first user interaction (browser autoplay policy) ---
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  eventBus.emit(Events.AUDIO_INIT);
+  // Start gameplay music after Strudel initializes
+  setTimeout(() => eventBus.emit(Events.MUSIC_GAMEPLAY), 150);
+}
+window.addEventListener('click', unlockAudio, { once: false });
+window.addEventListener('touchstart', unlockAudio, { once: false });
+window.addEventListener('keydown', unlockAudio, { once: false });
+
+// --- Mute toggle via M key ---
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'm' || e.key === 'M') {
+    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+    // Update mute button icon if present
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      muteBtn.textContent = gameState.isMuted ? 'MUTED' : 'SOUND';
+      muteBtn.title = gameState.isMuted ? 'Unmute (M)' : 'Mute (M)';
+    }
+  }
+});
+
+// --- Mute button click handler ---
+const muteBtn = document.getElementById('mute-btn');
+if (muteBtn) {
+  // Set initial state from restored preference
+  if (gameState.isMuted) {
+    muteBtn.textContent = 'MUTED';
+    muteBtn.title = 'Unmute (M)';
+  }
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Don't trigger projectile fire
+    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+    muteBtn.textContent = gameState.isMuted ? 'MUTED' : 'SOUND';
+    muteBtn.title = gameState.isMuted ? 'Unmute (M)' : 'Mute (M)';
+  });
+}
 
 // Expose for Playwright testing
 window.__GAME__ = game;
