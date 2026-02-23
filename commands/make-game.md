@@ -114,14 +114,20 @@ If visual issues are found, proceed to autofix.
 
 When any phase fails or visual/gameplay issues are found:
 
-1. Launch a **fix subagent** via `Task` tool with:
+1. **Read `output/autofix-history.json`** to see what fixes were already attempted. If a previous entry matches the same `issue` and `fix_attempted` with `result: "failure"`, instruct the subagent to try a different approach.
+2. Launch a **fix subagent** via `Task` tool with:
    - The error output (for build/runtime failures)
    - The screenshot and visual issues description (for visual review)
-   - The state JSON and specific failures (for gameplay verification — e.g., "scoring never incremented", "game never reached game_over", "button text invisible")
+   - The state JSON and specific failures (for gameplay verification -- e.g., "scoring never incremented", "game never reached game_over", "button text invisible")
    - Instructions to fix the specific issues
-2. Re-run the Verification Protocol (all phases)
-3. Up to **3 total attempts** per step (1 original + 2 retries)
-4. If all 3 attempts fail, report the failure to the user and ask whether to skip or abort
+   - Any relevant failed attempts from `output/autofix-history.json` so the subagent knows what NOT to repeat
+3. **After each autofix attempt**, append an entry to `output/autofix-history.json`:
+   ```json
+   { "step": "<step name>", "issue": "<what failed>", "fix_attempted": "<what was tried>", "result": "success|failure", "timestamp": "<ISO date>" }
+   ```
+4. Re-run the Verification Protocol (all phases)
+5. Up to **3 total attempts** per step (1 original + 2 retries)
+6. If all 3 attempts fail, report the failure to the user and ask whether to skip or abort
 
 **Important**: Always fix issues before proceeding to the next step. The autofix loop ensures each step produces working, visually correct output.
 
@@ -170,6 +176,8 @@ Create all pipeline tasks upfront using `TaskCreate`:
 6. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
 
 This gives the user full visibility into pipeline progress at all times. Quality assurance (build, runtime, visual review, autofix) is built into each step, not a separate task.
+
+After creating tasks, create the `output/` directory in the project root and initialize `output/autofix-history.json` as an empty array `[]`. This file tracks all autofix attempts across the pipeline so fix subagents avoid repeating failed approaches.
 
 ### Step 1: Scaffold the game
 
@@ -243,6 +251,34 @@ Launch a `Task` subagent with these instructions:
 
 **After subagent returns**, run the Verification Protocol (Phase 1 + Phase 2).
 
+**Create `progress.md`** at the game's project root. Read the game's actual source files to populate it accurately:
+- Read `src/core/EventBus.js` for the event list
+- Read `src/core/Constants.js` for the key sections (GAME, PLAYER, ENEMY, etc.)
+- List files in `src/entities/` for entity names
+- Read `src/core/GameState.js` for state fields
+
+Write `progress.md` with this structure:
+
+```markdown
+# Progress
+
+## Game Concept
+- **Name**: [game name from project]
+- **Engine**: Phaser 3 / Three.js
+- **Description**: [from user's original prompt]
+
+## Step 1: Scaffold
+- **Entities**: [list entity names from src/entities/]
+- **Events**: [list event names from EventBus.js]
+- **Constants keys**: [top-level sections from Constants.js, e.g. GAME, PLAYER, ENEMY, COLORS]
+- **Scoring system**: [how points are earned, from GameState + scene logic]
+- **Fail condition**: [what ends the game]
+- **Input scheme**: [keyboard/mouse/touch controls implemented]
+
+## Decisions / Known Issues
+- [any notable decisions or issues from scaffolding]
+```
+
 **Tell the user:**
 > Your game is scaffolded and running! Here's how it's organized:
 > - `src/core/Constants.js` — all game settings (speed, colors, sizes)
@@ -270,6 +306,8 @@ Launch a `Task` subagent with these instructions:
 > **Engine**: 2D (Phaser 3)
 > **Skill to load**: `game-assets`
 >
+> **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and scoring system from Step 1.
+>
 > Follow the game-assets skill fully:
 > 1. Read all entity files (`src/entities/`) to find `generateTexture()` / `fillCircle()` calls
 > 2. Choose the palette that matches the game's theme (DARK, BRIGHT, or RETRO)
@@ -281,6 +319,8 @@ Launch a `Task` subagent with these instructions:
 > 8. Update entity constructors to use pixel art instead of geometric shapes
 > 9. Add Phaser animations for entities with multiple frames
 > 10. Adjust physics bodies for new sprite dimensions
+>
+> **After completing your work**, append a `## Step 1.5: Assets` section to `progress.md` with: palette used, sprites created, any dimension changes to entities.
 >
 > Do NOT run builds — the orchestrator handles verification.
 
@@ -309,6 +349,8 @@ Launch a `Task` subagent with these instructions:
 > **Engine**: `<2d|3d>`
 > **Skill to load**: `game-designer`
 >
+> **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and what previous steps have done.
+>
 > Apply the game-designer skill:
 > 1. Audit the current visuals — read Constants.js, all scenes, entities, EventBus
 > 2. Score each visual area (background, palette, animations, particles, transitions, typography, game feel, game over) on a 1-5 scale
@@ -320,6 +362,8 @@ Launch a `Task` subagent with these instructions:
 >    - UI juice: button hover, text shadows, floating score text
 > 4. All new values go in Constants.js, use EventBus for triggering effects
 > 5. Don't alter gameplay mechanics
+>
+> **After completing your work**, append a `## Step 2: Design` section to `progress.md` with: improvements applied, new effects added, any color or layout changes.
 >
 > Do NOT run builds — the orchestrator handles verification.
 
@@ -346,6 +390,8 @@ Launch a `Task` subagent with these instructions:
 > **Engine**: `<2d|3d>`
 > **Skill to load**: `game-audio`
 >
+> **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and what previous steps have done.
+>
 > Apply the game-audio skill:
 > 1. Audit the game: check for `@strudel/web`, read EventBus events, read all scenes
 > 2. Install `@strudel/web` if needed
@@ -354,6 +400,8 @@ Launch a `Task` subagent with these instructions:
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
 > 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button.
+>
+> **After completing your work**, append a `## Step 3: Audio` section to `progress.md` with: BGM patterns added, SFX event mappings, mute wiring confirmation.
 >
 > Do NOT run builds — the orchestrator handles verification.
 
