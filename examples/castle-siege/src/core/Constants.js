@@ -136,6 +136,79 @@ export const CASTLE = {
 };
 
 // ---------------------------------------------------------------------------
+// Enemy Castle — dark fortress at the far end of the battlefield
+// ---------------------------------------------------------------------------
+export const ENEMY_CASTLE = {
+  // Position — sits at the negative Z end of the battlefield
+  POSITION_Z: -(LEVEL.GROUND_SIZE / 2 - 8),
+  POSITION_Y: 0,
+
+  // Main keep — wider and squatter than the player castle
+  KEEP_WIDTH: 10,
+  KEEP_HEIGHT: 8,
+  KEEP_DEPTH: 8,
+  KEEP_COLOR: 0x2a2a2a,       // dark stone
+
+  // Corner towers
+  TOWER_RADIUS: 2.8,
+  TOWER_HEIGHT: 11,
+  TOWER_SEGMENTS: 8,
+  TOWER_COLOR: 0x1a1a1a,      // near-black stone
+  TOWER_ROOF_COLOR: 0x330000,  // dark blood red
+  TOWER_ROOF_HEIGHT: 2.5,
+  TOWER_SPREAD_X: 12,
+  TOWER_SPREAD_Z: 5,
+
+  // Connecting walls
+  WALL_HEIGHT: 6,
+  WALL_THICKNESS: 1.8,
+  WALL_COLOR: 0x222222,
+
+  // Battlements
+  MERLON_SIZE: 0.9,
+  MERLON_SPACING: 1.6,
+  MERLON_COLOR: 0x1a1a1a,
+
+  // Gate — faces toward the player castle (positive Z side)
+  GATE_WIDTH: 5,
+  GATE_HEIGHT: 5.5,
+  GATE_COLOR: 0x1a0a00,       // very dark wood
+
+  // Glowing windows (red/orange emissive)
+  WINDOW_COLOR: 0xff2200,
+  WINDOW_EMISSIVE_INTENSITY: 1.5,
+  WINDOW_SIZE: 0.6,
+  WINDOW_ROWS: 2,
+  WINDOW_COLS: 3,
+  WINDOW_PULSE_SPEED: 1.5,
+  WINDOW_PULSE_AMOUNT: 0.3,
+
+  // Dark banners
+  BANNER_COLOR: 0x220000,      // dark crimson
+  BANNER_WAVE_SPEED: 2.5,
+  BANNER_WAVE_AMOUNT: 0.18,
+
+  // Torch lights — eerie red/orange
+  TORCH_COLOR: 0xff3300,
+  TORCH_INTENSITY: 1.0,
+  TORCH_DISTANCE: 12,
+  TORCH_FLICKER_SPEED: 10,
+  TORCH_FLICKER_AMOUNT: 0.5,
+
+  // Gate glow — menacing constant glow
+  GATE_GLOW_COLOR: 0xff1100,
+  GATE_GLOW_INTENSITY: 1.5,
+  GATE_GLOW_DISTANCE: 15,
+
+  // Skull decorations
+  SKULL_COLOR: 0xccccaa,
+  SKULL_SIZE: 0.5,
+
+  // Smoke/ambient particles from chimneys
+  SMOKE_COLOR: 0x333333,
+};
+
+// ---------------------------------------------------------------------------
 // Enemies
 // ---------------------------------------------------------------------------
 export const ENEMY = {
@@ -170,9 +243,9 @@ export const ENEMY = {
   BASE_SPEED: 4,
   SPEED_INCREASE_PER_WAVE: 0.1,  // multiplier added per wave
 
-  // Spawn
-  SPAWN_Z: -(LEVEL.GROUND_SIZE / 2 - 5),
-  SPAWN_X_RANGE: LEVEL.GROUND_SIZE / 2 - 10,
+  // Spawn — enemies emerge from the enemy castle gate
+  SPAWN_Z: ENEMY_CASTLE.POSITION_Z + ENEMY_CASTLE.TOWER_SPREAD_Z + 2,
+  SPAWN_X_RANGE: ENEMY_CASTLE.GATE_WIDTH * 1.5,
   LANE_COUNT: 5,
 
   // Health

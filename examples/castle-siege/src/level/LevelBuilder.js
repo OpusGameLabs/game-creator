@@ -4,7 +4,7 @@
 // =============================================================================
 
 import * as THREE from 'three';
-import { LEVEL, COLORS, SKY } from '../core/Constants.js';
+import { LEVEL, COLORS, SKY, ENEMY_CASTLE } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 
 export class LevelBuilder {
@@ -155,8 +155,15 @@ export class LevelBuilder {
       [-20, -35], [20, -35], [-15, 30], [15, 30],
     ];
 
+    // Enemy castle footprint for collision avoidance
+    const ecZ = ENEMY_CASTLE.POSITION_Z;
+    const ecSpreadX = ENEMY_CASTLE.TOWER_SPREAD_X + ENEMY_CASTLE.TOWER_RADIUS + 1;
+    const ecSpreadZ = ENEMY_CASTLE.TOWER_SPREAD_Z + ENEMY_CASTLE.TOWER_RADIUS + 1;
+
     for (const [x, z] of treePositions) {
       if (Math.abs(x) > halfGround - 2 || Math.abs(z) > halfGround - 2) continue;
+      // Skip trees that overlap the enemy castle
+      if (Math.abs(x) < ecSpreadX && z > ecZ - ecSpreadZ && z < ecZ + ecSpreadZ) continue;
 
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.set(x, 1.5, z);
@@ -178,6 +185,9 @@ export class LevelBuilder {
     ];
 
     for (const [x, z] of rockPositions) {
+      // Skip rocks that overlap the enemy castle
+      if (Math.abs(x) < ecSpreadX && z > ecZ - ecSpreadZ && z < ecZ + ecSpreadZ) continue;
+
       const rock = new THREE.Mesh(rockGeo, rockMat);
       const scale = 0.5 + Math.random() * 1.0;
       rock.scale.set(scale, scale * 0.6, scale);

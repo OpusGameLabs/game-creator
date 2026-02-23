@@ -268,12 +268,18 @@ export class ParticleSystem {
       this.trailSegments.push(new TrailSegment(this.scene));
     }
 
-    // Subscribe to events
-    eventBus.on(Events.PROJECTILE_IMPACT, (data) => this._onProjectileImpact(data));
-    eventBus.on(Events.ENEMY_KILLED, (data) => this._onEnemyKilled(data));
-    eventBus.on(Events.CASTLE_HIT, () => this._onCastleHit());
-    eventBus.on(Events.ENEMY_DUST, (data) => this._onEnemyDust(data));
-    eventBus.on(Events.SPAWN_PARTICLES, (data) => this._onSpawnParticles(data));
+    // Subscribe to events (store bound refs for cleanup in destroy())
+    this._boundOnProjectileImpact = (data) => this._onProjectileImpact(data);
+    this._boundOnEnemyKilled = (data) => this._onEnemyKilled(data);
+    this._boundOnCastleHit = () => this._onCastleHit();
+    this._boundOnEnemyDust = (data) => this._onEnemyDust(data);
+    this._boundOnSpawnParticles = (data) => this._onSpawnParticles(data);
+
+    eventBus.on(Events.PROJECTILE_IMPACT, this._boundOnProjectileImpact);
+    eventBus.on(Events.ENEMY_KILLED, this._boundOnEnemyKilled);
+    eventBus.on(Events.CASTLE_HIT, this._boundOnCastleHit);
+    eventBus.on(Events.ENEMY_DUST, this._boundOnEnemyDust);
+    eventBus.on(Events.SPAWN_PARTICLES, this._boundOnSpawnParticles);
   }
 
   // --- Get a free particle from pool ---
@@ -340,9 +346,13 @@ export class ParticleSystem {
     }
 
     // Scorch mark on ground
-    const scorch = this.scorchMarks[this.scorchIndex % LEVEL.MAX_SCORCH_MARKS];
-    scorch.activate(pos);
-    this.scorchIndex++;
+    if (this.scorchMarks.length > 0) {
+      const scorch = this.scorchMarks[this.scorchIndex % this.scorchMarks.length];
+      if (scorch) {
+        scorch.activate(pos);
+        this.scorchIndex++;
+      }
+    }
 
     // Camera shake
     eventBus.emit(Events.CAMERA_SHAKE, { type: 'impact' });
@@ -503,6 +513,13 @@ export class ParticleSystem {
 
   // --- Cleanup ---
   destroy() {
+    // Unsubscribe event listeners to prevent stale callbacks after restart
+    eventBus.off(Events.PROJECTILE_IMPACT, this._boundOnProjectileImpact);
+    eventBus.off(Events.ENEMY_KILLED, this._boundOnEnemyKilled);
+    eventBus.off(Events.CASTLE_HIT, this._boundOnCastleHit);
+    eventBus.off(Events.ENEMY_DUST, this._boundOnEnemyDust);
+    eventBus.off(Events.SPAWN_PARTICLES, this._boundOnSpawnParticles);
+
     // Deactivate all
     for (const p of this.pool) {
       p.deactivate();
