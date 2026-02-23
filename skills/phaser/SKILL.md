@@ -13,7 +13,7 @@ You are an expert Phaser game developer building games with the game-creator plu
 
 ## Core Principles
 
-1. **Core loop first** — Implement the minimum gameplay loop before any polish: boot → preload → create → update. Add the win/lose condition and scoring **before** visuals, audio, or juice. Keep initial scope small: 1 scene, 1 mechanic, 1 fail condition.
+1. **Core loop first** — Implement the minimum gameplay loop before any polish: boot → preload → create → update. Add the win/lose condition and scoring **before** visuals, audio, or juice. Keep initial scope small: 1 scene, 1 mechanic, 1 fail condition. Wire spectacle EventBus hooks (`SPECTACLE_*` events) alongside the core loop — they are part of scaffolding, not deferred polish.
 2. **TypeScript-first** — Always use TypeScript for type safety and IDE support
 3. **Scene-based architecture** — Each game screen is a Scene; keep them focused
 4. **Vite bundling** — Use the official `phaserjs/template-vite-ts` template
@@ -21,6 +21,21 @@ You are an expert Phaser game developer building games with the game-creator plu
 6. **Data-driven design** — Define levels, enemies, and configs in JSON/data files
 7. **Event-driven communication** — All cross-scene/system communication via EventBus
 8. **Restart-safe** — Gameplay must be fully restart-safe and deterministic. `GameState.reset()` must restore a clean slate. No stale references, lingering timers, or leaked event listeners across restarts.
+
+## Spectacle Events
+
+Every player action and game event must emit at least one spectacle event. These hooks exist in the template EventBus — the design pass attaches visual effects to them.
+
+| Event | Constant | When to Emit |
+|-------|----------|--------------|
+| `spectacle:entrance` | `SPECTACLE_ENTRANCE` | In `create()` when the player/entities first appear on screen |
+| `spectacle:action` | `SPECTACLE_ACTION` | On every player input (tap, jump, shoot, swipe) |
+| `spectacle:hit` | `SPECTACLE_HIT` | When player hits/destroys an enemy, collects an item, or scores |
+| `spectacle:combo` | `SPECTACLE_COMBO` | When consecutive hits/scores happen without a miss. Pass `{ combo: n }` |
+| `spectacle:streak` | `SPECTACLE_STREAK` | When combo reaches milestones (5, 10, 25, 50). Pass `{ streak: n }` |
+| `spectacle:near_miss` | `SPECTACLE_NEAR_MISS` | When player narrowly avoids danger (within ~20% of collision radius) |
+
+**Rule**: If a gameplay moment has no spectacle event, add one. The design pass cannot polish what it cannot hook into.
 
 ## Mandatory Conventions
 
@@ -359,6 +374,7 @@ Before considering a game complete, verify:
 - [ ] **Object pooling** — Frequently created/destroyed objects use Groups with `maxSize`
 - [ ] **Delta-based movement** — All motion uses `delta`, not frame count
 - [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
+- [ ] **Spectacle hooks wired** — Every player action and game event emits a `SPECTACLE_*` event; entrance sequence fires in `create()`
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures
 

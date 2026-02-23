@@ -256,7 +256,7 @@ Launch a `Task` subagent with these instructions:
 > 4. Scoring
 > 5. Restart flow (GameState.reset() → clean slate)
 >
-> Keep scope small: **1 scene, 1 mechanic, 1 fail condition**. Get the gameplay loop working before any polish.
+> Keep scope small: **1 scene, 1 mechanic, 1 fail condition**. Wire spectacle EventBus hooks alongside the core loop — they are scaffolding, not polish.
 >
 > Transform the template into the game concept:
 > - Rename entities, scenes/systems, and events to match the concept
@@ -267,6 +267,9 @@ Launch a `Task` subagent with these instructions:
 > - **No title screen** — the template boots directly into gameplay. Do not create a MenuScene or title screen. Only add one if the user explicitly asks.
 > - **No in-game score HUD** — the Play.fun widget displays score in a deadzone at the top of the game. Do not create a UIScene or HUD overlay for score display.
 > - **Mobile-first input**: Choose the best mobile input scheme for the game concept (tap zones, virtual joystick, gyroscope tilt, swipe). Implement touch + keyboard from the start — never keyboard-only. Use the unified analog InputSystem pattern (moveX/moveZ) so game logic is input-source-agnostic.
+> - Wire spectacle events: emit `SPECTACLE_ENTRANCE` in `create()`, `SPECTACLE_ACTION` on every player input, `SPECTACLE_HIT` on score/destroy, `SPECTACLE_COMBO` on consecutive hits (pass `{ combo }` ), `SPECTACLE_STREAK` at milestones (5, 10, 25 — pass `{ streak }`), `SPECTACLE_NEAR_MISS` on close calls
+> - Add entrance sequence in `create()`: player starts off-screen, tweens into position with `Bounce.easeOut`, landing shake + particle burst
+> - Add combo tracking to GameState: `combo` (current streak, resets on miss), `bestCombo` (session high), both reset in `reset()`
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
 > - Add `isMuted` to GameState for audio mute support
 >
@@ -432,7 +435,7 @@ Mark task 3 as `in_progress`.
 
 Launch a `Task` subagent with these instructions:
 
-> You are implementing Step 2 (Visual Design) of the game creation pipeline.
+> You are implementing Step 2 (Visual Design — Spectacle-First) of the game creation pipeline.
 >
 > **Project path**: `<project-dir>`
 > **Engine**: `<2d|3d>`
@@ -440,17 +443,40 @@ Launch a `Task` subagent with these instructions:
 >
 > **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and what previous steps have done.
 >
-> Apply the game-designer skill:
-> 1. Audit the current visuals — read Constants.js, all scenes, entities, EventBus
-> 2. Score each visual area (background, palette, animations, particles, transitions, typography, game feel, game over) on a 1-5 scale
-> 3. Implement the highest-impact improvements:
->    - Sky gradients or environment backgrounds
->    - Particle effects for key gameplay moments
->    - Screen shake, flash, or slow-mo for impact
->    - Smooth scene transitions
->    - UI juice: button hover, text shadows, floating score text
-> 4. All new values go in Constants.js, use EventBus for triggering effects
-> 5. Don't alter gameplay mechanics
+> Apply the game-designer skill with spectacle as the top priority. Work in this order:
+>
+> **1. Opening Moment (CRITICAL — this determines promo clip success):**
+> - Entrance flash: `cameras.main.flash(300)` on scene start
+> - Player slam-in: player starts off-screen, tweens in with `Bounce.easeOut`, landing shake (0.012) + particle burst (20 particles)
+> - Ambient particles active from frame 1 (drifting motes, dust, sparkles)
+> - Optional flavor text (e.g., "GO!", "DODGE!") — only when it naturally fits the game's vibe
+> - Verify: the first 3 seconds have zero static frames
+>
+> **2. Every-Action Effects (wire to SPECTACLE_* events from Step 1):**
+> - Particle burst (12-20 particles) on `SPECTACLE_ACTION` and `SPECTACLE_HIT`
+> - Floating score text (28px, scale 1.8, `Elastic.easeOut`) on `SCORE_CHANGED`
+> - Background pulse (additive blend, alpha 0.15) on `SCORE_CHANGED`
+> - Persistent player trail (particle emitter following player, `blendMode: ADD`)
+> - Screen shake (0.008-0.015) on hits
+>
+> **3. Combo & Streak System (wire to SPECTACLE_COMBO / SPECTACLE_STREAK):**
+> - Combo counter text that scales with combo count (32px base, +4px per combo)
+> - Streak milestone announcements at 5x, 10x, 25x (full-screen text slam + 40-particle burst)
+> - Hit freeze frame (60ms physics pause) on destruction events
+> - Shake intensity scales with combo (0.008 + combo * 0.002, capped at 0.025)
+>
+> **4. Standard Design Audit:**
+> - Full 10-area audit (background, palette, animations, particles, transitions, typography, game feel, game over, character prominence, first impression / viral appeal)
+> - **Every area must score 4 or higher** — improve any that fall below
+> - First Impression / Viral Appeal is the most critical category
+>
+> **5. Intensity Calibration:**
+> - Particle bursts: 12-30 per event (never fewer than 10)
+> - Screen shake: 0.008 (light) to 0.025 (heavy)
+> - Floating text: 28px minimum, starting scale 1.8
+> - Flash overlays: alpha 0.3-0.5
+> - All new values go in Constants.js, use EventBus for triggering effects
+> - Don't alter gameplay mechanics
 >
 > **After completing your work**, append a `## Step 2: Design` section to `progress.md` with: improvements applied, new effects added, any color or layout changes.
 >

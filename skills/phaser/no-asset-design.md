@@ -287,14 +287,17 @@ update(): void {
 
 ### Screen Shake
 
-On impacts, deaths, explosions:
+On impacts, deaths, explosions. Use intensities that are visible in video — subtle shakes disappear in compression.
 
 ```typescript
-// Light shake
-this.cameras.main.shake(100, 0.005);
+// Light shake (score, small hit)
+this.cameras.main.shake(100, 0.008);
 
-// Heavy shake
-this.cameras.main.shake(200, 0.015);
+// Medium shake (enemy destroyed, combo)
+this.cameras.main.shake(150, 0.015);
+
+// Heavy shake (death, streak milestone, big explosion)
+this.cameras.main.shake(200, 0.025);
 ```
 
 ### Trail Effects
@@ -371,6 +374,276 @@ private popScore(text: Phaser.GameObjects.Text): void {
 }
 ```
 
+## Spectacle Patterns
+
+These patterns make games visually compelling in short video clips. Wire them to `SPECTACLE_*` events from the EventBus so the design pass can plug them in without touching gameplay code.
+
+### Opening Entrance Animation
+
+Fires in `create()` before any player input. The first 3 seconds decide whether a viewer keeps watching.
+
+```typescript
+// Flash + player slam-in
+private playEntrance(): void {
+    this.cameras.main.flash(300, 255, 255, 255, true);
+
+    // Player starts above screen, slams into position
+    const targetY = this.player.y;
+    this.player.y = -100 * PX;
+    this.tweens.add({
+        targets: this.player,
+        y: targetY,
+        duration: 400,
+        ease: 'Bounce.easeOut',
+        onComplete: () => {
+            this.cameras.main.shake(150, 0.012);
+            emitBurst(this, this.player.x, this.player.y, 20, PALETTE.ACCENT);
+            eventBus.emit(Events.SPECTACLE_ENTRANCE);
+        },
+    });
+
+    // Optional flavor text — use only when it fits the game's vibe
+    // (e.g., "GO!" for racing, "DODGE!" for avoidance, "FIGHT!" for combat)
+    const goText = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'GO!', {
+        fontSize: `${64 * PX}px`, fontFamily: 'Arial Black',
+        color: '#ffffff', stroke: '#000000', strokeThickness: 6 * PX,
+    }).setOrigin(0.5).setScale(0).setDepth(500);
+    this.tweens.add({
+        targets: goText,
+        scale: 1.8,
+        alpha: 0,
+        duration: 600,
+        ease: 'Back.easeOut',
+        onComplete: () => goText.destroy(),
+    });
+}
+```
+
+### Combo Counter with Scaling Text
+
+Grows with consecutive hits. Wire to `SPECTACLE_COMBO`.
+
+```typescript
+private showCombo(combo: number): void {
+    const size = Math.min(32 + combo * 4, 72);
+    const comboText = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT * 0.3, `${combo}x COMBO`, {
+        fontSize: `${size * PX}px`, fontFamily: 'Arial Black',
+        color: '#ffff00', stroke: '#000000', strokeThickness: 4 * PX,
+    }).setOrigin(0.5).setScale(1.8).setDepth(400);
+    this.tweens.add({
+        targets: comboText,
+        scale: 1,
+        y: comboText.y - 30 * PX,
+        alpha: 0,
+        duration: 700,
+        ease: 'Elastic.easeOut',
+        onComplete: () => comboText.destroy(),
+    });
+}
+```
+
+### Hit Freeze Frame (Hit Stop)
+
+60ms physics pause on impact. Makes hits feel powerful.
+
+```typescript
+private hitFreeze(): void {
+    this.physics.world.pause();
+    this.time.delayedCall(60, () => {
+        this.physics.world.resume();
+    });
+}
+```
+
+### Screen-Wide Flash Burst
+
+Colored flashes for different event types.
+
+```typescript
+private flashBurst(color: number, alpha = 0.4): void {
+    const overlay = this.add.rectangle(
+        GAME.WIDTH / 2, GAME.HEIGHT / 2,
+        GAME.WIDTH, GAME.HEIGHT, color, alpha,
+    ).setDepth(900).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({
+        targets: overlay,
+        alpha: 0,
+        duration: 150,
+        onComplete: () => overlay.destroy(),
+    });
+}
+```
+
+### Color Cycling Background
+
+Hue shifts over time for ambient visual energy.
+
+```typescript
+private bgHue = 0;
+private bgGraphics: Phaser.GameObjects.Graphics;
+
+private updateBackgroundHue(delta: number): void {
+    this.bgHue = (this.bgHue + delta * 0.02) % 360;
+    const color = Phaser.Display.Color.HSLToColor(this.bgHue / 360, 0.6, 0.15);
+    this.bgGraphics.clear();
+    this.bgGraphics.fillStyle(color.color, 1);
+    this.bgGraphics.fillRect(0, 0, GAME.WIDTH, GAME.HEIGHT);
+}
+```
+
+### Pulsing Background on Score
+
+Additive blend overlay that flashes on score events.
+
+```typescript
+private createScorePulse(): void {
+    this.scorePulse = this.add.rectangle(
+        GAME.WIDTH / 2, GAME.HEIGHT / 2,
+        GAME.WIDTH, GAME.HEIGHT, PALETTE.ACCENT, 0,
+    ).setDepth(-50).setBlendMode(Phaser.BlendModes.ADD);
+
+    eventBus.on(Events.SCORE_CHANGED, () => {
+        this.scorePulse.setAlpha(0.15);
+        this.tweens.add({
+            targets: this.scorePulse,
+            alpha: 0,
+            duration: 300,
+            ease: 'Quad.easeOut',
+        });
+    });
+}
+```
+
+### Entity Entrance Animations
+
+Pop-in and slam-in patterns for spawning entities.
+
+```typescript
+// Pop-in: entity appears from scale 0
+private popIn(target: Phaser.GameObjects.GameObject, delay = 0): void {
+    (target as any).setScale(0);
+    this.tweens.add({
+        targets: target,
+        scale: 1,
+        duration: 300,
+        delay,
+        ease: 'Back.easeOut',
+    });
+}
+
+// Slam-in: entity drops from above with bounce
+private slamIn(target: Phaser.GameObjects.GameObject, targetY: number, delay = 0): void {
+    (target as any).y = -50 * PX;
+    this.tweens.add({
+        targets: target,
+        y: targetY,
+        duration: 350,
+        delay,
+        ease: 'Bounce.easeOut',
+        onComplete: () => {
+            this.cameras.main.shake(80, 0.006);
+        },
+    });
+}
+```
+
+### Persistent Player Trail
+
+Continuous particle spawn behind the player.
+
+```typescript
+private createPlayerTrail(): void {
+    this.playerTrail = this.add.particles(0, 0, 'particle', {
+        follow: this.player,
+        scale: { start: 0.6, end: 0 },
+        alpha: { start: 0.5, end: 0 },
+        speed: { min: 5, max: 15 },
+        lifespan: 400,
+        frequency: 30,
+        blendMode: 'ADD',
+        tint: PALETTE.ACCENT,
+    });
+}
+```
+
+### Particle Ring Burst
+
+Expanding ring for milestones. Higher visual impact than a random burst.
+
+```typescript
+private ringBurst(x: number, y: number, color: number, count = 24): void {
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const dist = 80 * PX + Math.random() * 20 * PX;
+        const particle = this.add.circle(x, y, 4 * PX, color, 1);
+        this.tweens.add({
+            targets: particle,
+            x: x + Math.cos(angle) * dist,
+            y: y + Math.sin(angle) * dist,
+            alpha: 0,
+            scale: 0.3,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => particle.destroy(),
+        });
+    }
+}
+```
+
+### Large Spectacle Burst
+
+Higher count, multi-color variant for big moments (streaks, game over).
+
+```typescript
+private spectacleBurst(x: number, y: number, colors: number[], count = 30): void {
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 80 + Math.random() * 120;
+        const color = colors[i % colors.length];
+        const size = (3 + Math.random() * 4) * PX;
+        const particle = this.add.circle(x, y, size, color, 1);
+        this.tweens.add({
+            targets: particle,
+            x: x + Math.cos(angle) * speed * PX,
+            y: y + Math.sin(angle) * speed * PX,
+            alpha: 0,
+            scale: 0.1,
+            duration: 500 + Math.random() * 300,
+            ease: 'Quad.easeOut',
+            onComplete: () => particle.destroy(),
+        });
+    }
+}
+```
+
+### Streak Milestone Announcements
+
+Full-screen text slam for streak milestones (5x, 10x, 25x).
+
+```typescript
+private announceStreak(streak: number): void {
+    const labels: Record<number, string> = { 5: 'ON FIRE!', 10: 'UNSTOPPABLE!', 25: 'LEGENDARY!' };
+    const label = labels[streak] || `${streak}x STREAK`;
+    const text = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT / 2, label, {
+        fontSize: `${80 * PX}px`, fontFamily: 'Arial Black',
+        color: '#ffffff', stroke: '#000000', strokeThickness: 8 * PX,
+    }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(500);
+    this.tweens.add({
+        targets: text,
+        scale: 1,
+        alpha: 1,
+        duration: 300,
+        ease: 'Back.easeOut',
+        hold: 400,
+        yoyo: true,
+        onComplete: () => text.destroy(),
+    });
+    this.cameras.main.shake(200, 0.02);
+    this.spectacleBurst(GAME.WIDTH / 2, GAME.HEIGHT / 2,
+        [PALETTE.ACCENT, PALETTE.HIGHLIGHT, 0xffffff], 40);
+}
+```
+
 ## Drawing Game Entities with Graphics
 
 ### Simple Sprite-Like Entity
@@ -423,3 +696,34 @@ When building an asset-free game, verify:
 - [ ] Score/text pop on change
 - [ ] Scene transitions (fade, flash, or slide)
 - [ ] Consistent shape language (all rounded, or all angular — pick one)
+
+## Viral Clip Checklist
+
+Every game is captured as a 13-second silent video clip for social media. Design for a viewer scrolling with sound off.
+
+### First 3 seconds (before player input)
+
+- [ ] **Screen flash** on scene start (white or accent color, 200-300ms)
+- [ ] **Player entrance animation** — slam-in or pop-in, not a static spawn
+- [ ] **Landing particles** — burst of 15-20 particles at spawn position
+- [ ] **Ambient motion** — background particles, color cycling, or parallax drift active immediately
+- [ ] **Optional flavor text** — "GO!", "DODGE!", etc. only when it naturally fits the game's theme
+
+### Every action (seconds 3-13)
+
+- [ ] **Particle burst** on every player action (minimum 12 particles per burst)
+- [ ] **Floating text** on every score event (28px+ font, scale 1.8 start with Elastic.easeOut)
+- [ ] **Screen shake** on every hit/score (minimum intensity 0.008)
+- [ ] **Background pulse** on score change (additive blend flash, alpha 0.15)
+- [ ] **Player trail** — continuous particle spawn behind the player
+- [ ] **Combo text** visible at 2x combo and above (scaling with combo count)
+- [ ] **Streak announcement** at milestones (5x, 10x, 25x — full-screen text slam)
+- [ ] **Hit freeze** on destruction events (60ms physics pause)
+
+### Intensity targets
+
+- Particle bursts: 12-30 count per event (never fewer than 10)
+- Screen shake range: 0.008 (light) to 0.025 (heavy)
+- Floating text: 28px minimum, starting scale 1.8
+- Flash overlays: alpha 0.3-0.5 for visibility in compressed video
+- At least one visual effect firing every 0.5 seconds during active gameplay
