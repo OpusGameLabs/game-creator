@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, COLORS, UI, TRANSITION } from '../core/Constants.js';
+import { GAME, COLORS, UI, TRANSITION, SAFE_ZONE } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 
@@ -15,12 +15,16 @@ export class GameOverScene extends Phaser.Scene {
 
     this._transitioning = false;
 
+    // Usable area below Play.fun widget bar
+    const safeTop = SAFE_ZONE.TOP;
+    const usableH = h - safeTop;
+
     // --- Gradient background ---
     this.drawGradient(w, h, COLORS.BG_TOP, COLORS.BG_BOTTOM);
 
     // --- "GAME OVER" title ---
     const titleSize = Math.round(h * UI.TITLE_RATIO);
-    const title = this.add.text(cx, h * 0.22, 'GAME OVER', {
+    const title = this.add.text(cx, safeTop + usableH * 0.15, 'GAME OVER', {
       fontSize: titleSize + 'px',
       fontFamily: UI.FONT,
       color: COLORS.UI_TEXT,
@@ -32,7 +36,7 @@ export class GameOverScene extends Phaser.Scene {
     // --- Score panel ---
     const panelW = w * 0.6;
     const panelH = h * 0.2;
-    const panelY = h * 0.4;
+    const panelY = safeTop + usableH * 0.35;
 
     const panel = this.add.graphics();
     panel.fillStyle(0x000000, 0.35);
@@ -81,7 +85,7 @@ export class GameOverScene extends Phaser.Scene {
 
 
     // --- Play Again button ---
-    this.createButton(cx, h * 0.65, 'PLAY AGAIN', () => this.restartGame());
+    this.createButton(cx, safeTop + usableH * 0.6, 'PLAY AGAIN', () => this.restartGame());
 
     // --- Keyboard shortcut ---
     this.input.keyboard.once('keydown-SPACE', () => this.restartGame());

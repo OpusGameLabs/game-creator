@@ -44,6 +44,8 @@ Evaluate these areas and score each 1-5:
 | **Typography** | Consistent font choices? Visual hierarchy? Text readable at all sizes? |
 | **Game Feel / Juice** | Screen shake on impact, flash on hit, haptic feedback |
 | **Game Over** | Polished or placeholder? Restart button feels clickable? Clear call to action? Score display with animation? |
+| **Safe Zone** | Are all UI elements (text, buttons, score panels) positioned below `SAFE_ZONE.TOP`? Does any UI get hidden behind the Play.fun widget bar (~75px at top)? |
+| **Entity Prominence** | Is the player character large enough to read? Character-driven games need 12–15% of GAME.WIDTH. Are entities proportionally sized (`GAME.WIDTH * ratio`), not fixed pixels? |
 
 Present the scores as a table, then list the top improvements ranked by visual impact.
 
@@ -57,6 +59,7 @@ After presenting the report, implement the improvements. Follow these rules:
 4. **Prefer procedural graphics** — gradients, shapes, particles over external image assets
 5. **Add new events** to `EventBus.js` for any new visual systems
 6. **Create new files** in the appropriate directories (`systems/`, `entities/`, `ui/`)
+7. **Respect the safe zone** — Verify all UI text, buttons, and interactive elements are below `SAFE_ZONE.TOP` from Constants.js. If any UI element is positioned in the top 8% of the screen, shift it down. Use `SAFE_ZONE.TOP + usableH * ratio` for proportional positioning (where `usableH = GAME.HEIGHT - SAFE_ZONE.TOP`).
 
 ## Visual Improvement Catalog
 

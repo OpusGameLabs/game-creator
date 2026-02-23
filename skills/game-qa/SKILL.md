@@ -463,11 +463,21 @@ test('bird falls after 1 second without input', async ({ page }) => {
 
 ## Playwright MCP — Interactive Visual QA
 
-In addition to automated tests, use the **Playwright MCP** for interactive visual inspection. This gives your agent direct browser control via a visible Chrome window.
+In addition to automated tests, use the **Playwright MCP** for interactive visual inspection. This gives your agent direct browser control for screenshots, element inspection, and real visual evaluation.
 
 ### Setup
 
-Add the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) to your agent's MCP configuration.
+Install the Playwright MCP server so your agent can use `browser_navigate`, `browser_take_screenshot`, `browser_snapshot`, `browser_evaluate`, and other browser control tools:
+
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
+
+**After running this command, the user must restart their agent (e.g., restart Claude Code) for the MCP server to take effect.** Prompt them:
+
+> Playwright MCP has been added. Please restart Claude Code for it to take effect, then tell me to continue.
+
+To verify it's working, try calling `browser_navigate` to any URL. If the tool is not available, the MCP server hasn't loaded yet.
 
 ### When to Use MCP vs Automated Tests
 
@@ -483,23 +493,37 @@ Add the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) to 
 | "CI/CD gate" | **Automated test** — headless, pass/fail |
 | "Evaluate visual polish" | **MCP** — designer uses screenshots to judge atmosphere |
 | "Active gameplay screenshot" | **MCP** — animated scenes are unstable for automated screenshots |
+| "Check Play.fun widget overlay" | **MCP** — inspect iframe computed styles |
 
 ### MCP Visual Inspection Flow
 
 When using MCP for QA:
 
-1. Navigate to the game URL with `browser_navigate`
-2. Take a screenshot with `browser_take_screenshot` — analyze gameplay (game starts immediately, no title screen)
-3. Take screenshots during gameplay to check visuals
-4. Let the player die, take a screenshot of the game over screen
-6. Report findings with specific visual observations
+1. **`browser_navigate`** to the game URL (e.g., `http://localhost:3000`)
+2. **`browser_wait_for`** — wait 2 seconds for the game to fully render
+3. **`browser_take_screenshot`** — capture gameplay (game starts immediately, no title screen)
+4. **Assess visually**: Check rendering, entity sizing, background, atmosphere
+5. **Check safe zone**: Verify no UI elements are hidden behind the top ~8% of the screen (Play.fun widget area at 75px). If deployed, inspect the widget directly:
+   ```js
+   // browser_evaluate — inspect Play.fun widget iframe
+   const iframe = document.querySelector('iframe[src*="widget.play.fun"]');
+   if (iframe) {
+     const styles = window.getComputedStyle(iframe);
+     return { position: styles.position, top: styles.top, height: styles.height, zIndex: styles.zIndex };
+   }
+   return 'No Play.fun widget found';
+   ```
+6. **Check buttons**: If game over is visible, verify button labels (text) are readable — not blank rectangles
+7. Let the player die, **`browser_take_screenshot`** — check game-over screen polish and score display
+8. **`browser_press_key`** (Space) — restart and verify transitions
+9. Report findings with specific visual observations
 
 ### MCP + Automated: Best of Both
 
 The recommended workflow is:
 
-1. **Write automated tests** for all objective checks (boot, scenes, input, scoring, game over, regression)
-2. **Use MCP** for subjective visual evaluation (does it look good? feel right? color palette working?)
+1. **Write automated tests** for all objective checks (boot, scenes, input, scoring, game over, regression, gameplay invariants)
+2. **Use MCP** for subjective visual evaluation (does it look good? feel right? color palette working? safe zone respected? entity sizes appropriate?)
 3. Run automated tests in CI; run MCP inspections during design passes
 
 ## Mobile Input & Responsive Layout Tests
@@ -617,6 +641,108 @@ The iterate client is the primary feedback mechanism for AI agents during game d
 3. Agent reads screenshots (visually) and state JSON (structurally) to verify the change
 4. If errors detected, agent reads the error JSON and fixes
 5. Repeat until stable
+
+## Core Gameplay Invariants
+
+Every game built through the pipeline **must** pass these minimum gameplay checks. These verify the game is actually playable, not just renders without errors.
+
+### 1. Scoring works
+
+The player must be able to earn at least 1 point through normal gameplay actions:
+
+```js
+test('player can score at least 1 point', async ({ gamePage }) => {
+  // Start the game (space/tap)
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started, null, { timeout: 5000 });
+
+  // Perform gameplay actions — keep the player alive
+  const actionInterval = setInterval(async () => {
+    await gamePage.keyboard.press('Space').catch(() => {});
+  }, 400);
+
+  // Wait for score > 0
+  await gamePage.waitForFunction(
+    () => window.__GAME_STATE__.score > 0,
+    null,
+    { timeout: 20000 }
+  );
+  clearInterval(actionInterval);
+
+  const score = await gamePage.evaluate(() => window.__GAME_STATE__.score);
+  expect(score).toBeGreaterThan(0);
+});
+```
+
+### 2. Death/fail condition triggers
+
+The player must be able to die or lose through inaction or collision:
+
+```js
+test('game over triggers through normal gameplay', async ({ gamePage }) => {
+  // Start the game
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started, null, { timeout: 5000 });
+
+  // Do nothing — let the fail condition trigger naturally (fall, timer, collision)
+  await gamePage.waitForFunction(
+    () => window.__GAME_STATE__.gameOver === true,
+    null,
+    { timeout: 15000 }
+  );
+
+  const isOver = await gamePage.evaluate(() => window.__GAME_STATE__.gameOver);
+  expect(isOver).toBe(true);
+});
+```
+
+### 3. Game-over buttons have visible text
+
+After game over, restart/play-again buttons must show their text labels:
+
+```js
+test('game over buttons display text labels', async ({ gamePage }) => {
+  // Trigger game over
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started, null, { timeout: 5000 });
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.gameOver, null, { timeout: 15000 });
+
+  // Wait for GameOverScene to render
+  await gamePage.waitForFunction(() => {
+    const scenes = window.__GAME__.scene.getScenes(true);
+    return scenes.some(s => s.scene.key === 'GameOverScene');
+  }, null, { timeout: 5000 });
+  await gamePage.waitForTimeout(500);
+
+  // Check that text objects exist and are visible in the scene
+  const hasVisibleText = await gamePage.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('GameOverScene');
+    if (!scene) return false;
+    const textObjects = scene.children.list.filter(
+      child => child.type === 'Text' && child.visible && child.alpha > 0
+    );
+    // Should have at least: title ("GAME OVER"), score, and button label ("PLAY AGAIN")
+    return textObjects.length >= 3;
+  });
+  expect(hasVisibleText).toBe(true);
+});
+```
+
+### 4. `render_game_to_text()` returns valid state
+
+The AI-readable state function must return parseable JSON with required fields:
+
+```js
+test('render_game_to_text returns valid game state', async ({ gamePage }) => {
+  const stateStr = await gamePage.evaluate(() => window.render_game_to_text());
+  const state = JSON.parse(stateStr);
+
+  expect(state).toHaveProperty('mode');
+  expect(state).toHaveProperty('score');
+  expect(['playing', 'game_over']).toContain(state.mode);
+  expect(typeof state.score).toBe('number');
+});
+```
 
 ## What NOT to Test (Automated)
 

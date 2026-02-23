@@ -9,6 +9,13 @@ export const GAME = {
 export const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 1);
 
+// Play.fun SDK widget renders a 75px fixed bar at top:0, z-index:9999.
+// All HTML overlays must account for this with padding-top or safe offset.
+export const SAFE_ZONE = {
+  TOP_PX: 75,          // pixels — use for CSS/HTML overlays
+  TOP_PERCENT: 8,      // percent of viewport height
+};
+
 export const PLAYER = {
   SIZE: 1,
   SPEED: 5,

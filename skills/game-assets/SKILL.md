@@ -634,11 +634,16 @@ At small scales, subtle changes read as smooth motion:
 - Bat = purple (index 9), Zombie = green (index 10), Skeleton = white (index 8), Demon = red (index 3)
 
 ### 6. Scale Appropriately
-| Entity Size | Grid | Scale | Rendered Size |
-|-------------|------|-------|---------------|
-| Small (items, pickups) | 8x8 | 2 | 16x16px |
-| Medium (player, enemies) | 16x16 | 2 | 32x32px |
-| Large (boss, vehicle) | 24x24 or 32x32 | 2 | 48x48 or 64x64px |
+| Entity Size | Grid | Scale | Rendered Size | Use Case |
+|-------------|------|-------|---------------|----------|
+| Small (items, pickups) | 8x8 | 2 | 16x16px | Gems, coins, hearts, bullets |
+| Medium (enemies, NPCs) | 16x16 | 2 | 32x32px | Standard enemies, small NPCs |
+| Large (player, boss) | 16x16 or 24x24 | 3 | 48x48 or 72x72px | Player character, mid-bosses |
+| Extra Large (hero, personality) | 24x24 or 32x32 | 3–4 | 72x72 to 128x128px | Character-driven games, named personalities, bobblehead characters |
+
+**Character-driven games** (games starring named characters, personalities, or mascots): Use Large or Extra Large sprites. The main character should occupy roughly 12–15% of the screen width. Use **bobblehead proportions** — oversized head (40–50% of sprite height), compact body — for maximum personality at any scale. Adjust `PLAYER.WIDTH` and `PLAYER.HEIGHT` in Constants.js to match.
+
+When replacing geometric shapes with pixel art, match the rendered sprite size to the entity's `WIDTH`/`HEIGHT` in Constants.js. If the Constants values are too small for the art style, increase them — the sprite and the physics body should agree.
 
 ## External Asset Download (Optional)
 

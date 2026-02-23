@@ -39,13 +39,23 @@ export const GAME = {
   GRAVITY: 800 * PX,
 };
 
+// --- Safe Zone (Play.fun widget overlay) ---
+// The Play.fun SDK widget renders a 75px fixed bar at top:0, z-index:9999.
+// All UI text, buttons, and interactive elements must be positioned below SAFE_ZONE.TOP.
+export const SAFE_ZONE = {
+  TOP: GAME.HEIGHT * 0.08,
+  BOTTOM: 0,
+  LEFT: 0,
+  RIGHT: 0,
+};
+
 // --- Player ---
 
 export const PLAYER = {
   START_X: GAME.WIDTH * 0.25,
   START_Y: GAME.HEIGHT * 0.65,
-  WIDTH: 40 * PX,
-  HEIGHT: 40 * PX,
+  WIDTH: GAME.WIDTH * 0.08,
+  HEIGHT: GAME.HEIGHT * 0.12,
   SPEED: 200 * PX,
   JUMP_VELOCITY: -400 * PX,
   COLOR: 0x44aaff,
@@ -89,7 +99,7 @@ export const UI = {
   BTN_H_RATIO: 0.075,         // button height as % of GAME.HEIGHT
   BTN_RADIUS: 12 * PX,        // button corner radius
   MIN_TOUCH: 44 * PX,         // minimum touch target
-  // Score HUD omitted — Play.fun widget displays score in a deadzone at the top
+  // Score HUD omitted — Play.fun widget displays score in SAFE_ZONE.TOP area
 };
 
 // --- Transitions ---

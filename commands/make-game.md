@@ -70,33 +70,56 @@ If the runtime check fails, proceed to autofix.
 ```bash
 cd <project-dir> && node scripts/iterate-client.js \
   --url http://localhost:<port> \
-  --actions-json '[{"buttons":["space"],"frames":4}]' \
-  --iterations 2 --screenshot-dir output/iterate
+  --actions-json '[{"buttons":["space"],"frames":4},{"buttons":[],"frames":30},{"buttons":["space"],"frames":4},{"buttons":[],"frames":60}]' \
+  --iterations 3 --screenshot-dir output/iterate
 ```
 
-This produces screenshots (`output/iterate/shot-*.png`), game state JSON (`output/iterate/state-*.json`), and error files (`output/iterate/errors-*.json`). Feed these to the autofix subagent for richer context when issues are found.
+This produces screenshots (`output/iterate/shot-*.png`), game state JSON (`output/iterate/state-*.json`), and error files (`output/iterate/errors-*.json`). The action sequence taps, waits for gameplay to develop, taps again, then waits long enough for a fail condition to potentially trigger. Feed these to the autofix subagent for richer context when issues are found.
 
 **Skip this phase** if `scripts/iterate-client.js` is not present (backward compatibility with existing projects).
 
+### Phase 2.75 — Gameplay Verification
+
+After the iterate check, read the state JSON files to verify the game is actually playable:
+
+1. **Read** `output/iterate/state-*.json` files from Phase 2.5
+2. **Check scoring**: At least one state file should show `score > 0`. If the game never scores after multiple taps + wait cycles, scoring is likely broken.
+3. **Check death**: At least one state file should show `mode: "game_over"`. If the game never ends after 60+ frames of inactivity, the fail condition is likely broken.
+4. **Check buttons**: Read the last screenshot (`shot-2.png` or similar). If it shows a game-over screen, verify button text is visible (not blank rectangles). If button text is missing, the `createButton()` pattern was broken — proceed to autofix with instructions to restore the Container + Graphics + Text pattern from the template.
+
+If any check fails, proceed to autofix with specific instructions about what's broken (scoring, death, or buttons).
+
 ### Phase 3 — Visual Review via Playwright MCP
 
-Use the Playwright MCP to visually review the game:
+**Prerequisite — Playwright MCP must be installed.** Before the first visual review, check if MCP tools like `browser_navigate` are available. If not:
 
-1. **Take a screenshot** of the game running in the browser
-2. **Assess visually**: Is the game rendering correctly? Are there visual bugs, layout issues, or broken elements?
-3. **Identify issues**: Note any visual problems that need fixing (e.g., elements off-screen, missing graphics, broken UI, wrong colors)
+1. Run: `claude mcp add playwright npx @playwright/mcp@latest`
+2. Tell the user: "Playwright MCP has been added. Please restart Claude Code for it to take effect, then tell me to continue."
+3. **Wait for user to restart and confirm.** Do not proceed until MCP tools are available.
+
+Once Playwright MCP is available, visually review the game:
+
+1. **`browser_navigate`** to `http://localhost:<port>`
+2. **`browser_wait_for`** — wait 2 seconds for the game to load and render
+3. **`browser_take_screenshot`** — capture gameplay (game starts immediately, no title screen)
+4. **Assess visually**: Is the game rendering correctly? Are there visual bugs, layout issues, or broken elements?
+5. **Check safe zone**: Is any UI text or interactive element hidden behind the top ~8% of the screen (Play.fun widget area)?
+6. **Check entity sizing**: Is the main character large enough to be clearly visible? Character-driven games should have the protagonist at 12–15% screen width.
+7. **Check buttons**: If game over is visible, are button labels (text) visible? Blank rectangles = broken button pattern.
+8. Let the player die (wait or navigate to game over), **`browser_take_screenshot`** again to check game-over screen polish.
 
 If visual issues are found, proceed to autofix.
 
 ### Autofix Logic
 
-When any phase fails or visual issues are found:
+When any phase fails or visual/gameplay issues are found:
 
 1. Launch a **fix subagent** via `Task` tool with:
    - The error output (for build/runtime failures)
    - The screenshot and visual issues description (for visual review)
+   - The state JSON and specific failures (for gameplay verification — e.g., "scoring never incremented", "game never reached game_over", "button text invisible")
    - Instructions to fix the specific issues
-2. Re-run the Verification Protocol (all three phases)
+2. Re-run the Verification Protocol (all phases)
 3. Up to **3 total attempts** per step (1 original + 2 retries)
 4. If all 3 attempts fail, report the failure to the user and ask whether to skip or abort
 
@@ -204,6 +227,17 @@ Launch a `Task` subagent with these instructions:
 > - **Mobile-first input**: Choose the best mobile input scheme for the game concept (tap zones, virtual joystick, gyroscope tilt, swipe). Implement touch + keyboard from the start — never keyboard-only. Use the unified analog InputSystem pattern (moveX/moveZ) so game logic is input-source-agnostic.
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
 > - Add `isMuted` to GameState for audio mute support
+>
+> **CRITICAL — Preserve the button pattern:**
+> - The template's `GameOverScene.js` contains a working `createButton()` helper (Container + Graphics + Text). **Do NOT rewrite this method.** Keep it intact or copy it into any new scenes that need buttons. The correct z-order is: Graphics first (background), Text second (label), Container interactive. If you put Graphics on top of Text, the text becomes invisible. If you make the Graphics interactive instead of the Container, hover/press states break.
+>
+> **Character & entity sizing:**
+> - Size all entities proportionally: `GAME.WIDTH * ratio` and `GAME.HEIGHT * ratio`, never fixed pixel values like `40 * PX`.
+> - For character-driven games (named personalities, mascots, famous figures): make the main character prominent — `GAME.WIDTH * 0.12` to `GAME.WIDTH * 0.15` (12–15% of screen width). Use bobblehead proportions (head = 40–50% of sprite height) for personality games.
+> - Define all sizes in `Constants.js` as `GAME.WIDTH * ratio` or `GAME.HEIGHT * ratio`.
+>
+> **Play.fun safe zone:**
+> - Import `SAFE_ZONE` from `Constants.js`. All UI text, buttons, and interactive elements (title text, score panels, restart buttons) must be positioned below `SAFE_ZONE.TOP`. The Play.fun SDK renders a 75px widget bar at the top of the viewport (z-index 9999). Use `safeTop + usableH * ratio` for proportional positioning within the usable area (where `usableH = GAME.HEIGHT - SAFE_ZONE.TOP`).
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
 

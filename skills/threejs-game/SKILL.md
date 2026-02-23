@@ -377,6 +377,38 @@ Use node-based material variants when writing TSL shaders:
 
 For the full TSL specification, functions, and node types, see `reference/llms-full.txt`.
 
+## Play.fun Safe Zone
+
+The Play.fun SDK renders a **75px fixed iframe** at `top: 0; z-index: 9999`. All HTML overlay UI (game-over screens, menus, buttons, text) must account for this.
+
+### Constants
+
+```js
+// In Constants.js
+export const SAFE_ZONE = {
+  TOP_PX: 75,          // pixels — use for CSS/HTML overlays
+  TOP_PERCENT: 8,      // percent of viewport height
+};
+```
+
+### CSS Rule
+
+All `.overlay` elements (game-over, pause, menus) must include padding to avoid the widget:
+
+```css
+.overlay {
+  padding-top: max(20px, 8vh); /* Safe zone for Play.fun widget bar */
+}
+```
+
+### What to Check
+
+- No text, buttons, or interactive elements in the top ~75px of the viewport
+- Game-over overlays center content in the **usable area** (below the widget), not the full viewport
+- Score displays, titles, and restart buttons are all visible and not hidden behind the widget
+
+**Note**: The 3D canvas itself renders behind the widget, which is fine — only HTML overlay UI needs the safe zone offset. In-world 3D elements (HUD textures, floating text) should avoid the top 8% of screen space.
+
 ## Performance Rules
 
 - **Use `renderer.setAnimationLoop()`** instead of manual `requestAnimationFrame`. It pauses when the tab is hidden and handles WebGPU async correctly.
@@ -551,5 +583,6 @@ Before considering a game complete, verify:
 - [ ] **Shadows disabled** — Unless explicitly needed and budget allows
 - [ ] **Delta-capped movement** — `Math.min(clock.getDelta(), 0.1)` on every frame
 - [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
+- [ ] **Safe zone respected** — All HTML overlay UI has `padding-top: max(20px, 8vh)` for Play.fun widget (75px at top)
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures

@@ -46,9 +46,12 @@ Rate each area on a 1–5 scale (1 = broken/missing, 3 = functional but basic, 5
 | **Performance** | | Delta capping, object pooling, disposal, no leaks |
 | **Player experience** | | Onboarding, feedback, difficulty curve, replayability |
 | **Mobile support** | | Touch input, responsive layout, gyro/joystick, 44px touch targets |
+| **Play.fun safe zone** | | All UI elements below `SAFE_ZONE.TOP` (~8% / 75px)? Nothing hidden behind Play.fun widget? |
+| **Gameplay invariants** | | Can the player score? Can the player die? Do game-over buttons show text? Does `render_game_to_text()` return valid JSON? |
+| **Entity sizing** | | Are characters large enough to read? Character-driven games need 12–15% of GAME.WIDTH. Proportional sizing (`GAME.WIDTH * ratio`), not fixed pixels? |
 | **Test coverage** | | Boot, gameplay, scoring, restart, visual, perf tests |
 
-**Overall score: X / 50**
+**Overall score: X / 65**
 
 ### Step 3: Improvement plan
 
@@ -99,7 +102,7 @@ Tell the user what changed:
 
 > **Improvement report**
 >
-> **Score: X/50 → Y/50** (+Z points)
+> **Score: X/65 → Y/65** (+Z points)
 >
 > **Implemented:**
 > 1. [Title] — [one-sentence summary of what changed]
@@ -127,7 +130,7 @@ When `$ARGUMENTS` includes a focus area keyword, weight these specific checks:
 
 **"polish"** — screen shake, hit pause, squash/stretch, easing curves, sound timing, button feedback, score popups, death animations, transition smoothness
 
-**"game-over"** — game over screen appeal, restart flow, button styling, score display, best score display, animations. Note: games do not have title/menu screens by default (Play.fun handles the chrome). Only add a title screen if the user explicitly requests one. Score HUD is handled by the Play.fun widget — do not add a separate in-game score display.
+**"game-over"** — game over screen appeal, restart flow, button styling, score display, best score display, animations. **Button text must be visible** — verify the `createButton()` pattern uses Container + Graphics + Text (Graphics first, Text second, Container interactive). If button labels are invisible, the pattern is broken. Note: games do not have title/menu screens by default (Play.fun handles the chrome). Only add a title screen if the user explicitly requests one. Score HUD is handled by the Play.fun widget — do not add a separate in-game score display. All game-over UI must be below `SAFE_ZONE.TOP`.
 
 **"audio"** — load the game-audio skill. Check BGM coverage (every game state should have music), SFX coverage (every player action should have feedback), volume mixing, transition smoothness between tracks
 
