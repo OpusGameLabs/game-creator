@@ -2,9 +2,9 @@ import { expect } from '@playwright/test';
 import { test, startPlaying } from '../fixtures/game-test.js';
 
 test.describe('Flappy Bird — Visual Regression', () => {
-  test('menu scene screenshot', async ({ gamePage: page }) => {
+  test('initial gameplay screenshot', async ({ gamePage: page }) => {
     await page.waitForTimeout(500);
-    await expect(page).toHaveScreenshot('menu-scene.png', {
+    await expect(page).toHaveScreenshot('initial-gameplay.png', {
       maxDiffPixels: 3000,
     });
   });

@@ -119,11 +119,11 @@ export class GameOverScene extends Phaser.Scene {
     });
 
     // Retry button with hover scale
-    const retryBtn = this.add.rectangle(cx - 80, cy + 110, 140, 44, COLORS.BUTTON, 0.9);
+    const retryBtn = this.add.rectangle(cx, cy + 110, 140, 44, COLORS.BUTTON, 0.9);
     retryBtn.setStrokeStyle(2, COLORS.BUTTON_HOVER);
     retryBtn.setInteractive({ useHandCursor: true });
 
-    const retryText = this.add.text(cx - 80, cy + 110, 'RETRY', {
+    const retryText = this.add.text(cx, cy + 110, 'RETRY', {
       fontSize: UI.FONT_SIZE_LARGE,
       fontFamily: UI.FONT_FAMILY,
       color: COLORS.UI_TEXT,
@@ -154,41 +154,6 @@ export class GameOverScene extends Phaser.Scene {
     });
     retryBtn.on('pointerdown', () => this.retryLevel());
 
-    // Menu button with hover scale
-    const menuBtn = this.add.rectangle(cx + 80, cy + 110, 140, 44, 0x555555, 0.9);
-    menuBtn.setStrokeStyle(2, 0x777777);
-    menuBtn.setInteractive({ useHandCursor: true });
-
-    const menuText = this.add.text(cx + 80, cy + 110, 'MENU', {
-      fontSize: UI.FONT_SIZE_LARGE,
-      fontFamily: UI.FONT_FAMILY,
-      color: COLORS.UI_TEXT,
-      fontStyle: 'bold',
-      stroke: EFFECTS.TEXT_STROKE_COLOR,
-      strokeThickness: EFFECTS.TEXT_STROKE_THICKNESS,
-    }).setOrigin(0.5);
-
-    menuBtn.on('pointerover', () => {
-      menuBtn.setFillStyle(0x777777, 1);
-      this.tweens.add({
-        targets: [menuBtn, menuText],
-        scaleX: EFFECTS.BUTTON_HOVER_SCALE,
-        scaleY: EFFECTS.BUTTON_HOVER_SCALE,
-        duration: EFFECTS.BUTTON_HOVER_DURATION,
-        ease: 'Quad.easeOut',
-      });
-    });
-    menuBtn.on('pointerout', () => {
-      menuBtn.setFillStyle(0x555555, 0.9);
-      this.tweens.add({
-        targets: [menuBtn, menuText],
-        scaleX: 1,
-        scaleY: 1,
-        duration: EFFECTS.BUTTON_HOVER_DURATION,
-        ease: 'Quad.easeOut',
-      });
-    });
-    menuBtn.on('pointerdown', () => this.goToMenu());
 
     // Fade in
     this.cameras.main.fadeIn(TRANSITION.FADE_DURATION);
@@ -237,13 +202,4 @@ export class GameOverScene extends Phaser.Scene {
     });
   }
 
-  goToMenu() {
-    eventBus.emit(Events.MUSIC_STOP);
-    eventBus.emit(Events.GAME_RESTART);
-    this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0, (camera, progress) => {
-      if (progress === 1) {
-        this.scene.start('MenuScene');
-      }
-    });
-  }
 }

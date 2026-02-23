@@ -6,13 +6,13 @@ test.describe('Vampire Survivors — Gameplay', () => {
     await expect(canvas).toBeVisible();
   });
 
-  test('starts on MenuScene (BootScene)', async ({ page }) => {
+  test('starts on GameScene', async ({ page }) => {
     const sceneName = await page.evaluate(() => {
       const scenes = window.__GAME__.scene.scenes;
-      const active = scenes.find(s => s.sys.isActive());
-      return active?.sys?.settings?.key;
+      const active = scenes.filter(s => s.sys.isActive());
+      return active.map(s => s.sys.settings.key);
     });
-    expect(['BootScene', 'MenuScene']).toContain(sceneName);
+    expect(sceneName).toContain('GameScene');
   });
 
   test('transitions to GameScene on double-tap', async ({ page }) => {
@@ -101,10 +101,10 @@ test.describe('Vampire Survivors — Gameplay', () => {
     expect(isOver).toBe(true);
   });
 
-  test('game has 5 registered scenes', async ({ page }) => {
+  test('game has 4 registered scenes', async ({ page }) => {
     const sceneCount = await page.evaluate(() => {
       return window.__GAME__.scene.scenes.length;
     });
-    expect(sceneCount).toBe(5);
+    expect(sceneCount).toBe(4);
   });
 });
