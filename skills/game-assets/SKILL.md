@@ -34,7 +34,7 @@ Add this to `src/core/PixelRenderer.js`:
  * @param {string} key - Texture key to register
  * @param {number} scale - Pixel scale (2 = each pixel becomes 2x2)
  */
-export function renderPixelArt(scene, pixels, palette, key, scale = 2) {
+export function renderPixelArt(scene, pixels, palette, key, scale = 3) {
   if (scene.textures.exists(key)) return;
 
   const h = pixels.length;
@@ -70,7 +70,7 @@ export function renderPixelArt(scene, pixels, palette, key, scale = 2) {
  * @param {string} key - Spritesheet texture key
  * @param {number} scale
  */
-export function renderSpriteSheet(scene, frames, palette, key, scale = 2) {
+export function renderSpriteSheet(scene, frames, palette, key, scale = 3) {
   if (scene.textures.exists(key)) return;
 
   const h = frames[0].length;
@@ -177,7 +177,77 @@ export const PALETTE = {
 
 ## Sprite Archetypes
 
-When creating sprites for a game, match the archetype to the entity type. All examples below use 16x16 grids at scale 2 (renders to 32x32 pixels on screen).
+When creating sprites for a game, match the archetype to the entity type. Grid sizes vary by archetype — from 8x8 for tiny pickups to 32x48 for personality characters. The default scale is 3 (each pixel becomes 3x3 on screen).
+
+### Personality Character (Bobblehead)
+
+For games featuring real people or named personalities (Karpathy, Altman, Amodei, etc.). Recognition IS the meme hook — the character must dominate the screen.
+
+- **Grid**: 32x48 (wide enough for facial detail, tall for bobblehead proportions)
+- **Scale**: 4 (renders to 128x192px = ~35% of 540px canvas height)
+- Head occupies 60%+ of sprite height; exaggerate signature features (hair, glasses, facial hair) at 4-6px
+- Must be the largest entity on screen — supporting entities stay at Medium (16x16) or Small (12x12)
+- Body is stubby (40% of height) to maximize head real estate
+
+```js
+// sprites/personality.js — 32x48 bobblehead template
+// Head: rows 0-28 (60%), Body: rows 29-40, Legs: rows 41-47
+// 1=outline, 2=shadow, 3=skin, 4=hair, 5=highlight, 6=shirt, 7=pants, 8=white(eyes/teeth), 9=glasses/accessory
+export const PERSONALITY_IDLE = [
+  [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,1,4,4,4,4,4,4,4,4,4,4,1,1,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,1,4,4,4,4,4,5,4,4,4,4,4,4,5,4,4,4,4,4,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0],
+  [0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0],
+  [0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0,0,0,0,0],
+  [0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,3,9,9,9,9,3,3,3,3,9,9,9,9,3,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,9,9,8,8,9,9,3,3,9,9,8,8,9,9,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,9,9,1,8,9,9,3,3,9,9,1,8,9,9,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,9,9,9,9,9,9,3,3,9,9,9,9,9,9,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0,0,0,0],
+  [0,0,0,0,0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0,0,0,0,0],
+  [0,0,0,0,0,1,3,3,3,3,3,3,3,1,1,1,1,1,3,3,3,3,3,3,3,3,1,0,0,0,0,0],
+  [0,0,0,0,0,0,1,3,3,3,3,3,3,8,8,8,8,8,3,3,3,3,3,3,3,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,1,2,3,3,3,3,3,3,3,3,2,1,1,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,1,3,3,3,3,3,3,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,3,3,3,3,3,3,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,3,3,3,3,3,3,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,3,3,3,3,3,3,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,3,3,3,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,6,6,6,6,6,6,6,6,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,1,6,6,6,6,6,6,6,6,6,6,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,1,6,6,6,6,6,6,6,6,6,6,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,3,6,6,6,6,6,6,6,6,6,6,3,1,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,3,6,6,6,6,6,6,6,6,6,6,3,1,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,1,6,6,6,6,6,6,6,6,6,6,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,1,6,6,6,6,6,6,6,6,6,6,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,6,6,6,1,1,6,6,6,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,6,6,6,1,1,6,6,6,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,7,1,1,7,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,7,1,1,7,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,7,1,1,7,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,1,0,0,1,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,1,0,0,1,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,7,7,1,0,0,1,7,7,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+export const PERSONALITY_FRAMES = [PERSONALITY_IDLE];
+```
+
+Customize per personality: change hair color/style (index 4), add glasses (index 9), adjust facial hair. The head rows (0-28) are where all recognition lives — spend your detail budget there.
 
 ### Humanoid (Player, NPC, Warrior)
 
@@ -634,11 +704,13 @@ At small scales, subtle changes read as smooth motion:
 - Bat = purple (index 9), Zombie = green (index 10), Skeleton = white (index 8), Demon = red (index 3)
 
 ### 6. Scale Appropriately
-| Entity Size | Grid | Scale | Rendered Size |
-|-------------|------|-------|---------------|
-| Small (items, pickups) | 8x8 | 2 | 16x16px |
-| Medium (player, enemies) | 16x16 | 2 | 32x32px |
-| Large (boss, vehicle) | 24x24 or 32x32 | 2 | 48x48 or 64x64px |
+| Entity Size | Grid | Scale | Rendered | Screen % (540px) |
+|---|---|---|---|---|
+| Tiny (pickups, projectiles) | 8x8 | 3 | 24x24px | 4% |
+| Small (items, collectibles) | 12x12 | 3 | 36x36px | 7% |
+| Medium (enemies, obstacles) | 16x16 | 3 | 48x48px | 9% |
+| Large (boss, vehicle) | 24x24 or 32x32 | 3 | 72-96px | 13-18% |
+| **Personality (named character)** | **32x48** | **4** | **128x192px** | **35%** |
 
 ## External Asset Download (Optional)
 

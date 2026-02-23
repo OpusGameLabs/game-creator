@@ -44,6 +44,7 @@ Evaluate these areas and score each 1-5:
 | **Typography** | Consistent font choices? Visual hierarchy? Text readable at all sizes? |
 | **Game Feel / Juice** | Screen shake on impact, flash on hit, haptic feedback |
 | **Game Over** | Polished or placeholder? Restart button feels clickable? Clear call to action? Score display with animation? |
+| **Character Prominence** | Is the main character the visually dominant element? Does it occupy 30%+ of screen height? Larger than all other entities? |
 
 Present the scores as a table, then list the top improvements ranked by visual impact.
 
@@ -61,6 +62,12 @@ After presenting the report, implement the improvements. Follow these rules:
 ## Visual Improvement Catalog
 
 Reference these patterns when designing improvements. Apply what fits the game.
+
+### Character Prominence
+
+If the main character (especially a named personality) is smaller than 25% of screen height, it's too hard to recognize:
+
+**Fix**: Re-render the character sprite at a higher scale, or redesign using the Personality Character (Bobblehead) archetype — 32x48 grid at scale 4 (128x192px rendered, ~35% of 540px canvas). The character should be the largest entity on screen. Reduce surrounding entity sizes if needed to maintain visual hierarchy.
 
 ### Backgrounds & Atmosphere
 
