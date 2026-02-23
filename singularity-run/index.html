@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Singularity Run</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+    canvas { display: block; }
+
+    /* Score HUD omitted — Play.fun widget displays score in a deadzone at the top */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 20;
+      color: #00ff00;
+      padding: 20px;
+    }
+    .overlay.hidden { display: none; }
+
+    .overlay h1 {
+      font-size: clamp(28px, 7vmin, 56px);
+      margin-bottom: clamp(10px, 2vmin, 24px);
+      text-align: center;
+      text-shadow: 0 0 20px #00ff00, 0 0 40px #00aa00;
+      letter-spacing: 4px;
+    }
+    .overlay p {
+      font-size: clamp(14px, 2.5vmin, 22px);
+      margin-bottom: 8px;
+      color: #00cc00;
+      text-align: center;
+    }
+    .overlay .score-display {
+      font-size: clamp(18px, 4vmin, 32px);
+      margin: 8px 0;
+      color: #00ffcc;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+    .overlay .best-display {
+      font-size: clamp(14px, 2.5vmin, 22px);
+      color: #008800;
+    }
+    .overlay button {
+      margin-top: clamp(16px, 3vmin, 32px);
+      padding: clamp(10px, 2vmin, 16px) clamp(28px, 6vmin, 48px);
+      font-size: clamp(16px, 2.5vmin, 22px);
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      color: #000;
+      background: #00ff00;
+      border: 2px solid #00ff00;
+      border-radius: 4px;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 120px;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 0 15px #00ff00;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .overlay button:hover {
+      background: #44ff44;
+      box-shadow: 0 0 25px #44ff44;
+      transform: scale(1.05);
+    }
+    .overlay button:active {
+      background: #009900;
+      box-shadow: 0 0 10px #009900;
+      transform: scale(0.95);
+    }
+
+    #mute-btn {
+      position: fixed;
+      top: max(10px, 1vh);
+      right: max(10px, 1vw);
+      z-index: 30;
+      background: transparent;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(12px, 2vmin, 16px);
+      padding: 6px 10px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      min-height: 36px;
+      min-width: 36px;
+    }
+    #mute-btn:hover { opacity: 1; }
+  </style>
+  <script type="module" crossorigin src="/game-creator/singularity-run/assets/index-DzCKmlgW.js"></script>
+</head>
+<body>
+  <button id="mute-btn" title="Toggle sound (M)">SND</button>
+
+  <div id="gameover-overlay" class="overlay hidden">
+    <h1>SYSTEM CRASH</h1>
+    <div class="score-display" id="final-score">Score: 0</div>
+    <div class="best-display" id="best-score">Best: 0</div>
+    <button id="restart-btn">REBOOT</button>
+  </div>
+
+</body>
+</html>
