@@ -291,7 +291,7 @@ export class LevelCompleteScene extends Phaser.Scene {
 
   restartGame() {
     eventBus.emit(Events.MUSIC_STOP);
-    gameState.setLevel(0);
+    gameState.reset();
     eventBus.emit(Events.GAME_RESTART);
 
     this.cameras.main.fadeOut(TRANSITION.FADE_DURATION, 0, 0, 0, (camera, progress) => {

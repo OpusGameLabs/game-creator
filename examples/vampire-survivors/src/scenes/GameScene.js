@@ -32,7 +32,7 @@ export class GameScene extends Phaser.Scene {
       eventBus.emit(Events.MUSIC_GAMEPLAY);
     };
     this.input.once('pointerdown', initAudio);
-    this.input.keyboard.once('keydown', initAudio);
+    this.input.keyboard?.once('keydown', initAudio);
 
     // World bounds
     this.physics.world.setBounds(0, 0, GAME.WORLD_WIDTH, GAME.WORLD_HEIGHT);
