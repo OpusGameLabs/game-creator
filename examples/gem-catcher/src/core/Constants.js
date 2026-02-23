@@ -106,8 +106,15 @@ export const COLORS = {
   PLAYER: 0x8b5e3c,
   PLAYER_RIM: 0x6b3f1c,
 
-  // Gems -- golden highlight
+  // Gems -- per-type colors for particles
   GEM_GLOW: 0xffd700,
+  GEM_DIAMOND: 0xf5d742,
+  GEM_EMERALD: 0x3fa04b,
+  GEM_RUBY: 0xe94560,
+  GEM_SAPPHIRE: 0x44ddff,
+
+  // New best score
+  NEW_BEST: '#ff6600',
 
   // Skulls
   SKULL: 0xff3333,
@@ -150,4 +157,81 @@ export const UI = {
 
 export const TRANSITION = {
   FADE_DURATION: 350,
+};
+
+// --- Particles & Effects ---
+
+export const PARTICLES = {
+  // Gem catch burst
+  GEM_CATCH_COUNT: 10,         // number of sparkle particles on gem catch
+  GEM_CATCH_SPEED: 80 * PX,   // max outward travel distance
+  GEM_CATCH_SIZE: 3 * PX,     // base particle radius
+  GEM_CATCH_DURATION: 500,     // ms
+
+  // Skull hit burst
+  SKULL_HIT_COUNT: 12,
+  SKULL_HIT_SPEED: 100 * PX,
+  SKULL_HIT_SIZE: 4 * PX,
+  SKULL_HIT_DURATION: 400,
+  SKULL_HIT_COLORS: [0xff3333, 0x660000, 0x330011, 0xff0000],
+
+  // Difficulty up golden shower
+  DIFFICULTY_COUNT: 30,
+  DIFFICULTY_SIZE: 3 * PX,
+  DIFFICULTY_DURATION: 1200,
+  DIFFICULTY_COLOR: 0xffd700,
+
+  // Gem trail (glow particles while falling)
+  GEM_TRAIL_INTERVAL: 120,     // ms between trail particles
+  GEM_TRAIL_SIZE: 2 * PX,
+  GEM_TRAIL_DURATION: 400,
+  GEM_TRAIL_ALPHA: 0.6,
+};
+
+export const EFFECTS = {
+  // Screen shake on skull hit
+  SHAKE_DURATION: 150,         // ms
+  SHAKE_INTENSITY: 0.008,      // camera shake intensity (0-1)
+
+  // Slow-mo on final death
+  SLOWMO_SCALE: 0.3,           // time scale multiplier
+  SLOWMO_DURATION: 500,        // ms before game over transition
+
+  // Camera flash on skull hit
+  FLASH_DURATION: 200,         // ms
+  FLASH_R: 255,
+  FLASH_G: 50,
+  FLASH_B: 50,
+
+  // Floating score text
+  FLOAT_RISE: 50 * PX,        // pixels to rise
+  FLOAT_DURATION: 700,         // ms
+  FLOAT_FONT_RATIO: 0.04,     // % of GAME.HEIGHT
+
+  // Heart pulse on life lost
+  HEART_PULSE_SCALE: 1.5,     // max scale during pulse
+  HEART_PULSE_DURATION: 200,  // ms per half-cycle
+
+  // Basket idle bob
+  BASKET_BOB_AMOUNT: 2 * PX,  // pixels up/down
+  BASKET_BOB_DURATION: 1500,  // ms full cycle
+
+  // Score count-up on game over
+  SCORE_COUNTUP_DURATION: 1000, // ms to count from 0 to final
+  SCORE_COUNTUP_DELAY: 400,     // ms delay before starting count
+};
+
+export const BACKGROUND = {
+  // Parallax star layers
+  PARALLAX_SPEED_NEAR: 8 * PX,    // pixels/sec for near stars
+  PARALLAX_SPEED_FAR: 3 * PX,     // pixels/sec for far stars
+
+  // Shooting stars
+  SHOOTING_STAR_INTERVAL_MIN: 3000,  // ms min between shooting stars
+  SHOOTING_STAR_INTERVAL_MAX: 8000,  // ms max
+  SHOOTING_STAR_SPEED: 400 * PX,    // pixels/sec
+  SHOOTING_STAR_LENGTH: 60 * PX,    // trail length
+  SHOOTING_STAR_DURATION: 800,      // ms
+  SHOOTING_STAR_COLOR: 0xffffff,
+  SHOOTING_STAR_ALPHA: 0.8,
 };

@@ -17,8 +17,10 @@ export const Events = {
   LIFE_LOST: 'life:lost',
   DIFFICULTY_UP: 'difficulty:up',
 
-  // Particles
+  // Particles & Effects
   PARTICLES_EMIT: 'particles:emit',
+  SCREEN_SHAKE: 'screen:shake',
+  SCREEN_FLASH: 'screen:flash',
 
   // Audio (used by /add-audio)
   AUDIO_INIT: 'audio:init',

@@ -9,6 +9,7 @@ class GameState {
   reset() {
     this.score = 0;
     this.bestScore = this.bestScore || 0;
+    this.isNewBest = false;
     this.started = false;
     this.gameOver = false;
     this.lives = LIVES.STARTING;
@@ -19,6 +20,7 @@ class GameState {
     this.score += points;
     if (this.score > this.bestScore) {
       this.bestScore = this.score;
+      this.isNewBest = true;
     }
   }
 
