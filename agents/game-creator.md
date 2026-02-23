@@ -322,6 +322,8 @@ Launch a `Task` subagent:
 > 9. Add Phaser animations for entities with multiple frames
 > 10. Adjust physics bodies for new sprite dimensions
 >
+> **Character prominence**: If the game features a real person or named personality, use the Personality Character (Bobblehead) archetype — 32x48 grid at scale 4 (renders to 128x192px, ~35% of canvas height). The character must be the visually dominant element on screen. Supporting entities stay at Medium (16x16) or Small (12x12) to create clear visual hierarchy.
+>
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After updating sprites/backgrounds, run:
 > ```
 > node scripts/iterate-client.js --url http://localhost:<port> --actions-file scripts/example-actions.json --iterations 3

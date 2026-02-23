@@ -407,6 +407,8 @@ Launch a `Task` subagent with these instructions:
 > 9. Add Phaser animations for entities with multiple frames
 > 10. Adjust physics bodies for new sprite dimensions
 >
+> **Character prominence**: If the game features a real person or named personality, use the Personality Character (Bobblehead) archetype — 32x48 grid at scale 4 (renders to 128x192px, ~35% of canvas height). The character must be the visually dominant element on screen. Supporting entities stay at Medium (16x16) or Small (12x12) to create clear visual hierarchy.
+>
 > **After completing your work**, append a `## Step 1.5: Assets` section to `progress.md` with: palette used, sprites created, any dimension changes to entities.
 >
 > Do NOT run builds — the orchestrator handles verification.

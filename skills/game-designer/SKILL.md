@@ -52,6 +52,7 @@ Evaluate these areas and score each 1-5:
 | **Game Over** | Polished or placeholder? Restart button feels clickable? Clear call to action? Score display with animation? |
 | **Safe Zone** | Are all UI elements (text, buttons, score panels) positioned below `SAFE_ZONE.TOP`? Does any UI get hidden behind the Play.fun widget bar (~75px at top)? |
 | **Entity Prominence** | Is the player character large enough to read? Character-driven games need 12-15% of GAME.WIDTH. Are entities proportionally sized (`GAME.WIDTH * ratio`), not fixed pixels? |
+| **Character Prominence** | Is the main character the visually dominant element? Does it occupy 30%+ of screen height? Larger than all other entities? |
 
 Present the scores as a table, then list the top improvements ranked by visual impact.
 
