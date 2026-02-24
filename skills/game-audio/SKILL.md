@@ -304,7 +304,7 @@ export function initAudioBridge() {
 
 ## Mute State Management
 
-Every game with audio MUST support a mute toggle. Store `isMuted` in GameState and respect it everywhere:
+Store `isMuted` in GameState and respect it everywhere:
 
 ```js
 // AudioManager — check mute before playing BGM
@@ -329,10 +329,88 @@ eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
 });
 ```
 
-Wire the toggle to:
-- A speaker icon button in the UI (visible on all scenes)
-- The **M** key on keyboard
-- Persist preference in `localStorage` if available
+### Mute Button
+
+Reference implementation for drawing a speaker icon with the Phaser Graphics API:
+
+```js
+function drawMuteIcon(gfx, muted, size) {
+  gfx.clear();
+  const s = size;
+
+  // Speaker body — rectangle + triangle cone
+  gfx.fillStyle(0xffffff);
+  gfx.fillRect(-s * 0.15, -s * 0.15, s * 0.15, s * 0.3);
+  gfx.fillTriangle(-s * 0.15, -s * 0.3, -s * 0.15, s * 0.3, -s * 0.45, 0);
+
+  if (!muted) {
+    // Sound waves — two arcs
+    gfx.lineStyle(2, 0xffffff);
+    gfx.beginPath();
+    gfx.arc(0, 0, s * 0.2, -Math.PI / 4, Math.PI / 4);
+    gfx.strokePath();
+    gfx.beginPath();
+    gfx.arc(0, 0, s * 0.35, -Math.PI / 4, Math.PI / 4);
+    gfx.strokePath();
+  } else {
+    // X mark
+    gfx.lineStyle(3, 0xff4444);
+    gfx.lineBetween(s * 0.05, -s * 0.25, s * 0.35, s * 0.25);
+    gfx.lineBetween(s * 0.05, s * 0.25, s * 0.35, -s * 0.25);
+  }
+}
+```
+
+Create the button in UIScene (runs as a parallel scene, visible on all screens):
+
+```js
+// In UIScene.create():
+_createMuteButton() {
+  const ICON_SIZE = 16;
+  const MARGIN = 12;
+  const x = this.cameras.main.width - MARGIN - ICON_SIZE;
+  const y = this.cameras.main.height - MARGIN - ICON_SIZE;
+
+  // Hit zone — semi-transparent circle
+  this.muteBg = this.add.circle(x, y, ICON_SIZE + 4, 0x000000, 0.3)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(100);
+
+  // Speaker icon drawn with Graphics API
+  this.muteIcon = this.add.graphics().setDepth(100);
+  this.muteIcon.setPosition(x, y);
+  drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
+
+  // Click toggles mute
+  this.muteBg.on('pointerdown', () => {
+    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+    drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
+  });
+
+  // M key shortcut
+  this.input.keyboard.on('keydown-M', () => {
+    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
+    drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
+  });
+}
+```
+
+Persist preference via `localStorage`:
+
+```js
+// GameState — read on construct
+constructor() {
+  this.isMuted = localStorage.getItem('muted') === 'true';
+  // ...
+}
+
+// AudioBridge — write on toggle
+eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
+  gameState.isMuted = !gameState.isMuted;
+  try { localStorage.setItem('muted', gameState.isMuted); } catch (_) {}
+  if (gameState.isMuted) audioManager.stopMusic();
+});
+```
 
 ## Anti-Repetition: Making BGM Not Sound Like a 4-Second Loop
 

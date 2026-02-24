@@ -37,6 +37,7 @@ Score each area 1-5 and present as a table:
 | Typography | | |
 | Game Feel / Juice | | |
 | Game Over | | |
+| Expression Usage | | If personality characters exist, score how reactively expressions change to game events. Score 1 if expressions never change. |
 
 Then list the top improvements ranked by visual impact, with a plain-English description of what each one does (e.g., "Add a sky gradient so the background looks like a real sky instead of a flat color").
 

@@ -13,7 +13,7 @@ You are an expert Phaser game developer building games with the game-creator plu
 
 ## Core Principles
 
-1. **Core loop first** — Implement the minimum gameplay loop before any polish: boot → preload → create → update. Add the win/lose condition and scoring **before** visuals, audio, or juice. Keep initial scope small: 1 scene, 1 mechanic, 1 fail condition.
+1. **Core loop first** — Implement the minimum gameplay loop before any polish: boot → preload → create → update. Add the win/lose condition and scoring **before** visuals, audio, or juice. Keep initial scope small: 1 scene, 1 mechanic, 1 fail condition. Wire spectacle EventBus hooks (`SPECTACLE_*` events) alongside the core loop — they are part of scaffolding, not deferred polish.
 2. **TypeScript-first** — Always use TypeScript for type safety and IDE support
 3. **Scene-based architecture** — Each game screen is a Scene; keep them focused
 4. **Vite bundling** — Use the official `phaserjs/template-vite-ts` template
@@ -21,6 +21,21 @@ You are an expert Phaser game developer building games with the game-creator plu
 6. **Data-driven design** — Define levels, enemies, and configs in JSON/data files
 7. **Event-driven communication** — All cross-scene/system communication via EventBus
 8. **Restart-safe** — Gameplay must be fully restart-safe and deterministic. `GameState.reset()` must restore a clean slate. No stale references, lingering timers, or leaked event listeners across restarts.
+
+## Spectacle Events
+
+Every player action and game event must emit at least one spectacle event. These hooks exist in the template EventBus — the design pass attaches visual effects to them.
+
+| Event | Constant | When to Emit |
+|-------|----------|--------------|
+| `spectacle:entrance` | `SPECTACLE_ENTRANCE` | In `create()` when the player/entities first appear on screen |
+| `spectacle:action` | `SPECTACLE_ACTION` | On every player input (tap, jump, shoot, swipe) |
+| `spectacle:hit` | `SPECTACLE_HIT` | When player hits/destroys an enemy, collects an item, or scores |
+| `spectacle:combo` | `SPECTACLE_COMBO` | When consecutive hits/scores happen without a miss. Pass `{ combo: n }` |
+| `spectacle:streak` | `SPECTACLE_STREAK` | When combo reaches milestones (5, 10, 25, 50). Pass `{ streak: n }` |
+| `spectacle:near_miss` | `SPECTACLE_NEAR_MISS` | When player narrowly avoids danger (within ~20% of collision radius) |
+
+**Rule**: If a gameplay moment has no spectacle event, add one. The design pass cannot polish what it cannot hook into.
 
 ## Mandatory Conventions
 
@@ -245,7 +260,7 @@ PLAYER: {
 }
 ```
 
-For **character-driven games** (named characters, personalities, mascots), make characters prominent — use 12–15% of `GAME.WIDTH` for the player width. Use **bobblehead proportions** (oversized head ~40–50% of sprite height, compact body) for personality games to maximize character recognition at any scale.
+For **character-driven games** (named characters, personalities, mascots), make characters prominent — use 12–15% of `GAME.WIDTH` for the player width. Use **caricature proportions** (large head ~40–50% of sprite height with exaggerated features, compact body) for personality games to maximize character recognition at any scale.
 
 **HTML boilerplate** (required for proper scaling):
 
@@ -337,7 +352,7 @@ createButton(scene, x, y, label, callback) {
 - **Hardcoded values** — Every number belongs in `Constants.ts`. No magic numbers in game logic.
 - **Unwired physics colliders** — Creating a static body with `physics.add.existing(obj, true)` does nothing on its own. You MUST call `physics.add.collider(bodyA, bodyB, callback)` to connect two bodies. Every static collider (ground, walls, platforms) needs an explicit collider or overlap call wiring it to the entities that should interact with it.
 - **Invisible or hidden button elements** — Never set `setAlpha(0)` on an interactive game object and layer Graphics or other display objects on top. **For buttons, always use the Container + Graphics + Text pattern** (see Button Pattern section above). Common broken patterns: (1) Drawing a Graphics rect after adding Text, hiding the label behind it. (2) Creating a Zone for hit area with Graphics drawn over it, making the Zone unreachable. (3) Making Text interactive but covering it with a Graphics background drawn afterward. The fix is always: Container first, Graphics added to container, Text added to container (in that order), Container is the interactive element.
-- **No mute toggle** — Games with audio MUST have a mute/unmute mechanism. Store a global `isMuted` flag in GameState. Both BGM and SFX must check it before playing. Wire it to a UI button or keyboard shortcut (M key).
+- **No mute toggle** — See the `mute-button` rule. Games with audio must have a mute toggle.
 
 ## Examples
 
@@ -358,7 +373,8 @@ Before considering a game complete, verify:
 - [ ] **Physics wired** — Every static body has an explicit `collider()` or `overlap()` call
 - [ ] **Object pooling** — Frequently created/destroyed objects use Groups with `maxSize`
 - [ ] **Delta-based movement** — All motion uses `delta`, not frame count
-- [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
+- [ ] **Mute toggle** — See `mute-button` rule
+- [ ] **Spectacle hooks wired** — Every player action and game event emits a `SPECTACLE_*` event; entrance sequence fires in `create()`
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures
 

@@ -1,8 +1,70 @@
 # Sprite Catalog
 
-Complete catalog of sprite archetypes for pixel art game assets. All examples use 16x16 grids at scale 2 (renders to 32x32 pixels on screen) unless otherwise noted.
+Complete catalog of sprite archetypes for pixel art game assets. Grid sizes vary by archetype — from 8x8 for tiny pickups to 32x48 for personality characters. The default scale is 3 (each pixel becomes 3x3 on screen).
 
 When creating sprites for a game, match the archetype to the entity type.
+
+## Design Philosophy: Push the Pose
+
+Before choosing an archetype, consider what each entity represents thematically:
+
+- **Real people** → Always use the Personality Character archetype. Exaggerate their most recognizable feature until it's almost a caricature. Recognition is everything.
+- **Companies/brands** → Incorporate logo shapes into the sprite. Use brand colors as the primary palette. Consider anthropomorphizing the logo (add limbs, face, expressions).
+- **Game objects** → Must be instantly recognizable real-world objects, never abstract shapes. A collectible representing "creative output" could be a painting, a polaroid, a film reel — not a generic diamond or spark.
+- **Opponents** → Each must be visually distinct. Different silhouettes, color palettes, and proportions. If they represent specific entities (rival companies, other people), build that identity into the sprite.
+
+When in doubt, make it MORE recognizable, MORE exaggerated, MORE character-driven. We dial back, never up.
+
+## Personality Character (South Park Photo-Composite)
+
+For games featuring real people or named personalities (Altman, Amodei, Musk, Zuckerberg, etc.). Photo heads composited onto South Park-style cartoon bodies — instantly recognizable, no hand-drawn pixel art needed.
+
+- **Dimensions**: 200x300 per frame (frameWidth: 200, frameHeight: 300)
+- **Spritesheet**: Horizontal strip with all expressions
+- **Source**: Pre-built in the character library at `/home/glitchtrend/character-library/`
+- Head occupies 65% of sprite height — large, recognizable photo on a small cartoon body
+- Must be the largest entity on screen — supporting entities stay at Medium (16x16) or Small (12x12)
+
+### Expression Frame Index Reference
+
+Frame indices are fixed and consistent across all characters:
+
+| Frame | Expression | Use Case |
+|-------|-----------|----------|
+| 0 | normal | Default/idle state |
+| 1 | happy | Score point, collect item, win |
+| 2 | angry | Take damage, lose life, opponent scores |
+| 3 | surprised | Power-up, special event, streak milestone |
+
+Not all characters have all 4 expressions — check `manifest.json` for available frames. If a character has only 3 frames (normal, happy, angry), don't reference frame 3.
+
+### Loading in Phaser
+
+```js
+// Preloader
+this.load.spritesheet('sam-altman', 'assets/characters/sam-altman/spritesheet.png', {
+  frameWidth: 200,
+  frameHeight: 300,
+});
+
+// Create sprite
+this.sprite = scene.physics.add.sprite(x, y, 'sam-altman', EXPRESSION.NORMAL);
+```
+
+### Character Feature Reference
+
+Physical descriptions for commonly-appearing tech figures. Use these to select source images for new character builds.
+
+| Person | Slug | Body Type | Expressions | Key Feature |
+|--------|------|-----------|-------------|-------------|
+| Sam Altman | sam-altman | casual | 4 (normal, happy, angry, surprised) | Gray hoodie + round face |
+| Dario Amodei | dario-amodei | suit | 4 | Curly hair + glasses + beard |
+| Elon Musk | elon-musk | casual | 4 | Receding hairline + broad jaw |
+| Mark Zuckerberg | mark-zuckerberg | casual | 4 | Curly top + blank expression |
+| Satya Nadella | satya-nadella | suit | 4 | Bald + glasses |
+| Sundar Pichai | sundar-pichai | suit | 3 (normal, happy, angry) | Slim face + neat dark hair |
+| Jensen Huang | jensen-huang | leather-jacket | 4 | Black leather jacket |
+| Andrej Karpathy | andrej-karpathy | casual | 3 (normal, happy, angry) | Wavy hair + stubble |
 
 ## Humanoid (Player, NPC, Warrior)
 
