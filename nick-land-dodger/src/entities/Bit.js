@@ -55,11 +55,13 @@ export class Bit {
   activate(x, y, fallSpeed) {
     this.active = true;
     this._dodgeCounted = false; // Reset dodge tracking flag
+    this._dissolvePlayed = false; // Reset dissolve effect flag
     this.container.setPosition(x, y);
     this.container.setVisible(true);
     this.container.body.enable = true;
     this.container.body.setVelocityY(fallSpeed);
     this.container.setAlpha(1);
+    this.container.setScale(1);
 
     // Randomize character and color on reuse
     const char = Phaser.Utils.Array.GetRandom(BIT.CHARACTERS);
@@ -78,6 +80,7 @@ export class Bit {
   deactivate() {
     this.active = false;
     this._dodgeCounted = false;
+    this._dissolvePlayed = false;
     this.container.setVisible(false);
     this.container.body.enable = false;
     this.container.body.setVelocity(0, 0);

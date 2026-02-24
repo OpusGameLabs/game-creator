@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { GAME, PLAYER, COLORS, PX, TRANSITION, SAFE_ZONE, NEAR_MISS, BIT, EXPRESSION, EXPRESSION_HOLD_MS, MATRIX_RAIN } from '../core/Constants.js';
+import { GAME, PLAYER, COLORS, PX, TRANSITION, SAFE_ZONE, NEAR_MISS, BIT, EXPRESSION, EXPRESSION_HOLD_MS, MATRIX_RAIN, SPECTACLE } from '../core/Constants.js';
 import { eventBus, Events } from '../core/EventBus.js';
 import { gameState } from '../core/GameState.js';
 import { Player } from '../entities/Player.js';
 import { BitSpawner } from '../systems/BitSpawner.js';
 import { ScoreSystem } from '../systems/ScoreSystem.js';
+import { SpectacleSystem } from '../systems/SpectacleSystem.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -20,7 +21,7 @@ export class GameScene extends Phaser.Scene {
       this.sys.game.device.os.iOS || this.sys.game.device.os.iPad;
 
     // --- Background grid (depth -10) ---
-    this.drawGrid();
+    this.gridGfx = this.drawGrid();
 
     // --- Matrix rain background effect (depth -5) ---
     this.matrixRainPool = [];
@@ -34,6 +35,11 @@ export class GameScene extends Phaser.Scene {
 
     // --- Score System ---
     this.scoreSystem = new ScoreSystem();
+
+    // --- Spectacle System (visual effects) ---
+    this.spectacle = new SpectacleSystem(this);
+    this.spectacle.gridGfx = this.gridGfx;
+    this.spectacle.setupTrail(this.player.container);
 
     // --- Collision: player vs bits ---
     this.physics.add.overlap(
@@ -111,11 +117,8 @@ export class GameScene extends Phaser.Scene {
 
     gameState.started = true;
 
-    // Emit entrance spectacle
-    eventBus.emit(Events.SPECTACLE_ENTRANCE, { character: 'nick-land' });
-
-    // Fade in
-    this.cameras.main.fadeIn(TRANSITION.FADE_DURATION, 0, 0, 0);
+    // --- Play entrance sequence (replaces simple fade-in) ---
+    this.spectacle.playEntrance(this.player.container);
   }
 
   update(time, delta) {
@@ -136,11 +139,15 @@ export class GameScene extends Phaser.Scene {
 
     // Update matrix rain
     this.updateMatrixRain(delta);
+
+    // Update spectacle system (ambient motes, etc.)
+    this.spectacle.update(delta);
   }
 
   /**
    * Check for bits that have fallen past the player -- count as dodged.
    * Near-miss detection: bit x was within 20% of player width from player center.
+   * Also triggers bit dissolve effect on off-screen bits.
    */
   checkDodgedBits() {
     const playerX = this.player.container.x;
@@ -175,6 +182,12 @@ export class GameScene extends Phaser.Scene {
           eventBus.emit(Events.SPECTACLE_COMBO, { combo: gameState.combo });
         }
       }
+
+      // Trigger dissolve effect when bit is near screen bottom (before recycling)
+      if (bit.container.y > GAME.HEIGHT - BIT.MAX_SIZE && !bit._dissolvePlayed) {
+        bit._dissolvePlayed = true;
+        this.spectacle.bitDissolve(bit.container, bit.text?.style?.color);
+      }
     }
   }
 
@@ -188,10 +201,10 @@ export class GameScene extends Phaser.Scene {
     const bit = this.bitSpawner.pool.find(b => b.container === bitContainer);
     if (bit && !bit.active) return; // Skip inactive bits
 
-    this.triggerGameOver();
+    this.triggerGameOver(bitContainer);
   }
 
-  triggerGameOver() {
+  triggerGameOver(killingBitContainer) {
     if (gameState.gameOver) return;
     gameState.gameOver = true;
 
@@ -206,8 +219,11 @@ export class GameScene extends Phaser.Scene {
     });
     eventBus.emit(Events.GAME_OVER, { score: gameState.score });
 
-    // Brief pause before transitioning
-    this.time.delayedCall(400, () => {
+    // Play death spectacle sequence (freeze, flash, slow-mo, particles, zoom)
+    this.spectacle.playDeath(this.player.container, killingBitContainer);
+
+    // Transition to GameOver scene after death sequence completes
+    this.time.delayedCall(SPECTACLE.DEATH_TRANSITION_DELAY, () => {
       this.scene.start('GameOverScene');
     });
   }
@@ -216,6 +232,7 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Draw a subtle grid pattern on the background at depth -10.
+   * Returns the graphics object so SpectacleSystem can pulse it.
    */
   drawGrid() {
     const gfx = this.add.graphics();
@@ -237,6 +254,8 @@ export class GameScene extends Phaser.Scene {
 
     gfx.strokePath();
     gfx.setDepth(-10);
+
+    return gfx;
   }
 
   // --- Matrix Rain Background Effect ---
@@ -315,6 +334,11 @@ export class GameScene extends Phaser.Scene {
     eventBus.off(Events.SPECTACLE_NEAR_MISS, this._onNearMiss);
     eventBus.off(Events.SPEED_INCREASED, this._onSpeedIncreased);
 
+    // Clean up spectacle system (removes its own EventBus listeners, particles, etc.)
+    if (this.spectacle) {
+      this.spectacle.destroy();
+    }
+
     // Clean up player expression timer
     if (this.player) {
       this.player.destroy();
@@ -337,5 +361,8 @@ export class GameScene extends Phaser.Scene {
       }
       this.matrixRainPool = [];
     }
+
+    // Reset camera zoom (in case death zoom was active)
+    this.cameras.main.setZoom(1);
   }
 }

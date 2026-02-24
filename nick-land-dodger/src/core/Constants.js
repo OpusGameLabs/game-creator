@@ -59,8 +59,8 @@ export const CHARACTER = {
   // Neck
   NECK_W: _U * 2.5,
   NECK_H: _U * 1,
-  // Head (photo-composite — dominates visually)
-  HEAD_H: _canvasH * 0.25,
+  // Head (photo-composite — derive from WIDTH to stay proportional on portrait)
+  HEAD_H: GAME.WIDTH * 0.18,
   FRAME_W: 200,
   FRAME_H: 300,
   // Arms
@@ -214,4 +214,123 @@ export const MATRIX_RAIN = {
   FONT_SIZE_MAX: 0.04,
   DEPTH: -5,
   CHARACTERS: ['0', '1', '\u221E', '\u03A9', '\u0394', '\u00A7', '//', '{}', '<>', '\u03B1', '\u03B2', '\u03BB'],
+};
+
+// --- Spectacle (visual effects configuration) ---
+
+export const SPECTACLE = {
+  // Opening moment
+  ENTRANCE_FLASH_DURATION: 300,
+  ENTRANCE_FLASH_COLOR: { r: 0, g: 255, b: 136 }, // neon green tint
+  ENTRANCE_SLAM_DURATION: 600,
+  ENTRANCE_SLAM_EASE: 'Bounce.easeOut',
+  ENTRANCE_LANDING_SHAKE: 0.012,
+  ENTRANCE_LANDING_PARTICLES: 20,
+  ENTRANCE_TEXT: 'ACCELERATE',
+  ENTRANCE_TEXT_SCALE_FROM: 2.0,
+  ENTRANCE_TEXT_SCALE_TO: 1.0,
+  ENTRANCE_TEXT_EASE: 'Elastic.easeOut',
+  ENTRANCE_TEXT_HOLD: 1000,       // ms before fade out
+  ENTRANCE_TEXT_FADE: 400,        // ms fade out duration
+
+  // Ambient floating motes
+  AMBIENT_MOTE_COUNT: 15,
+  AMBIENT_MOTE_SPEED_MIN: 10,    // design space px/s upward
+  AMBIENT_MOTE_SPEED_MAX: 30,
+  AMBIENT_MOTE_SIZE_MIN: 1,      // design space px
+  AMBIENT_MOTE_SIZE_MAX: 3,
+  AMBIENT_MOTE_ALPHA_MIN: 0.2,
+  AMBIENT_MOTE_ALPHA_MAX: 0.6,
+
+  // Action effects (player movement)
+  ACTION_PARTICLE_COUNT: 14,
+  ACTION_PARTICLE_SPEED_MIN: 30 * PX,
+  ACTION_PARTICLE_SPEED_MAX: 80 * PX,
+  ACTION_PARTICLE_LIFESPAN: 400,
+  ACTION_PARTICLE_SIZE_MIN: 1 * PX,
+  ACTION_PARTICLE_SIZE_MAX: 3 * PX,
+  ACTION_PARTICLE_ALPHA: 0.7,
+  ACTION_COOLDOWN: 150,           // ms between action particle bursts
+
+  // Player trail
+  TRAIL_ALPHA: 0.25,
+  TRAIL_LIFESPAN: 350,
+  TRAIL_FREQUENCY: 40,
+  TRAIL_SIZE_MIN: 1 * PX,
+  TRAIL_SIZE_MAX: 2 * PX,
+
+  // Score popup
+  SCORE_TEXT_SIZE: Math.round(GAME.HEIGHT * 0.035),
+  SCORE_TEXT_START_SCALE: 1.8,
+  SCORE_TEXT_EASE: 'Elastic.easeOut',
+  SCORE_TEXT_RISE: 60 * PX,
+  SCORE_TEXT_DURATION: 800,
+
+  // Background pulse on score
+  BG_PULSE_ALPHA: 0.15,
+  BG_PULSE_DURATION: 300,
+
+  // Near-miss
+  NEAR_MISS_SHAKE: 0.01,
+  NEAR_MISS_TEXT_SIZE: Math.round(GAME.HEIGHT * 0.03),
+  NEAR_MISS_TEXT: 'CLOSE!',
+  NEAR_MISS_DURATION: 600,
+
+  // Combo / Streak
+  COMBO_TEXT_SIZE_BASE: Math.round(GAME.HEIGHT * 0.03),
+  COMBO_TEXT_SIZE_STEP: 2 * PX,    // +2px per combo milestone
+  COMBO_TEXT_DURATION: 800,
+  STREAK_MILESTONES: [5, 10, 25, 50, 100],
+  STREAK_PARTICLE_COUNT: 30,
+  STREAK_TEXT_SIZE: Math.round(GAME.HEIGHT * 0.06),
+  STREAK_TEXT_DURATION: 1200,
+
+  // Hit freeze (game over)
+  HIT_FREEZE_DURATION: 60,         // ms physics pause
+
+  // Shake intensity
+  SHAKE_LIGHT: 0.008,
+  SHAKE_MEDIUM: 0.015,
+  SHAKE_HEAVY: 0.02,
+  SHAKE_MAX: 0.025,
+  SHAKE_SPEED_FACTOR: 0.002,       // multiplied by currentSpeed
+
+  // Speed milestone effects
+  SPEED_FLASH_ALPHA: 0.3,
+  SPEED_FLASH_DURATION: 200,
+  SPEED_TEXT_SIZE: Math.round(GAME.HEIGHT * 0.06),
+  SPEED_TEXT_DURATION: 1200,
+  SPEED_GRID_PULSE_ALPHA: 0.8,
+  SPEED_GRID_PULSE_DURATION: 500,
+  SPEED_SHAKE: 0.02,
+
+  // Bit destruction
+  BIT_DISSOLVE_DURATION: 300,
+  BIT_HIT_FLASH_DURATION: 200,
+  BIT_HIT_EXPAND_SCALE: 2.0,
+
+  // Game over / Death
+  DEATH_FLASH_COLOR: { r: 255, g: 0, b: 50 },
+  DEATH_FLASH_DURATION: 300,
+  DEATH_SLOWMO_SCALE: 0.3,
+  DEATH_SLOWMO_DURATION: 300,
+  DEATH_PARTICLE_COUNT: 40,
+  DEATH_ZOOM_TARGET: 1.1,
+  DEATH_ZOOM_DURATION: 300,
+  DEATH_TRANSITION_DELAY: 700,     // total ms before scene transition
+
+  // General particles
+  PARTICLE_MIN_COUNT: 10,
+  PARTICLE_BURST_SPEED_MIN: 50 * PX,
+  PARTICLE_BURST_SPEED_MAX: 150 * PX,
+  PARTICLE_BURST_LIFESPAN: 500,
+  PARTICLE_BURST_SIZE_MIN: 2 * PX,
+  PARTICLE_BURST_SIZE_MAX: 4 * PX,
+
+  // Floating text general
+  FLOAT_TEXT_MIN_SIZE: Math.round(GAME.HEIGHT * 0.03),
+
+  // Flash overlay general
+  FLASH_ALPHA_MIN: 0.3,
+  FLASH_ALPHA_MAX: 0.5,
 };
