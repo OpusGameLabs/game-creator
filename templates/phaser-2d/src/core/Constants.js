@@ -51,11 +51,13 @@ export const SAFE_ZONE = {
 
 // --- Player ---
 
+const SPRITE_ASPECT = 1.5;
+
 export const PLAYER = {
   START_X: GAME.WIDTH * 0.25,
   START_Y: GAME.HEIGHT * 0.65,
   WIDTH: GAME.WIDTH * 0.08,
-  HEIGHT: GAME.HEIGHT * 0.12,
+  HEIGHT: GAME.WIDTH * 0.08 * SPRITE_ASPECT,
   SPEED: 200 * PX,
   JUMP_VELOCITY: -400 * PX,
   COLOR: 0x44aaff,

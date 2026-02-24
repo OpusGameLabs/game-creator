@@ -287,9 +287,9 @@ Launch a `Task` subagent with these instructions:
 > - The template's `GameOverScene.js` contains a working `createButton()` helper (Container + Graphics + Text). **Do NOT rewrite this method.** Keep it intact or copy it into any new scenes that need buttons. The correct z-order is: Graphics first (background), Text second (label), Container interactive. If you put Graphics on top of Text, the text becomes invisible. If you make the Graphics interactive instead of the Container, hover/press states break.
 >
 > **Character & entity sizing:**
-> - Size all entities proportionally: `GAME.WIDTH * ratio` and `GAME.HEIGHT * ratio`, never fixed pixel values like `40 * PX`.
+> - Character WIDTH from `GAME.WIDTH * ratio`, HEIGHT from `WIDTH * SPRITE_ASPECT` (where `const SPRITE_ASPECT = 1.5` for 200×300 spritesheets). **Never** define character HEIGHT as `GAME.HEIGHT * ratio` — on mobile portrait, `GAME.HEIGHT` is much larger than `GAME.WIDTH`, squishing characters.
 > - For character-driven games (named personalities, mascots, famous figures): make the main character prominent — `GAME.WIDTH * 0.12` to `GAME.WIDTH * 0.15` (12–15% of screen width). Use caricature proportions (large head = 40–50% of sprite height, exaggerate distinguishing features) for personality games.
-> - Define all sizes in `Constants.js` as `GAME.WIDTH * ratio` or `GAME.HEIGHT * ratio`.
+> - Non-character entities (projectiles, collectibles, squares) can use `GAME.WIDTH * ratio` for both dimensions since they have no intrinsic aspect ratio to preserve.
 >
 > **Play.fun safe zone:**
 > - Import `SAFE_ZONE` from `Constants.js`. All UI text, buttons, and interactive elements (title text, score panels, restart buttons) must be positioned below `SAFE_ZONE.TOP`. The Play.fun SDK renders a 75px widget bar at the top of the viewport (z-index 9999). Use `safeTop + usableH * ratio` for proportional positioning within the usable area (where `usableH = GAME.HEIGHT - SAFE_ZONE.TOP`).

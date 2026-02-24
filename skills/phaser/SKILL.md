@@ -244,10 +244,18 @@ const buttonY = GAME.HEIGHT * 0.55;
 
 ### Entity Sizing
 
-Entity dimensions in Constants.js should be proportional to game dimensions, not fixed pixel values:
+Character dimensions must preserve their spritesheet aspect ratio across all orientations. Derive HEIGHT from WIDTH using the sprite's native aspect ratio (200×300 spritesheets = 1.5):
 
 ```js
-// Good — proportional to screen
+const SPRITE_ASPECT = 1.5;
+
+// Good — HEIGHT derived from WIDTH, correct in both landscape and portrait
+PLAYER: {
+  WIDTH: GAME.WIDTH * 0.08,
+  HEIGHT: GAME.WIDTH * 0.08 * SPRITE_ASPECT,
+}
+
+// Bad — independent GAME.HEIGHT ratio squishes characters in portrait mode
 PLAYER: {
   WIDTH: GAME.WIDTH * 0.08,
   HEIGHT: GAME.HEIGHT * 0.12,
@@ -260,7 +268,7 @@ PLAYER: {
 }
 ```
 
-For **character-driven games** (named characters, personalities, mascots), make characters prominent — use 12–15% of `GAME.WIDTH` for the player width. Use **caricature proportions** (large head ~40–50% of sprite height with exaggerated features, compact body) for personality games to maximize character recognition at any scale.
+For **character-driven games** (named characters, personalities, mascots), make characters prominent — use 12–15% of `GAME.WIDTH` for the player width. Use **caricature proportions** (large head ~40–50% of sprite height with exaggerated features, compact body) for personality games to maximize character recognition at any scale. Never define character HEIGHT as `GAME.HEIGHT * ratio` — on mobile portrait, `GAME.HEIGHT` is much larger than `GAME.WIDTH`, breaking the aspect ratio and squishing heads vertically.
 
 **HTML boilerplate** (required for proper scaling):
 
