@@ -201,6 +201,17 @@ If `$ARGUMENTS` contains a tweet URL (matching `x.com/*/status/*`, `twitter.com/
 
 Wait for user confirmation before proceeding. The user can override the engine (to 3D) or the name at this point.
 
+**Celebrity Detection:**
+
+After determining the game concept, scan the concept description, tweet text, and any mentioned people for celebrity/public figure names. Check against:
+1. `character-library/manifest.json` (relative to plugin root) — exact slug match or name match
+2. Common name recognition — politicians, tech CEOs, world leaders, entertainers
+
+If celebrities are detected:
+- Set `hasCelebrities = true` and list detected names
+- Note in `progress.md` which characters are pre-built vs need building
+- The Step 1.5 subagent will use photo-composite characters for these
+
 Create all pipeline tasks upfront using `TaskCreate`:
 
 1. Scaffold game from template
@@ -430,20 +441,30 @@ Mark task 2 as `in_progress`.
 Before launching the asset subagent, check if the game uses personality characters:
 
 1. Read `design-brief.md` to identify personality characters
-2. For each personality, check `/home/glitchtrend/character-library/manifest.json`
-3. If the character exists in the library, copy their sprites into the game:
+2. Resolve the character library path — find `character-library/manifest.json` relative to the plugin root:
+   - Check `character-library/manifest.json` relative to the plugin install directory
+   - Check common plugin cache paths (e.g., `~/.claude/plugins/cache/local-plugins/game-creator/*/character-library/`)
+3. For each personality, check if their slug exists in `manifest.json`
+4. If the character exists in the library, copy their sprites:
    ```bash
    mkdir -p <project-dir>/public/assets/characters/<slug>/
-   cp /home/glitchtrend/character-library/characters/<slug>/sprites/* \
+   cp <plugin-root>/character-library/characters/<slug>/sprites/* \
       <project-dir>/public/assets/characters/<slug>/
    ```
-4. If a personality is NOT in the library, build it first:
-   ```bash
-   cd /home/glitchtrend/character-library
-   python3 build-character.py <slug> "<Full Name>" <body-type> <normal-url> <happy-url> <angry-url> [surprised-url]
-   ```
-   Then copy as above.
-5. Pass the list of available character slugs and their expression counts to the subagent.
+5. If a personality is NOT in the library, build them:
+   a. Use WebSearch to find 4 expression images (transparent PNG preferred):
+      - normal: `"<Name> face transparent PNG pngimg OR cleanpng"`
+      - happy: `"<Name> smiling face transparent PNG"`
+      - angry: `"<Name> angry face transparent PNG"`
+      - surprised: `"<Name> surprised shocked face transparent PNG"`
+   b. Download images to `<project-dir>/public/assets/characters/<slug>/raw/`
+   c. Run the Node.js pipeline:
+      ```bash
+      node <plugin-root>/scripts/build-character.mjs "<Name>" \
+        <project-dir>/public/assets/characters/<slug>/ --skip-find
+      ```
+   d. The pipeline runs: ML bg removal → face detection crop → spritesheet assembly
+6. Pass the list of available character slugs and their expression counts to the subagent.
 
 Launch a `Task` subagent with these instructions:
 

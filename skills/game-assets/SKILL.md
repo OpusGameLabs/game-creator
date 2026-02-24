@@ -21,12 +21,12 @@ Procedural circles and rectangles are fast to scaffold, but players can't tell a
 
 | Tier | Use for | Source |
 |------|---------|--------|
-| **South Park characters** (default for personalities) | Named people / CEO characters | Character library at `/home/glitchtrend/character-library/` — photo heads composited onto cartoon bodies with expression spritesheets |
+| **South Park characters** (default for personalities) | Named people / CEO characters | Character library at `character-library/` (relative to plugin root) — photo heads composited onto cartoon bodies with expression spritesheets |
 | **Real images** (logos, photos) | Company logos, brand marks when game features a named company | Download to `public/assets/` with pixel art fallback |
 | **Meme/reference images** | Source tweet `image_url` — embed as background, splash, or texture when it enhances thematic identity | Download to `public/assets/` |
 | **Pixel art** (fallback) | Non-personality characters, items, game objects, enemies | Code-only 2D arrays rendered at runtime |
 
-**South Park characters** are the default for named personalities (Altman, Amodei, Musk, Zuckerberg, Nadella, Pichai, Huang, Karpathy). The character library at `/home/glitchtrend/character-library/` contains pre-built spritesheets with multiple expressions. Each spritesheet has frames for: normal (0), happy (1), angry (2), surprised (3). Games load these as Phaser spritesheets and wire expression changes to game events.
+**South Park characters** are the default for named personalities (Altman, Amodei, Musk, Zuckerberg, Nadella, Pichai, Huang, Karpathy, Trump, Biden, Obama). The character library at `character-library/` (relative to plugin root) contains pre-built spritesheets with multiple expressions. Each spritesheet has frames for: normal (0), happy (1), angry (2), surprised (3). Games load these as Phaser spritesheets and wire expression changes to game events.
 
 **Pixel art** is the fallback for personality characters not yet in the library and the default for non-personality entities (enemies, items, game objects).
 
@@ -40,7 +40,7 @@ All tiers share the same fallback pattern: if an external asset fails to load, f
 
 ### Character Library
 
-Location: `/home/glitchtrend/character-library/`
+Location: `character-library/` (relative to plugin root)
 
 The library contains pre-built characters with photo-realistic heads composited onto South Park-style cartoon bodies. Each character has:
 - Multiple expression sprites (normal, happy, angry, surprised)
@@ -52,17 +52,20 @@ The library contains pre-built characters with photo-realistic heads composited 
 ```
 character-library/
   manifest.json                    # Index of all built characters
-  bodies/                          # South Park body templates
   characters/
-    sam-altman/
+    donald-trump/
       sprites/
         normal.png                 # Individual expression sprites (200x300)
         happy.png
         angry.png
         surprised.png
-        spritesheet.png            # All expressions in horizontal strip
-    dario-amodei/
-      ...
+        spritesheet.png            # 800x300 horizontal strip (all expressions)
+    joe-biden/
+      sprites/
+        ...
+    elon-musk/
+      sprites/
+        ...
 ```
 
 ### Expression Constants
@@ -142,14 +145,51 @@ eventBus.on(Events.OPPONENT_SCORES, ({ id }) => {
 
 ### Building New Characters
 
-If a personality is needed but not in the library, build it:
+If a personality is needed but not in the library, build it using the project-level pipeline scripts:
+
+#### Step 1: Find Expression Images via WebSearch
+
+Use WebSearch to find 4 distinct expression photos (transparent PNG preferred):
+
+| Expression | Search query |
+|-----------|-------------|
+| **normal** | `"<Person Name> face transparent PNG pngimg OR cleanpng"` — no emotion descriptor (produces better neutral results) |
+| **happy** | `"<Person Name> smiling face transparent PNG"` |
+| **angry** | `"<Person Name> angry face transparent PNG"` |
+| **surprised** | `"<Person Name> surprised shocked face transparent PNG"` |
+
+For each expression, look for:
+- **normal** — neutral/calm face, slight smile OK
+- **happy** — big grin, laughing, celebrating (close-up preferred)
+- **angry** — grimacing, teeth-baring, scowling
+- **surprised** — mouth open, wide eyes, shocked
+
+**Image selection rules:**
+- Prefer head-only cutouts (already cropped to face). Sites like pngimg.com often have these.
+- Any composition works (head-only, half-body, full-body) — `crop-head.mjs` uses face detection to find and crop the face automatically. No manual `--ratio` tuning needed.
+- Avoid illustrations/cartoons — use real photos for photo-composite characters.
+- Download to `<outputDir>/raw/normal.png`, `happy.png`, `angry.png`, `surprised.png`.
+
+#### Step 2: Run the Pipeline
 
 ```bash
-cd /home/glitchtrend/character-library
-python3 build-character.py <slug> "<Full Name>" <body-type> <normal-url> <happy-url> <angry-url> [surprised-url]
+# If images already have transparent backgrounds:
+node scripts/crop-head.mjs raw/normal.png cropped/normal.png
+node scripts/crop-head.mjs raw/happy.png cropped/happy.png
+# ... for each expression (face detection auto-finds the face)
+
+# Build the spritesheet:
+node scripts/build-spritesheet.mjs public/assets/<slug>-expressions.png \
+  --normal cropped/normal.png --happy cropped/happy.png \
+  --angry cropped/angry.png --surprised cropped/surprised.png
 ```
 
-Body types: `casual` (t-shirt/hoodie), `suit` (blazer), `leather-jacket` (Jensen special).
+Or use the orchestrator (expects raw images with opaque backgrounds — runs ML bg removal + crop + spritesheet):
+```bash
+node scripts/build-character.mjs "<Full Name>" public/assets/<slug>/ --skip-find
+```
+
+`crop-head.mjs` uses face-api.js (SSD MobileNet v1) to detect the face bounding box and crops with 25% padding. Falls back to bounding-box heuristic if no face is detected. Use `--padding 0.40` to increase padding around the detected face.
 
 ## Pixel Art Rendering System
 

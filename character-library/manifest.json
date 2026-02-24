@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "characters": {
+    "donald-trump": {
+      "name": "Donald Trump",
+      "slug": "donald-trump",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["politician", "president", "usa"]
+    },
+    "joe-biden": {
+      "name": "Joe Biden",
+      "slug": "joe-biden",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["politician", "president", "usa"]
+    },
+    "elon-musk": {
+      "name": "Elon Musk",
+      "slug": "elon-musk",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "tesla", "spacex", "x"]
+    },
+    "sam-altman": {
+      "name": "Sam Altman",
+      "slug": "sam-altman",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "openai", "ai"]
+    },
+    "jensen-huang": {
+      "name": "Jensen Huang",
+      "slug": "jensen-huang",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "nvidia", "ai"]
+    },
+    "mark-zuckerberg": {
+      "name": "Mark Zuckerberg",
+      "slug": "mark-zuckerberg",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "meta", "facebook"]
+    },
+    "dario-amodei": {
+      "name": "Dario Amodei",
+      "slug": "dario-amodei",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "anthropic", "ai"]
+    },
+    "barack-obama": {
+      "name": "Barack Obama",
+      "slug": "barack-obama",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["politician", "president", "usa"]
+    },
+    "satya-nadella": {
+      "name": "Satya Nadella",
+      "slug": "satya-nadella",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "microsoft"]
+    },
+    "sundar-pichai": {
+      "name": "Sundar Pichai",
+      "slug": "sundar-pichai",
+      "expressions": ["normal", "happy", "angry", "surprised"],
+      "spritesheet": "spritesheet.png",
+      "frameWidth": 200,
+      "frameHeight": 300,
+      "tags": ["tech-ceo", "google", "alphabet"]
+    }
+  }
+}
