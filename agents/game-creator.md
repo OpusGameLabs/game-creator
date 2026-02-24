@@ -110,7 +110,7 @@ Launch a `Task` subagent with these instructions:
 > 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
 > 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
 > 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
-> 9. Check mute button: Is there a speaker icon or mute toggle visible? If not, flag as ISSUE.
+> 9. Check mute button: Is there a mute toggle visible? If not, flag as ISSUE.
 >
 > Without MCP (fallback):
 > 1. Read the iterate screenshots from `output/iterate/shot-*.png`
@@ -249,7 +249,7 @@ Launch a `Task` subagent with these instructions:
 > - Ensure all modules communicate only through EventBus
 > - All magic numbers go in Constants.js
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
-> - Add `isMuted` to GameState for audio mute support
+> - Add `isMuted` to GameState for mute support
 > - **Update `render_game_to_text()`** in `main.js` to reflect your new entities, obstacles, and mechanics. Add all player-relevant state: position, velocity, visible enemies/obstacles, collectibles, timers/cooldowns, and mode flags.
 >
 > **Visual identity — push the pose:**
@@ -410,7 +410,7 @@ Launch a `Task` subagent:
 > 4. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
-> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button drawn with the **Phaser Graphics API** (`fillRect`, `fillTriangle`, `arc`, `lineBetween`). Do NOT use `this.add.text()` for the mute button — see the game-audio skill "Mute Button" section for exact drawing code.
+> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Add M key shortcut and a speaker icon UI button. See the `mute-button` rule and the game-audio skill "Mute Button" section for requirements and drawing code.
 >
 > **Iterate after each meaningful change**: The dev server is running on port `<port>`. After wiring audio, run:
 > ```

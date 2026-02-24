@@ -101,39 +101,6 @@ Boot/Load -> Gameplay <-> Pause Menu (if requested)
 
 **No title screen by default.** Games boot directly into gameplay. The Play.fun widget handles score display, leaderboards, and wallet connect in a deadzone at the top of the game, so no in-game score HUD is needed. Only add a title/menu scene if the user explicitly requests one.
 
-## Mute State Management
-
-Games with audio MUST have a global mute toggle. Store `isMuted` in GameState and wire it to both BGM and SFX:
-
-```js
-// In GameState
-game: {
-  isMuted: false,
-  // ...
-}
-
-// AudioManager checks before playing
-playMusic(patternFn) {
-  if (gameState.game.isMuted || !this.initialized) return;
-  // ...
-}
-
-// SFX checks before playing
-export function scoreSfx() {
-  if (gameState.game.isMuted) return;
-  playNotes([659.25, 987.77], 'square', 0.12, 0.07, 0.3, 5000);
-}
-
-// Toggle via EventBus
-eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
-  gameState.game.isMuted = !gameState.game.isMuted;
-  if (gameState.game.isMuted) audioManager.stopMusic();
-  else audioManager.playMusic(currentTheme);
-});
-```
-
-Wire mute to a UI button (speaker icon) and keyboard shortcut (M key). Persist preference in `localStorage` if available.
-
 ## Common Architecture Pitfalls
 
 - **Unwired physics bodies** — Creating a static physics body (e.g., ground, wall) without wiring it to other bodies via `physics.add.collider()` or `physics.add.overlap()` has no gameplay effect. Every boundary or obstacle needs explicit collision wiring to the entities it should interact with. After creating any static body, immediately add the collider call.
@@ -153,7 +120,7 @@ Before considering a game complete, verify all items:
 - [ ] **Constants** — Zero hardcoded magic numbers in game logic
 - [ ] **EventBus** — No direct cross-module imports for communication
 - [ ] **Cleanup** — All listeners removed in shutdown, resources disposed
-- [ ] **Mute toggle** — Audio can be muted/unmuted via UI and keyboard (M)
+- [ ] **Mute toggle** — See `mute-button` rule
 - [ ] **Delta-based** — All movement uses delta time, not frame count
 - [ ] **Build** — `npm run build` succeeds with no errors
 - [ ] **No errors** — No uncaught exceptions or console errors at runtime
