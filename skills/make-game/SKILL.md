@@ -112,6 +112,7 @@ Launch a `Task` subagent with these instructions:
 > 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
 > 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
 > 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
+> 9. Check mute button: Is there a mute toggle visible? If not, flag as ISSUE.
 >
 > **Screenshot timeout**: If `browser_take_screenshot` hangs for more than 10 seconds (can happen with continuous WebGL animations), cancel and proceed with code review instead. Do not let a screenshot hang block the entire QA phase.
 >
@@ -256,7 +257,7 @@ Launch a `Task` subagent with these instructions:
 > 4. Scoring
 > 5. Restart flow (GameState.reset() → clean slate)
 >
-> Keep scope small: **1 scene, 1 mechanic, 1 fail condition**. Get the gameplay loop working before any polish.
+> Keep scope small: **1 scene, 1 mechanic, 1 fail condition**. Wire spectacle EventBus hooks alongside the core loop — they are scaffolding, not polish.
 >
 > Transform the template into the game concept:
 > - Rename entities, scenes/systems, and events to match the concept
@@ -267,15 +268,27 @@ Launch a `Task` subagent with these instructions:
 > - **No title screen** — the template boots directly into gameplay. Do not create a MenuScene or title screen. Only add one if the user explicitly asks.
 > - **No in-game score HUD** — the Play.fun widget displays score in a deadzone at the top of the game. Do not create a UIScene or HUD overlay for score display.
 > - **Mobile-first input**: Choose the best mobile input scheme for the game concept (tap zones, virtual joystick, gyroscope tilt, swipe). Implement touch + keyboard from the start — never keyboard-only. Use the unified analog InputSystem pattern (moveX/moveZ) so game logic is input-source-agnostic.
+> - Wire spectacle events: emit `SPECTACLE_ENTRANCE` in `create()`, `SPECTACLE_ACTION` on every player input, `SPECTACLE_HIT` on score/destroy, `SPECTACLE_COMBO` on consecutive hits (pass `{ combo }` ), `SPECTACLE_STREAK` at milestones (5, 10, 25 — pass `{ streak }`), `SPECTACLE_NEAR_MISS` on close calls
+>
+> **Visual identity — push the pose:**
+> - If the player character represents a real person or brand, build visual recognition into the entity from the start. Don't use generic circles/rectangles as placeholders — use descriptive colors, proportions, and features that communicate identity even before pixel art is added.
+> - Named opponents/NPCs must have visual presence on screen — never text-only. At minimum use distinct colored shapes that suggest the brand. Better: simple character forms with recognizable features.
+> - Collectibles and hazards must be visually self-explanatory. Avoid abstract concepts ("imagination blocks", "creativity sparks"). Use concrete objects players instantly recognize (polaroids, trophies, lightning bolts, money bags, etc.).
+> - Think: "Could someone screenshot this and immediately know what the game is about?"
+> - **NEVER** use a single letter (C, G, O) as a character's visual identity
+> - **NEVER** differentiate two characters only by fill color — they must have distinct silhouettes and features
+> - When a company is featured (OpenAI, Anthropic, xAI, etc.), use the CEO as the character: Altman for OpenAI, Amodei for Anthropic, Musk for xAI, Zuckerberg for Meta, Nadella for Microsoft, Pichai for Google, Huang for NVIDIA
+> - Add entrance sequence in `create()`: player starts off-screen, tweens into position with `Bounce.easeOut`, landing shake + particle burst
+> - Add combo tracking to GameState: `combo` (current streak, resets on miss), `bestCombo` (session high), both reset in `reset()`
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
-> - Add `isMuted` to GameState for audio mute support
+> - Add `isMuted` to GameState for mute support
 >
 > **CRITICAL — Preserve the button pattern:**
 > - The template's `GameOverScene.js` contains a working `createButton()` helper (Container + Graphics + Text). **Do NOT rewrite this method.** Keep it intact or copy it into any new scenes that need buttons. The correct z-order is: Graphics first (background), Text second (label), Container interactive. If you put Graphics on top of Text, the text becomes invisible. If you make the Graphics interactive instead of the Container, hover/press states break.
 >
 > **Character & entity sizing:**
 > - Size all entities proportionally: `GAME.WIDTH * ratio` and `GAME.HEIGHT * ratio`, never fixed pixel values like `40 * PX`.
-> - For character-driven games (named personalities, mascots, famous figures): make the main character prominent — `GAME.WIDTH * 0.12` to `GAME.WIDTH * 0.15` (12–15% of screen width). Use bobblehead proportions (head = 40–50% of sprite height) for personality games.
+> - For character-driven games (named personalities, mascots, famous figures): make the main character prominent — `GAME.WIDTH * 0.12` to `GAME.WIDTH * 0.15` (12–15% of screen width). Use caricature proportions (large head = 40–50% of sprite height, exaggerate distinguishing features) for personality games.
 > - Define all sizes in `Constants.js` as `GAME.WIDTH * ratio` or `GAME.HEIGHT * ratio`.
 >
 > **Play.fun safe zone:**
@@ -310,6 +323,55 @@ Launch a `Task` subagent with these instructions:
 >   {"buttons":["space"],"frames":4},
 >   {"buttons":[],"frames":80}
 > ]
+> ```
+>
+> Before returning, write `<project-dir>/design-brief.md`:
+> ```
+> # Design Brief
+> ## Concept
+> One-line game concept.
+> ## Core Mechanics
+> For each mechanic:
+> - **Name**: what it does
+> - **State field**: which GameState field it affects
+> - **Expected magnitude**: how much/fast it should change (e.g., "reaches 50-70% of max within the round duration without player input")
+> ## Win/Lose Conditions
+> - How the player wins
+> - How the player loses
+> - Confirm both outcomes are realistically achievable with the current Constants.js values
+> ## Entity Interactions
+> For each visible entity (enemies, projectiles, collectibles, environmental objects):
+> - **Name**: what it is
+> - **Visual identity**: what it should LOOK like and why (reference real logos, people, objects — not abstract concepts)
+> - **Distinguishing feature**: the ONE exaggerated feature visible at thumbnail size (e.g., "curly dark hair + glasses" for Amodei, "leather jacket" for Jensen Huang)
+> - **Real image asset**: logo URL to download, or "pixel art" if no real image applies
+> - **Behavior**: what it does (moves, falls, spawns, etc.)
+> - **Player interaction**: how the player interacts with it (dodge, collect, tap, block, or "none — background/decoration")
+> - **AI/opponent interaction**: how the opponent interacts with it, if applicable
+>
+> For named people: describe hair, glasses, facial hair, clothing. For companies: specify logo to download. NEVER use a letter or text label as visual identity.
+>
+> ## Expression Map
+>
+> For each personality character, map game events to expressions:
+>
+> ### Player: [Name]
+> | Game Event | Expression | Why |
+> |---|---|---|
+> | Idle/default | normal | Resting state |
+> | Score point / collect item | happy | Positive reinforcement |
+> | Take damage / lose life | angry | Visceral reaction |
+> | Power-up / special event | surprised | Excitement |
+> | Win / game over (high score) | happy | Celebration |
+> | Lose / game over (low score) | angry | Defeat |
+>
+> ### Opponent: [Name]
+> | Game Event | Expression | Why |
+> |---|---|---|
+> | Idle/default | normal | Resting state |
+> | Player scores | angry | Frustrated at losing |
+> | Opponent scores | happy | Gloating |
+> | Near-miss / close call | surprised | Tension |
 > ```
 >
 > Do NOT start a dev server or run builds — the orchestrator handles that.
@@ -363,6 +425,26 @@ Mark task 1 as `completed`.
 
 Mark task 2 as `in_progress`.
 
+**Pre-step: Character Library Check**
+
+Before launching the asset subagent, check if the game uses personality characters:
+
+1. Read `design-brief.md` to identify personality characters
+2. For each personality, check `/home/glitchtrend/character-library/manifest.json`
+3. If the character exists in the library, copy their sprites into the game:
+   ```bash
+   mkdir -p <project-dir>/public/assets/characters/<slug>/
+   cp /home/glitchtrend/character-library/characters/<slug>/sprites/* \
+      <project-dir>/public/assets/characters/<slug>/
+   ```
+4. If a personality is NOT in the library, build it first:
+   ```bash
+   cd /home/glitchtrend/character-library
+   python3 build-character.py <slug> "<Full Name>" <body-type> <normal-url> <happy-url> <angry-url> [surprised-url]
+   ```
+   Then copy as above.
+5. Pass the list of available character slugs and their expression counts to the subagent.
+
 Launch a `Task` subagent with these instructions:
 
 > You are implementing Step 1.5 (Pixel Art Sprites) of the game creation pipeline.
@@ -373,7 +455,9 @@ Launch a `Task` subagent with these instructions:
 >
 > **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and scoring system from Step 1.
 >
-> Follow the game-assets skill fully:
+> **Character library sprites are already copied** to `public/assets/characters/<slug>/`. For personality characters, load the spritesheet and wire expression changes per the game-assets skill's "Expression Wiring Pattern". Add `EXPRESSION` and `EXPRESSION_HOLD_MS` to Constants.js. Wire expression changes to EventBus events per the Expression Map in `design-brief.md`.
+>
+> Follow the game-assets skill fully for non-personality entities:
 > 1. Read all entity files (`src/entities/`) to find `generateTexture()` / `fillCircle()` calls
 > 2. Choose the palette that matches the game's theme (DARK, BRIGHT, or RETRO)
 > 3. Create `src/core/PixelRenderer.js` — the `renderPixelArt()` + `renderSpriteSheet()` utilities
@@ -384,6 +468,23 @@ Launch a `Task` subagent with these instructions:
 > 8. Update entity constructors to use pixel art instead of geometric shapes
 > 9. Add Phaser animations for entities with multiple frames
 > 10. Adjust physics bodies for new sprite dimensions
+>
+> **Character prominence**: If the game features a real person or named personality, use the Personality Character (Caricature) archetype — 32x48 grid at scale 4 (renders to 128x192px, ~35% of canvas height). The character must be the visually dominant element on screen. Supporting entities stay at Medium (16x16) or Small (12x12) to create clear visual hierarchy.
+>
+> **Push the pose — thematic expressiveness:**
+> - Sprites must visually embody who/what they represent. A sprite for "Grok AI" should look like Grok (logo features, brand colors, xAI aesthetic) — not a generic robot or colored circle.
+> - For real people: exaggerate their most recognizable features (signature hairstyle, glasses, facial hair, clothing). Recognition IS the meme hook.
+> - For brands/products: incorporate logo shapes, brand colors, and distinctive visual elements into the sprite design.
+> - For game objects: make them instantly recognizable. A "power-up" should look like the specific thing it represents in the theme, not a generic star or diamond.
+> - Opponents should be visually distinct from each other — different colors, shapes, sizes, and personality. A player should tell them apart at a glance.
+>
+> **Self-audit before returning** — check every personality sprite against these:
+> - Does each sprite have distinct hair (not a solid-color dome)?
+> - Does each sprite have facial features beyond just eyes (glasses, facial hair, or clothing details if applicable)?
+> - Would two character sprites look different if rendered in the same color?
+> - Is any `scene.add.text()` being used as the primary identifier? If so, remove it and add physical features instead.
+> - Does the head region (rows 0-28) use at least 4 distinct palette indices?
+> - For brand entities: was a real logo downloaded and loaded? If not, why?
 >
 > **After completing your work**, append a `## Step 1.5: Assets` section to `progress.md` with: palette used, sprites created, any dimension changes to entities.
 >
@@ -408,7 +509,7 @@ Mark task 3 as `in_progress`.
 
 Launch a `Task` subagent with these instructions:
 
-> You are implementing Step 2 (Visual Design) of the game creation pipeline.
+> You are implementing Step 2 (Visual Design — Spectacle-First) of the game creation pipeline.
 >
 > **Project path**: `<project-dir>`
 > **Engine**: `<2d|3d>`
@@ -416,17 +517,40 @@ Launch a `Task` subagent with these instructions:
 >
 > **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and what previous steps have done.
 >
-> Apply the game-designer skill:
-> 1. Audit the current visuals — read Constants.js, all scenes, entities, EventBus
-> 2. Score each visual area (background, palette, animations, particles, transitions, typography, game feel, game over) on a 1-5 scale
-> 3. Implement the highest-impact improvements:
->    - Sky gradients or environment backgrounds
->    - Particle effects for key gameplay moments
->    - Screen shake, flash, or slow-mo for impact
->    - Smooth scene transitions
->    - UI juice: button hover, text shadows, floating score text
-> 4. All new values go in Constants.js, use EventBus for triggering effects
-> 5. Don't alter gameplay mechanics
+> Apply the game-designer skill with spectacle as the top priority. Work in this order:
+>
+> **1. Opening Moment (CRITICAL — this determines promo clip success):**
+> - Entrance flash: `cameras.main.flash(300)` on scene start
+> - Player slam-in: player starts off-screen, tweens in with `Bounce.easeOut`, landing shake (0.012) + particle burst (20 particles)
+> - Ambient particles active from frame 1 (drifting motes, dust, sparkles)
+> - Optional flavor text (e.g., "GO!", "DODGE!") — only when it naturally fits the game's vibe
+> - Verify: the first 3 seconds have zero static frames
+>
+> **2. Every-Action Effects (wire to SPECTACLE_* events from Step 1):**
+> - Particle burst (12-20 particles) on `SPECTACLE_ACTION` and `SPECTACLE_HIT`
+> - Floating score text (28px, scale 1.8, `Elastic.easeOut`) on `SCORE_CHANGED`
+> - Background pulse (additive blend, alpha 0.15) on `SCORE_CHANGED`
+> - Persistent player trail (particle emitter following player, `blendMode: ADD`)
+> - Screen shake (0.008-0.015) on hits
+>
+> **3. Combo & Streak System (wire to SPECTACLE_COMBO / SPECTACLE_STREAK):**
+> - Combo counter text that scales with combo count (32px base, +4px per combo)
+> - Streak milestone announcements at 5x, 10x, 25x (full-screen text slam + 40-particle burst)
+> - Hit freeze frame (60ms physics pause) on destruction events
+> - Shake intensity scales with combo (0.008 + combo * 0.002, capped at 0.025)
+>
+> **4. Standard Design Audit:**
+> - Full 10-area audit (background, palette, animations, particles, transitions, typography, game feel, game over, character prominence, first impression / viral appeal)
+> - **Every area must score 4 or higher** — improve any that fall below
+> - First Impression / Viral Appeal is the most critical category
+>
+> **5. Intensity Calibration:**
+> - Particle bursts: 12-30 per event (never fewer than 10)
+> - Screen shake: 0.008 (light) to 0.025 (heavy)
+> - Floating text: 28px minimum, starting scale 1.8
+> - Flash overlays: alpha 0.3-0.5
+> - All new values go in Constants.js, use EventBus for triggering effects
+> - Don't alter gameplay mechanics
 >
 > **After completing your work**, append a `## Step 2: Design` section to `progress.md` with: improvements applied, new effects added, any color or layout changes.
 >
@@ -464,7 +588,7 @@ Launch a `Task` subagent with these instructions:
 > 4. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
-> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button.
+> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Add M key shortcut and a speaker icon UI button. See the `mute-button` rule and the game-audio skill "Mute Button" section for requirements and drawing code.
 >
 > **After completing your work**, append a `## Step 3: Audio` section to `progress.md` with: BGM patterns added, SFX event mappings, mute wiring confirmation.
 >

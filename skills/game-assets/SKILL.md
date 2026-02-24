@@ -17,12 +17,139 @@ For detailed reference, see companion files in this directory:
 
 Procedural circles and rectangles are fast to scaffold, but players can't tell a bat from a zombie. Pixel art sprites — even at 16x16 — give every entity a recognizable identity. The key insight: **pixel art IS code**. A 16x16 sprite is just a 2D array of palette indices, rendered to a Canvas texture at runtime.
 
-This approach:
-- **Zero external dependencies** — no image files, no downloads, no broken URLs
-- **Legitimate art style** — 16x16 and 32x32 pixel art is a real aesthetic (Celeste, Shovel Knight, Vampire Survivors itself)
-- **Unique per game** — your agent generates custom sprites matching each game's theme
-- **Drops into existing architecture** — replaces `fillCircle()` + `generateTexture()` in entity constructors
-- **Animation support** — multiple frames as separate matrices, wired to Phaser anims
+### Asset Tiers
+
+| Tier | Use for | Source |
+|------|---------|--------|
+| **South Park characters** (default for personalities) | Named people / CEO characters | Character library at `/home/glitchtrend/character-library/` — photo heads composited onto cartoon bodies with expression spritesheets |
+| **Real images** (logos, photos) | Company logos, brand marks when game features a named company | Download to `public/assets/` with pixel art fallback |
+| **Meme/reference images** | Source tweet `image_url` — embed as background, splash, or texture when it enhances thematic identity | Download to `public/assets/` |
+| **Pixel art** (fallback) | Non-personality characters, items, game objects, enemies | Code-only 2D arrays rendered at runtime |
+
+**South Park characters** are the default for named personalities (Altman, Amodei, Musk, Zuckerberg, Nadella, Pichai, Huang, Karpathy). The character library at `/home/glitchtrend/character-library/` contains pre-built spritesheets with multiple expressions. Each spritesheet has frames for: normal (0), happy (1), angry (2), surprised (3). Games load these as Phaser spritesheets and wire expression changes to game events.
+
+**Pixel art** is the fallback for personality characters not yet in the library and the default for non-personality entities (enemies, items, game objects).
+
+**Real logos** are preferred for brand identity. When a game features OpenAI, Anthropic, Google, etc., download their logo and use it.
+
+**Meme images** from the source tweet (`image_url` in thread.json) should be downloaded and incorporated when they enhance visual identity.
+
+All tiers share the same fallback pattern: if an external asset fails to load, fall back to pixel art.
+
+## South Park Character System
+
+### Character Library
+
+Location: `/home/glitchtrend/character-library/`
+
+The library contains pre-built characters with photo-realistic heads composited onto South Park-style cartoon bodies. Each character has:
+- Multiple expression sprites (normal, happy, angry, surprised)
+- A horizontal spritesheet with all expressions
+- Metadata in `manifest.json`
+
+**Check the library first** before creating any personality sprite. If the character exists, copy their sprites into the game — no pixel art needed.
+
+```
+character-library/
+  manifest.json                    # Index of all built characters
+  bodies/                          # South Park body templates
+  characters/
+    sam-altman/
+      sprites/
+        normal.png                 # Individual expression sprites (200x300)
+        happy.png
+        angry.png
+        surprised.png
+        spritesheet.png            # All expressions in horizontal strip
+    dario-amodei/
+      ...
+```
+
+### Expression Constants
+
+Standard expression frame indices — must be consistent across all games:
+
+```js
+// In Constants.js
+export const EXPRESSION = {
+  NORMAL: 0,
+  HAPPY: 1,
+  ANGRY: 2,
+  SURPRISED: 3,
+};
+
+export const EXPRESSION_HOLD_MS = 600;
+```
+
+### Loading Characters from the Library
+
+During game build, copy character sprites into the game:
+```
+character-library/characters/<slug>/sprites/ → game-dir/public/assets/characters/<slug>/
+```
+
+In the Phaser preloader:
+```js
+preload() {
+  this.load.spritesheet('sam-altman', 'assets/characters/sam-altman/spritesheet.png', {
+    frameWidth: 200,
+    frameHeight: 300,
+  });
+}
+```
+
+### Expression Wiring Pattern
+
+Every personality character must have reactive expressions. Wire them to game events:
+
+```js
+// In the player/character entity constructor:
+this.sprite = scene.physics.add.sprite(x, y, 'sam-altman', EXPRESSION.NORMAL);
+this.expressionTimer = null;
+
+setExpression(expression, holdMs = EXPRESSION_HOLD_MS) {
+  this.sprite.setFrame(expression);
+  if (this.expressionTimer) this.expressionTimer.remove();
+  if (expression !== EXPRESSION.NORMAL) {
+    this.expressionTimer = this.scene.time.delayedCall(holdMs, () => {
+      this.sprite.setFrame(EXPRESSION.NORMAL);
+    });
+  }
+}
+
+// Wire to game events in the scene's create():
+eventBus.on(Events.PLAYER_DAMAGED, () => {
+  player.setExpression(EXPRESSION.ANGRY);
+});
+
+eventBus.on(Events.SCORE_CHANGED, () => {
+  player.setExpression(EXPRESSION.HAPPY);
+});
+
+eventBus.on(Events.SPECTACLE_STREAK, ({ streak }) => {
+  player.setExpression(EXPRESSION.SURPRISED, 1000);
+});
+
+// Opponents also react:
+eventBus.on(Events.OPPONENT_HIT, ({ id }) => {
+  opponents[id].setExpression(EXPRESSION.ANGRY);
+});
+
+eventBus.on(Events.OPPONENT_SCORES, ({ id }) => {
+  opponents[id].setExpression(EXPRESSION.HAPPY);
+});
+```
+
+### Building New Characters
+
+If a personality is needed but not in the library, build it:
+
+```bash
+cd /home/glitchtrend/character-library
+python3 build-character.py <slug> "<Full Name>" <body-type> <normal-url> <happy-url> <angry-url> [surprised-url]
+```
+
+Body types: `casual` (t-shirt/hoodie), `suit` (blazer), `leather-jacket` (Jensen special).
 
 ## Pixel Art Rendering System
 
@@ -305,20 +432,21 @@ At small scales, subtle changes read as smooth motion:
 - Bat = purple (index 9), Zombie = green (index 10), Skeleton = white (index 8), Demon = red (index 3)
 
 ### 6. Scale Appropriately
-| Entity Size | Grid | Scale | Rendered Size | Use Case |
-|-------------|------|-------|---------------|----------|
-| Small (items, pickups) | 8x8 | 2 | 16x16px | Gems, coins, hearts, bullets |
-| Medium (enemies, NPCs) | 16x16 | 2 | 32x32px | Standard enemies, small NPCs |
-| Large (player, boss) | 16x16 or 24x24 | 3 | 48x48 or 72x72px | Player character, mid-bosses |
-| Extra Large (hero, personality) | 24x24 or 32x32 | 3-4 | 72x72 to 128x128px | Character-driven games, named personalities, bobblehead characters |
+| Entity Size | Grid | Scale | Rendered | Screen % (540px) |
+|---|---|---|---|---|
+| Tiny (pickups, projectiles) | 8x8 | 3 | 24x24px | 4% |
+| Small (items, collectibles) | 12x12 | 3 | 36x36px | 7% |
+| Medium (enemies, obstacles) | 16x16 | 3 | 48x48px | 9% |
+| Large (boss, vehicle) | 24x24 or 32x32 | 3 | 72-96px | 13-18% |
+| **Personality (named character)** | **32x48** | **4** | **128x192px** | **35%** |
 
-**Character-driven games** (games starring named characters, personalities, or mascots): Use Large or Extra Large sprites. The main character should occupy roughly 12-15% of the screen width. Use **bobblehead proportions** -- oversized head (40-50% of sprite height), compact body -- for maximum personality at any scale. Adjust `PLAYER.WIDTH` and `PLAYER.HEIGHT` in Constants.js to match.
+**Character-driven games** (games starring named characters, personalities, or mascots): Use the Personality archetype. The main character should dominate the screen (~35% of canvas height). Use **caricature proportions** — large head (60%+ of sprite height) with exaggerated features, compact body — for maximum personality at any scale. Adjust `PLAYER.WIDTH` and `PLAYER.HEIGHT` in Constants.js to match.
 
 When replacing geometric shapes with pixel art, match the rendered sprite size to the entity's `WIDTH`/`HEIGHT` in Constants.js. If the Constants values are too small for the art style, increase them — the sprite and the physics body should agree.
 
-## External Asset Download (Optional)
+## External Asset Download
 
-If the user explicitly requests real art assets instead of pixel art, use this workflow:
+Use this workflow for downloading real images (logos, meme references, sprite sheets). Logos and meme images from the source tweet are downloaded by default (see Asset Tiers above). Full sprite sheet replacements are optional and used when pixel art isn't sufficient.
 
 ### Reliable Free Sources
 
@@ -358,6 +486,45 @@ if (scene.textures.exists('player-external')) {
   this.sprite = scene.physics.add.sprite(x, y, 'player-fallback');
 }
 ```
+
+### Logo Download Workflow
+
+When a game features a named company, download and use the real logo. SVG preferred (scales cleanly), PNG acceptable.
+
+**Steps:**
+1. Search for the company's official logo (SVG or high-res PNG)
+2. Download to `public/assets/logos/<company>.svg` (or `.png`)
+3. Load in Phaser: `this.load.image('logo-openai', 'assets/logos/openai.svg')`
+4. Use for branding elements (splash, HUD icons, entity overlays)
+5. Keep pixel art fallback for the character sprite itself — logos complement personality sprites, they don't replace them
+
+**Well-known logo sources** (search for these when needed):
+- Company press kits and brand pages typically host official logo files
+- Use WebSearch to find `"<company> logo SVG press kit"` or `"<company> brand assets"`
+
+**In Phaser preload:**
+```js
+preload() {
+  this.load.image('logo-openai', 'assets/logos/openai.png');
+  this.load.image('logo-anthropic', 'assets/logos/anthropic.png');
+}
+```
+
+**Fallback if logo fails to load:**
+```js
+this.load.on('loaderror', (file) => {
+  console.warn(`Failed to load ${file.key}, using pixel art fallback`);
+});
+```
+
+### Meme Image Integration
+
+When `thread.json` includes an `image_url`, download and incorporate it:
+
+1. Download the image: `curl -o public/assets/meme-ref.png "<image_url>"`
+2. Load in Phaser: `this.load.image('meme-ref', 'assets/meme-ref.png')`
+3. Use appropriately — as a background element, game-over splash, or visual reference for character design
+4. Study the image for character appearances, visual style, and meme elements before designing sprites
 
 ## Process
 

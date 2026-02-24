@@ -29,16 +29,19 @@ Present a table of sprites to create:
 
 | Entity | Archetype | Grid | Frames | Description |
 |--------|-----------|------|--------|-------------|
-| Player | Humanoid | 16x16 | 4 | ... |
+| Player (personality) | Personality | 32x48 | 1-4 | Caricature of [name], scale 4 |
+| Player (generic) | Humanoid | 16x16 | 4 | ... |
 | Enemy X | Flying | 16x16 | 2 | ... |
 | Pickup | Item | 8x8 | 1 | ... |
+
+If the game features a real person or named personality, default to the **Personality** archetype for the player character. This uses a 32x48 grid at scale 4 (128x192px rendered, ~35% of canvas height) — large enough to recognize the personality at a glance.
 
 Choose the palette that best matches the game's existing color scheme:
 - **DARK** — gothic, horror, dark fantasy
 - **BRIGHT** — arcade, platformer, casual
 - **RETRO** — NES-style, muted tones
 
-Explain: "Each entity will get a pixel art sprite defined as a grid of color indices. At 16x16 scaled 2x, they render at 32x32 pixels — small and retro but recognizable. Animations use 2-4 frames for walk cycles and wing flaps."
+Grid sizes range from 8x8 (tiny pickups) through 16x16 (standard entities) to 32x48 (personality characters). Named characters always use the Personality archetype to ensure the meme hook — recognizing the person — lands immediately.
 
 ### Step 3: Implement
 

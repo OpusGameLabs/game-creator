@@ -22,7 +22,9 @@ First, load the game-qa skill to get the full testing patterns and fixtures.
 - Read `src/main.js` to check if `window.__GAME__`, `window.__GAME_STATE__`, `window.__EVENT_BUS__` are exposed
 - Read `src/core/GameState.js` to understand what state is available
 - Read `src/core/EventBus.js` to understand what events exist
+- Read `src/core/Constants.js` to understand game parameters (rates, speeds, durations, max values)
 - Read all scene files to understand the game flow
+- Read `design-brief.md` if it exists — it documents expected mechanics, magnitudes, and win/lose reachability
 
 ### Step 2: Setup Playwright
 
@@ -53,14 +55,63 @@ Write tests based on what the game actually does:
 
 Follow the game-qa skill patterns. Use `gamePage` fixture. Use `page.evaluate()` to read game state. Use `page.keyboard.press()` for input.
 
-### Step 4: Run and verify
+### Step 4: Design-intent tests
+
+Add a `test.describe('Design Intent')` block to game.spec.js. These tests catch
+mechanics that technically exist but are too weak to matter.
+
+1. **Lose condition**: Detect deterministically whether the game has a lose state.
+   Read `GameState.js` — if it has a `won`, `result`, or similar boolean/enum
+   field, the game distinguishes win from loss. Also check `render_game_to_text()`
+   in `main.js` — if it returns distinct outcome modes (e.g., `'win'` vs
+   `'game_over'`), the game has a lose state.
+
+   If a lose state exists: start the game, provide NO input, let it run to
+   completion (use `page.waitForFunction` with the round duration from
+   Constants.js). Assert the outcome is the losing one (e.g., `won === false`,
+   `mode === 'game_over'`).
+
+   **This assertion is non-negotiable.** Do NOT write a test that passes when the
+   player wins by doing nothing. If the current game behavior is "player wins
+   with no input," that is a bug — write the test to catch it.
+
+2. **Opponent/AI pressure**: If an AI-driven mechanic exists (auto-climbing bar,
+   enemy spawning, difficulty ramp), test that it produces substantial state
+   changes. Run the game for half its duration without player input. Assert the
+   opponent's state reaches at least 25% of its maximum. If `design-brief.md`
+   exists, use its expected magnitudes for thresholds. Otherwise, derive from
+   Constants.js: calculate `rate * duration` and assert it reaches meaningful
+   levels.
+
+3. **Win condition**: Test that active player input leads to a win. Provide rapid
+   input throughout the round and assert the outcome is a win.
+
+### Step 5: Entity interaction audit
+
+Audit collision and interaction logic for asymmetries that would confuse a
+first-time player.
+
+If `design-brief.md` has an "Entity Interactions" section, use it as the
+checklist. Otherwise, audit `GameScene.js` directly:
+
+1. Find all collision handlers, overlap checks, or distance-based interactions
+2. Map which entities interact with which others
+3. Flag any visible moving entity that interacts with one side (player OR
+   opponent) but not the other — add a `// QA FLAG: asymmetric interaction`
+   comment in the test file noting the entity name and the asymmetry
+
+This is a flag, not a hard fail. Some asymmetries are intentional (e.g.,
+hazards that only affect the player). The flag ensures the asymmetry is a
+conscious design choice, not an oversight.
+
+### Step 6: Run and verify
 
 1. Run `npx playwright test` to execute all tests
 2. If visual tests fail on first run, that's expected — generate baselines with `npx playwright test --update-snapshots`
 3. Run again to verify all tests pass
 4. Summarize results
 
-### Step 5: Report
+### Step 7: Report
 
 Tell the user in plain English:
 

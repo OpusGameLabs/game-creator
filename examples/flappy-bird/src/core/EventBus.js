@@ -23,6 +23,7 @@ export const Events = {
   MUSIC_GAMEPLAY: 'music:gameplay',
   MUSIC_GAMEOVER: 'music:gameover',
   MUSIC_STOP: 'music:stop',
+  AUDIO_TOGGLE_MUTE: 'audio:toggleMute',
 };
 
 class EventBus {

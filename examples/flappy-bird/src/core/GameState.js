@@ -1,6 +1,7 @@
 class GameState {
   constructor() {
     this.bestScore = 0;
+    this.isMuted = localStorage.getItem('muted') === 'true';
     this.reset();
   }
 
