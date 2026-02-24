@@ -13,13 +13,50 @@ The #1 mistake is making BGM too loud, dense, or aggressive. Players need to foc
 - **Add `.room()` and `.delay()`** — reverb/delay fill space without density
 - **Avoid drums for most game types** — if drums are needed, keep gain under 0.3
 
+## Anti-Repetition (CRITICAL)
+
+The #2 mistake is writing short patterns that sound identical every cycle. A 16-step pattern at 120 cpm loops every ~8 seconds — players hear the same thing 7+ times per minute. Use these techniques on EVERY BGM pattern:
+
+### Cycle alternation — `<[phrase1] [phrase2] [phrase3]>`
+Write 3-4 melodic variations that rotate each cycle. This multiplies your effective loop length:
+
+```js
+// 4 alternating melodies = 4x longer before repeating
+note('<[e3 ~ g3 a3 ~ ~ g3 ~] [g3 ~ a3 b3 ~ ~ a3 ~] [a3 ~ g3 e3 ~ ~ d3 ~] [b3 ~ a3 g3 ~ ~ e3 ~]>')
+```
+
+### Layer phasing — different `.slow()` per layer
+When layers cycle at different speeds, they combine differently each pass:
+```js
+// Melody: 1 cycle, Counter: 1.5 cycles, Pad: 4 cycles, Texture: 3 cycles
+// = ~12 cycles before exact realignment
+melody,                           // default speed
+counterMelody.slow(1.5),          // phased
+padChords.slow(4),                // very slow
+atmosphericTexture.slow(3),       // different phase
+```
+
+### Probabilistic notes — `?` suffix
+Notes with `?` play 50% of the time, creating organic variation each loop:
+```js
+note('b4 ~ ~ ~ e5? ~ ~ ~ g4? ~ ~ ~ a4? ~ ~ ~')
+```
+
+### Filter cycling — `<value1 value2 ...>`
+Change timbre across cycles:
+```js
+.lpf('<1200 800 1600 1000>')  // brightness shifts each cycle
+```
+
+**Rule of thumb**: Effective loop length should be 30+ seconds before exact repetition. Apply ALL of these techniques, not just one.
+
 ## Ambient / Atmospheric BGM (flight sims, exploration, puzzle)
 
 ```js
 export function gameplayBGM() {
   return stack(
-    // Melody — gentle sine, lots of rests, reverb
-    note('e4 ~ g4 ~ a4 ~ ~ ~ b4 ~ a4 ~ g4 ~ e4 ~')
+    // Melody — 3 alternating phrases, gentle sine, lots of rests
+    note('<[e4 ~ g4 ~ a4 ~ ~ ~ b4 ~ a4 ~ g4 ~ e4 ~] [g4 ~ a4 ~ b4 ~ ~ ~ a4 ~ g4 ~ e4 ~ ~ ~] [b4 ~ a4 ~ g4 ~ ~ ~ e4 ~ g4 ~ a4 ~ g4 ~]>')
       .s('sine')
       .gain(0.14)
       .lpf(2200)
@@ -31,7 +68,7 @@ export function gameplayBGM() {
       .delay(0.2)
       .delaytime(0.5)
       .delayfeedback(0.3),
-    // Pad — warm sustained chords
+    // Pad — 4-chord progression on slow cycle (phases against melody)
     note('<e3,g3,b3> <e3,g3,b3> <a2,c3,e3> <a2,c3,e3> <d3,f3,a3> <d3,f3,a3> <g2,b2,d3> <g2,b2,d3>')
       .s('sine')
       .attack(0.6)
@@ -40,25 +77,26 @@ export function gameplayBGM() {
       .room(0.5)
       .roomsize(4)
       .lpf(1600)
-      .slow(2),
-    // Bass — slow pulse
-    note('e2 ~ ~ ~ a2 ~ ~ ~ d2 ~ ~ ~ g2 ~ ~ ~')
+      .slow(4),
+    // Bass — 2 alternating root progressions
+    note('<[e2 ~ ~ ~ a2 ~ ~ ~ d2 ~ ~ ~ g2 ~ ~ ~] [a2 ~ ~ ~ d2 ~ ~ ~ g2 ~ ~ ~ c2 ~ ~ ~]>')
       .s('triangle')
       .gain(0.16)
       .lpf(500)
       .slow(2),
-    // Texture — very quiet background arpeggio
-    note('e4 g4 b4 e5')
+    // Texture — probabilistic notes with delay, on its own slow cycle
+    note('e4? g4 b4? e5')
       .s('triangle')
       .fast(2)
       .gain(0.04)
-      .lpf(1200)
+      .lpf('<1200 900 1500 1100>')
       .decay(0.15)
       .sustain(0)
       .room(0.6)
       .delay(0.3)
       .delaytime(0.375)
       .delayfeedback(0.4)
+      .slow(3)
   ).cpm(75).play();
 }
 ```
@@ -68,34 +106,39 @@ export function gameplayBGM() {
 ```js
 export function gameplayBGM() {
   return stack(
-    // Lead — square, moderate gain
-    note("c4 e4 g4 e4 c4 d4 e4 c4")
+    // Lead — 4 alternating phrases for variety
+    note('<[c4 e4 g4 e4 c4 d4 e4 c4] [e4 g4 c5 g4 e4 f4 g4 e4] [g4 e4 c4 d4 e4 c4 g3 c4] [c4 d4 e4 g4 e4 d4 c4 d4]>')
       .s("square")
       .gain(0.18)
       .lpf(2200)
       .decay(0.12)
       .sustain(0.25),
-    // Counter melody — sparse, fills gaps
-    note("~ c5 ~ ~ ~ e5 ~ ~")
+    // Counter melody — 2 alternating phrases, offset timing
+    note('<[~ c5 ~ ~ ~ e5 ~ ~] [~ ~ e5 ~ ~ ~ c5 ~]>')
       .s("square")
       .gain(0.08)
       .lpf(3000)
       .decay(0.15)
-      .sustain(0),
-    // Bass — triangle, steady
-    note("c2 c2 g2 g2 f2 f2 c2 c2")
+      .sustain(0)
+      .slow(1.5),
+    // Bass — 3 root progressions
+    note('<[c2 c2 g2 g2 f2 f2 c2 c2] [a1 a1 e2 e2 f2 f2 g2 g2] [f2 f2 c2 c2 g2 g2 c2 c2]>')
       .s("triangle")
       .gain(0.22)
       .lpf(500),
-    // Drums — restrained
-    s("bd ~ sd ~, hh*8")
-      .gain(0.28),
-    // Arp accent — very quiet
+    // Synth drums — 2 alternating kick patterns
+    note('<[c1 ~ c1 ~ c1 c1 ~ ~ c1 ~ c1 ~ c1 ~ c1 ~] [c1 c1 ~ ~ c1 ~ c1 ~ ~ c1 ~ c1 c1 ~ ~ c1]>')
+      .s("sine")
+      .gain(0.28)
+      .decay(0.12)
+      .sustain(0)
+      .lpf(200),
+    // Arp accent — filter cycles for timbral shift
     note("c3 e3 g3 c4")
       .s("square")
       .fast(4)
       .gain(0.05)
-      .lpf(1000)
+      .lpf('<1000 700 1400 900>')
       .decay(0.06)
       .sustain(0)
   ).cpm(130).play();
@@ -142,8 +185,8 @@ export function menuTheme() {
 ```js
 export function gameOverTheme() {
   return stack(
-    // Descending melody
-    note('b4 ~ a4 ~ g4 ~ e4 ~ d4 ~ c4 ~ ~ ~ ~ ~')
+    // Descending melody — 3 variations
+    note('<[b4 ~ a4 ~ g4 ~ e4 ~ d4 ~ c4 ~ ~ ~ ~ ~] [e4 ~ d4 ~ c4 ~ b3 ~ a3 ~ g3 ~ ~ ~ ~ ~] [g4 ~ e4 ~ d4 ~ c4 ~ e4 ~ d4 ~ b3 ~ ~ ~]>')
       .s('triangle')
       .gain(0.18)
       .decay(0.6)
@@ -152,8 +195,8 @@ export function gameOverTheme() {
       .room(0.6)
       .roomsize(5)
       .lpf(1800),
-    // Dark pad
-    note('a2,c3,e3')
+    // Dark pad — alternating chords on slow cycle
+    note('<[a2,c3,e3] [d2,f2,a2] [e2,g2,b2]>')
       .s('sine')
       .attack(0.5)
       .release(2.5)
@@ -161,6 +204,17 @@ export function gameOverTheme() {
       .room(0.7)
       .roomsize(6)
       .lpf(1200)
+      .slow(2),
+    // Ghostly high texture — probabilistic, phased
+    note('~ ~ ~ ~ ~ e5? ~ ~ ~ ~ ~ ~ ~ b4? ~ ~')
+      .s('sine')
+      .gain(0.03)
+      .delay(0.5)
+      .delaytime(0.6)
+      .delayfeedback(0.5)
+      .room(0.7)
+      .lpf(2000)
+      .slow(3)
   ).slow(3).cpm(50).play();
 }
 ```
@@ -170,23 +224,27 @@ export function gameOverTheme() {
 ```js
 export function bossTheme() {
   return stack(
-    // Aggressive lead — sawtooth with filter
-    note("e3 e3 g3 a3 e3 e3 b3 a3")
+    // Aggressive lead — 3 alternating riffs
+    note('<[e3 e3 g3 a3 e3 e3 b3 a3] [e3 g3 a3 b3 a3 g3 e3 g3] [b3 a3 g3 e3 g3 a3 b3 a3]>')
       .s("sawtooth")
       .gain(0.2)
       .lpf(1800)
       .decay(0.1)
       .sustain(0.4),
-    // Heavy bass
-    note("e1 e1 e1 g1 a1 a1 e1 e1")
+    // Heavy bass — 2 alternating lines
+    note('<[e1 e1 e1 g1 a1 a1 e1 e1] [a1 a1 g1 e1 e1 g1 a1 a1]>')
       .s("sawtooth")
       .gain(0.25)
       .lpf(400)
       .distort(1.5),
-    // Drums — active but not overwhelming
-    s("bd bd sd bd, hh*16")
-      .gain(0.35),
-    // Tension arp
+    // Synth drums — 2 alternating patterns
+    note('<[c1 c1 ~ c1 c1 ~ c1 ~] [c1 ~ c1 c1 ~ c1 ~ c1]>')
+      .s("sine")
+      .gain(0.35)
+      .decay(0.12)
+      .sustain(0)
+      .lpf(200),
+    // Tension arp — filter cycling for movement
     note("e4 g4 b4 e5")
       .s("square")
       .fast(8)

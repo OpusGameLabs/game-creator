@@ -12,7 +12,7 @@ You are an expert game audio engineer. You use **Strudel.cc** for looping backgr
 
 For detailed reference, see companion files in this directory:
 - `strudel-reference.md` — Mini-notation syntax, synth oscillators, effects chain, FM synthesis, filter patterns
-- `bgm-patterns.md` — Genre-specific BGM pattern examples (ambient, chiptune, menu, game over, boss)
+- `bgm-patterns.md` — Genre-specific BGM pattern examples (ambient, chiptune, menu, game over, boss) + anti-repetition techniques
 - `mixing-guide.md` — Volume levels table and style guidelines per genre
 
 ## Critical: BGM vs SFX — Two Different Engines
@@ -333,6 +333,51 @@ Wire the toggle to:
 - A speaker icon button in the UI (visible on all scenes)
 - The **M** key on keyboard
 - Persist preference in `localStorage` if available
+
+## Anti-Repetition: Making BGM Not Sound Like a 4-Second Loop
+
+The #1 complaint about procedural game music is repetitiveness. Strudel patterns loop by design, so you MUST use these techniques to create variation:
+
+### 1. Cycle alternation with `<...>`
+Instead of one melody that repeats every cycle, write 3-4 variations that rotate:
+```js
+// BAD — same 16 notes every cycle, gets old in 5 seconds
+note('e3 ~ g3 a3 ~ ~ g3 ~ e3 ~ d3 e3 ~ ~ ~ ~')
+
+// GOOD — 4 different phrases that alternate, takes 4x longer to repeat
+note('<[e3 ~ g3 a3 ~ ~ g3 ~ e3 ~ d3 e3 ~ ~ ~ ~] [g3 ~ a3 b3 ~ ~ a3 ~ g3 ~ e3 g3 ~ ~ ~ ~] [a3 ~ g3 e3 ~ ~ d3 ~ e3 ~ g3 a3 ~ ~ ~ ~] [b3 ~ a3 g3 ~ ~ e3 ~ d3 ~ e3 ~ g3 ~ a3 ~]>')
+```
+
+### 2. Layer phasing with different `.slow()` values
+When layers have different cycle lengths, they combine differently each time:
+```js
+// Melody repeats every 1 cycle, bass every 1.5, pad every 4
+// Creates ~12 cycles before exact alignment
+note('...melody...'),                    // .slow(1) — default
+note('...bass...').slow(1.5),            // 1.5x slower
+note('...pad chords...').slow(4),        // 4x slower
+note('...texture...').slow(3),           // 3x slower
+```
+
+### 3. Probabilistic notes with `?`
+Add organic variation — notes play 50% of the time:
+```js
+note('b4 ~ ~ ~ e5? ~ ~ ~ g4? ~ ~ ~ a4? ~ ~ ~')
+```
+
+### 4. Filter sweep alternation
+Cycle the filter cutoff so the timbre changes:
+```js
+.lpf('<1200 800 1600 1000>')  // different brightness each cycle
+```
+
+### 5. Counter melodies on offset timing
+Add a sparse answering phrase on a different `.slow()` so it never aligns the same way:
+```js
+note('<[~ ~ ~ ~ ~ b3 ~ ~] [~ ~ d4 ~ ~ ~ ~ ~]>').slow(1.5)
+```
+
+**Rule of thumb**: The effective loop length should be at least 30 seconds before exact repetition. Use 3-4 cycle alternations on the melody, different `.slow()` on each layer, and at least one probabilistic texture layer.
 
 ## Integration Checklist
 
