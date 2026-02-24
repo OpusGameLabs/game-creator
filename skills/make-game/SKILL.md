@@ -13,10 +13,11 @@ Build a complete browser game from scratch, step by step. This command walks you
 1. A fully scaffolded game project with clean architecture
 2. Pixel art sprites — recognizable characters, enemies, and items (optional, replaces geometric shapes)
 3. Visual polish — gradients, particles, transitions, juice
-4. Chiptune music and retro sound effects (no audio files needed)
-5. Live deployment to GitHub Pages with a public URL
-6. Monetization via Play.fun — points tracking, leaderboards, wallet connect, and a play.fun URL to share on Moltbook
-7. Future changes auto-deploy on `git push`
+4. A 50 FPS promo video — autonomous gameplay capture, mobile portrait, ready for social media
+5. Chiptune music and retro sound effects (no audio files needed)
+6. Live deployment to GitHub Pages with a public URL
+7. Monetization via Play.fun — points tracking, leaderboards, wallet connect, and a play.fun URL to share on Moltbook
+8. Future changes auto-deploy on `git push`
 
 **Quality assurance is built into every step** — each code-modifying step runs build verification, visual review via Playwright MCP, and autofixes any issues found.
 
@@ -40,13 +41,14 @@ Build a complete browser game from scratch, step by step. This command walks you
 - Step 1 (game implementation): Transform template into the actual game concept
 - Step 1.5: Pixel art sprites and backgrounds
 - Step 2: Visual polish
+- Step 2.5: Promo video capture
 - Step 3: Audio integration
 
 Each subagent receives: step instructions, relevant skill name, project path, engine type, dev server port, and game concept description.
 
 ## Verification Protocol
 
-Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). It delegates all QA work to a subagent to minimize main-thread context usage.
+Run this protocol after **every code-modifying step** (Steps 1, 1.5, 2, 3). Step 2.5 (Promo Video) does not modify game code, so it skips QA. It delegates all QA work to a subagent to minimize main-thread context usage.
 
 ### Playwright MCP Check (once, before first QA run)
 
@@ -217,9 +219,10 @@ Create all pipeline tasks upfront using `TaskCreate`:
 1. Scaffold game from template
 2. Add pixel art sprites and backgrounds (2D only; marked N/A for 3D)
 3. Add visual polish (particles, transitions, juice)
-4. Add audio (BGM + SFX)
-5. Deploy to GitHub Pages
-6. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
+4. Record promo video (autonomous 50 FPS capture)
+5. Add audio (BGM + SFX)
+6. Deploy to GitHub Pages
+7. Monetize with Play.fun (register on OpenGameProtocol, add SDK, redeploy)
 
 This gives the user full visibility into pipeline progress at all times. Quality assurance (build, runtime, visual review, autofix) is built into each step, not a separate task.
 
@@ -234,9 +237,10 @@ Mark task 1 as `in_progress`.
 1. Locate the plugin's template directory. Check these paths in order until found:
    - The agent's plugin cache (e.g. `~/.claude/plugins/cache/local-plugins/game-creator/1.0.0/templates/`)
    - The `templates/` directory relative to this plugin's install location
-2. Copy the entire template directory to the target project name:
-   - 2D: copy `templates/phaser-2d/` → `<game-name>/`
-   - 3D: copy `templates/threejs-3d/` → `<game-name>/`
+2. **Determine the target directory.** If the current working directory is the `game-creator` plugin repository (check for `CLAUDE.md` mentioning "game-creator" or `.claude-plugin/plugin.json`), create the game inside `examples/` (e.g., `examples/<game-name>/`). Otherwise, create it in the current working directory (`<game-name>/`).
+3. Copy the entire template directory to the target:
+   - 2D: copy `templates/phaser-2d/` → `<target-dir>/`
+   - 3D: copy `templates/threejs-3d/` → `<target-dir>/`
 3. Update `package.json` — set `"name"` to the game name
 4. Update `<title>` in `index.html` to a human-readable version of the game name
 5. **Verify Node.js/npm availability**: Run `node --version && npm --version` to confirm Node.js and npm are installed and accessible. If they fail (e.g., nvm lazy-loading), try sourcing nvm: `export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"` then retry. If Node.js is not installed at all, tell the user they need to install it before continuing.
@@ -456,11 +460,13 @@ cp <plugin-root>/character-library/characters/<slug>/sprites/* \
 ```
 Result: 4-expression spritesheet ready. Done.
 
-**Tier 2 — Build from 4 images (good)**: WebSearch for 4 expression photos:
-- normal: `"<Name> face transparent PNG pngimg OR cleanpng"`
-- happy: `"<Name> smiling face transparent PNG"`
-- angry: `"<Name> angry face transparent PNG"`
-- surprised: `"<Name> surprised shocked face transparent PNG"`
+**Tier 2 — Build from 4 images (good)**: WebSearch for 4 expression photos. **Any photo format works** (jpg, png, webp) — the pipeline has ML background removal built in, so transparent PNGs are NOT required. Search broadly:
+- normal: `"<Name> portrait photo"` or `"<Name> face"` — neutral expression
+- happy: `"<Name> smiling"` or `"<Name> laughing"`
+- angry: `"<Name> angry"` or `"<Name> serious stern"`
+- surprised: `"<Name> surprised"` or `"<Name> shocked"`
+
+Prefer real photographs (not illustrations/cartoons). Head shots and half-body shots both work — `crop-head.mjs` uses face detection to isolate the face automatically. Download as `normal.jpg`, `happy.jpg`, etc. (any image extension).
 
 If all 4 found, download to `<project-dir>/public/assets/characters/<slug>/raw/` and run:
 ```bash
@@ -616,15 +622,113 @@ Launch a `Task` subagent with these instructions:
 **Tell the user:**
 > Your game looks much better now! Here's what changed: [summarize changes]
 >
-> **Next up: music and sound effects.** I'll add chiptune background music and retro sound effects — all generated in the browser, no audio files needed. Ready?
+> **Next up: promo video.** I'll autonomously record a 50 FPS gameplay clip in mobile portrait — ready for social media. Then we'll add music and sound effects.
 
 Mark task 3 as `completed`.
+
+**Proceed directly to Step 2.5** — no user confirmation needed (promo video is non-destructive and fast).
+
+### Step 2.5: Record promo video
+
+Mark task 4 as `in_progress`.
+
+**This step stays in the main thread.** It does not modify game code — it records autonomous gameplay footage using Playwright and converts it with FFmpeg. No QA verification needed.
+
+**Pre-check: FFmpeg availability**
+
+```bash
+ffmpeg -version | head -1
+```
+
+If FFmpeg is not found, warn the user and skip this step:
+> FFmpeg is not installed. Skipping promo video. Install it with `brew install ffmpeg` (macOS) or `apt install ffmpeg` (Linux), then run `/game-creator:promo-video` later.
+
+Mark task 4 as `completed` and proceed to Step 3.
+
+**Copy the conversion script** from the plugin:
+
+```bash
+cp <plugin-root>/skills/promo-video/scripts/convert-highfps.sh <project-dir>/scripts/
+chmod +x <project-dir>/scripts/convert-highfps.sh
+```
+
+**Launch a `Task` subagent** to generate the game-specific capture script:
+
+> You are implementing Step 2.5 (Promo Video) of the game creation pipeline.
+>
+> **Project path**: `<project-dir>`
+> **Dev server port**: `<port>`
+> **Skill to load**: `promo-video`
+>
+> **Read `progress.md`** and the following source files to understand the game:
+> - `src/scenes/GameScene.js` — find the death/failure method(s) to patch out
+> - `src/core/EventBus.js` — understand event flow
+> - `src/core/Constants.js` — check input keys, game dimensions
+> - `src/main.js` — verify `__GAME__` and `__GAME_STATE__` are exposed
+>
+> **Create `scripts/capture-promo.mjs`** following the `promo-video` skill template. You MUST adapt these game-specific parts:
+>
+> 1. **Death patching** — identify ALL code paths that lead to game over and monkey-patch them. Search for `triggerGameOver`, `gameOver`, `takeDamage`, `playerDied`, `onPlayerHit`, or any method that sets `gameState.gameOver = true`. Patch every one.
+>
+> 2. **Input sequence** — determine the actual input keys from the game's input handling (look for `createCursorKeys()`, `addKeys()`, `input.on('pointerdown')`, etc.). Generate a `generateInputSequence(totalMs)` function that produces natural-looking gameplay for this specific game type:
+>    - **Dodger** (left/right): Alternating holds with variable timing, occasional double-taps
+>    - **Platformer** (jump): Rhythmic taps with varying gaps
+>    - **Shooter** (move + fire): Interleaved movement and fire inputs
+>    - **Top-down** (WASD): Figure-eight or sweep patterns
+>
+> 3. **Entrance pause** — include a 1-2s pause at the start so the entrance animation plays (this is the visual hook).
+>
+> 4. **Viewport** — always `{ width: 1080, height: 1920 }` (9:16 mobile portrait) unless the game is desktop-only landscape.
+>
+> 5. **Duration** — 13s of game-time by default. For slower-paced games (puzzle, strategy), use 8-10s.
+>
+> **Config**: The script must accept `--port`, `--duration`, and `--output-dir` CLI args with sensible defaults.
+>
+> **Do NOT run the capture** — just create the script. The orchestrator runs it.
+
+**After subagent returns**, run the capture and conversion from the main thread:
+
+```bash
+# Ensure output directory exists
+mkdir -p <project-dir>/output
+
+# Run capture (takes ~26s for 13s game-time at 0.5x)
+node scripts/capture-promo.mjs --port <port>
+
+# Convert to 50 FPS MP4
+bash scripts/convert-highfps.sh output/promo-raw.webm output/promo.mp4 0.5
+```
+
+**Verify the output:**
+1. Check `output/promo.mp4` exists and is non-empty
+2. Verify duration is approximately `DESIRED_GAME_DURATION / 1000` seconds
+3. Verify frame rate is 50 FPS
+
+If capture fails (Playwright error, timeout, etc.), warn the user and skip — the promo video is a nice-to-have, not a blocker.
+
+**Extract a thumbnail** for the user to preview:
+```bash
+ffmpeg -y -ss 5 -i output/promo.mp4 -frames:v 1 -update 1 output/promo-thumbnail.jpg
+```
+
+Read the thumbnail image and show it to the user.
+
+**Tell the user:**
+> Promo video recorded! 50 FPS, mobile portrait (1080x1920).
+>
+> **File**: `output/promo.mp4` ([duration]s, [size])
+>
+> This was captured autonomously — the game ran at 0.5x, recorded at 25 FPS, then FFmpeg sped it up to 50 FPS. Death was patched out so it shows continuous gameplay.
+>
+> **Next up: music and sound effects.** Ready?
+
+Mark task 4 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
 ### Step 3: Add audio
 
-Mark task 4 as `in_progress`.
+Mark task 5 as `in_progress`.
 
 Launch a `Task` subagent with these instructions:
 
@@ -657,13 +761,13 @@ Launch a `Task` subagent with these instructions:
 >
 > **Next up: deploy to the web.** I'll help you set up GitHub Pages so your game gets a public URL. Future changes auto-deploy when you push. Ready?
 
-Mark task 4 as `completed`.
+Mark task 5 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
 ### Step 4: Deploy to GitHub Pages
 
-Mark task 5 as `in_progress`.
+Mark task 6 as `in_progress`.
 
 Load the game-deploy skill. **This step stays in the main thread** because it requires interactive authentication and user back-and-forth.
 
@@ -782,13 +886,13 @@ Add a `deploy` script to `package.json` so future deploys are one command:
 >
 > **Next up: monetization.** I'll register your game on Play.fun (OpenGameProtocol), add the points SDK, and redeploy. Players earn rewards, you get a play.fun URL to share on Moltbook. Ready?
 
-Mark task 5 as `completed`.
+Mark task 6 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
 ### Step 5: Monetize with Play.fun
 
-Mark task 6 as `in_progress`.
+Mark task 7 as `in_progress`.
 
 **This step stays in the main thread** because it requires interactive authentication.
 
@@ -946,7 +1050,7 @@ Wait ~30 seconds, then verify the deployment is live.
 >
 > **Share on Moltbook**: Post your game URL to [moltbook.com](https://www.moltbook.com/) — 770K+ agents ready to play and upvote.
 
-Mark task 6 as `completed`.
+Mark task 7 as `completed`.
 
 ### Pipeline Complete!
 
@@ -956,16 +1060,19 @@ Tell the user:
 > - **Scaffolded architecture** — clean, modular code structure
 > - **Pixel art sprites** — recognizable characters (if chosen) or clean geometric shapes
 > - **Visual polish** — gradients, particles, transitions, juice
+> - **Promo video** — 50 FPS gameplay footage in mobile portrait (`output/promo.mp4`)
 > - **Music and SFX** — chiptune background music and retro sound effects
 > - **Quality assured** — each step verified with build, runtime, and visual review
 > - **Live on the web** — deployed to GitHub Pages with a public URL
 > - **Monetized on Play.fun** — points tracking, leaderboards, and wallet connect
 >
 > **Share your play.fun URL on Moltbook** to reach 770K+ agents on the agent internet.
+> **Post your promo video** to TikTok, Reels, or X to drive traffic.
 >
 > **What's next?**
 > - Add new gameplay features: `/game-creator:add-feature [describe what you want]`
 > - Upgrade to pixel art (if using shapes): `/game-creator:add-assets`
+> - Re-record promo video: `/game-creator:record-promo`
 > - Launch a playcoin for your game (token rewards for players)
 > - Keep iterating! Run any step again: `/game-creator:design-game`, `/game-creator:add-audio`
 > - Redeploy after changes: `npm run deploy`

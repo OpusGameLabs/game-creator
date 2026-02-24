@@ -21,12 +21,14 @@ skills/
   game-architecture/SKILL.md  # Reference architecture patterns
   game-deploy/SKILL.md     # Deployment (GitHub Pages, Vercel, etc.)
   playdotfun/SKILL.md      # Play.fun monetization (git submodule → submodules/playdotfun)
-  make-game/SKILL.md       # Full pipeline: scaffold → assets → design → audio → deploy → monetize (QA at every step)
+  promo-video/SKILL.md     # Autonomous 50 FPS gameplay recording (Playwright + FFmpeg)
+  make-game/SKILL.md       # Full pipeline: scaffold → assets → design → promo video → audio → deploy → monetize (QA at every step)
   improve-game/SKILL.md    # Holistic audit + implement highest-impact improvements
   design-game/SKILL.md     # Visual design audit + improvements
   add-feature/SKILL.md     # Add feature following patterns
   add-assets/SKILL.md      # Replace shapes with pixel art sprites
   add-audio/SKILL.md       # Add Strudel.cc audio
+  record-promo/SKILL.md    # Record autonomous promo video (standalone command)
   monetize-game/SKILL.md   # Play.fun monetization (register, SDK, redeploy)
   qa-game/SKILL.md         # Add Playwright QA tests
   review-game/SKILL.md     # Code review for architecture + best practices
@@ -45,7 +47,10 @@ agents/
   game-reviewer.md         # Code review agent (preloads game-architecture)
 examples/
   flappy-bird/             # Complete example game (see below)
+  nick-land-dodger/        # Dodge game with photo-composite character + promo video
 ```
+
+**Game creation directory**: When the `/make-game` pipeline is launched from within the `game-creator` repository (i.e., the current working directory is `game-creator/` or a subdirectory), new games **must be created in `examples/`** (e.g., `examples/<game-name>/`). This keeps the repo organized and ensures example games are versioned alongside the plugin. When launched from any other directory, games are created in the current working directory as normal.
 
 ## Architecture Rules
 
