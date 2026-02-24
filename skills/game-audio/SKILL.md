@@ -304,7 +304,7 @@ export function initAudioBridge() {
 
 ## Mute State Management
 
-Every game with audio MUST support a mute toggle. Store `isMuted` in GameState and respect it everywhere:
+Store `isMuted` in GameState and respect it everywhere:
 
 ```js
 // AudioManager — check mute before playing BGM
@@ -329,11 +329,9 @@ eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
 });
 ```
 
-### Mute Button (Phaser Graphics API — do NOT use text)
+### Mute Button
 
-**Do NOT use `this.add.text()` for the mute button.** Draw a speaker icon with the Phaser Graphics API so it looks correct at any resolution.
-
-Helper that draws onto an existing Graphics object:
+Reference implementation for drawing a speaker icon with the Phaser Graphics API:
 
 ```js
 function drawMuteIcon(gfx, muted, size) {

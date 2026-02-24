@@ -112,7 +112,7 @@ Launch a `Task` subagent with these instructions:
 > 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
 > 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
 > 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
-> 9. Check mute button: Is there a speaker icon or mute toggle visible? If not, flag as ISSUE.
+> 9. Check mute button: Is there a mute toggle visible? If not, flag as ISSUE.
 >
 > **Screenshot timeout**: If `browser_take_screenshot` hangs for more than 10 seconds (can happen with continuous WebGL animations), cancel and proceed with code review instead. Do not let a screenshot hang block the entire QA phase.
 >
@@ -281,7 +281,7 @@ Launch a `Task` subagent with these instructions:
 > - Add entrance sequence in `create()`: player starts off-screen, tweens into position with `Bounce.easeOut`, landing shake + particle burst
 > - Add combo tracking to GameState: `combo` (current streak, resets on miss), `bestCombo` (session high), both reset in `reset()`
 > - Ensure restart is clean — test mentally that 3 restarts in a row would work identically
-> - Add `isMuted` to GameState for audio mute support
+> - Add `isMuted` to GameState for mute support
 >
 > **CRITICAL — Preserve the button pattern:**
 > - The template's `GameOverScene.js` contains a working `createButton()` helper (Container + Graphics + Text). **Do NOT rewrite this method.** Keep it intact or copy it into any new scenes that need buttons. The correct z-order is: Graphics first (background), Text second (label), Container interactive. If you put Graphics on top of Text, the text becomes invisible. If you make the Graphics interactive instead of the Container, hover/press states break.
@@ -588,7 +588,7 @@ Launch a `Task` subagent with these instructions:
 > 4. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
 > 5. Wire audio into main.js and all scenes
 > 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
-> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Both BGM and SFX must check `isMuted` before playing. Add M key shortcut and a speaker icon UI button drawn with the **Phaser Graphics API** (`fillRect`, `fillTriangle`, `arc`, `lineBetween`). Do NOT use `this.add.text()` for the mute button — see the game-audio skill "Mute Button" section for exact drawing code.
+> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Add M key shortcut and a speaker icon UI button. See the `mute-button` rule and the game-audio skill "Mute Button" section for requirements and drawing code.
 >
 > **After completing your work**, append a `## Step 3: Audio` section to `progress.md` with: BGM patterns added, SFX event mappings, mute wiring confirmation.
 >

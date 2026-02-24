@@ -352,7 +352,7 @@ createButton(scene, x, y, label, callback) {
 - **Hardcoded values** — Every number belongs in `Constants.ts`. No magic numbers in game logic.
 - **Unwired physics colliders** — Creating a static body with `physics.add.existing(obj, true)` does nothing on its own. You MUST call `physics.add.collider(bodyA, bodyB, callback)` to connect two bodies. Every static collider (ground, walls, platforms) needs an explicit collider or overlap call wiring it to the entities that should interact with it.
 - **Invisible or hidden button elements** — Never set `setAlpha(0)` on an interactive game object and layer Graphics or other display objects on top. **For buttons, always use the Container + Graphics + Text pattern** (see Button Pattern section above). Common broken patterns: (1) Drawing a Graphics rect after adding Text, hiding the label behind it. (2) Creating a Zone for hit area with Graphics drawn over it, making the Zone unreachable. (3) Making Text interactive but covering it with a Graphics background drawn afterward. The fix is always: Container first, Graphics added to container, Text added to container (in that order), Container is the interactive element.
-- **No mute toggle** — Games with audio MUST have a mute/unmute mechanism. Store a global `isMuted` flag in GameState. Both BGM and SFX must check it before playing. Wire it to a UI button or keyboard shortcut (M key).
+- **No mute toggle** — See the `mute-button` rule. Games with audio must have a mute toggle.
 
 ## Examples
 
@@ -373,7 +373,7 @@ Before considering a game complete, verify:
 - [ ] **Physics wired** — Every static body has an explicit `collider()` or `overlap()` call
 - [ ] **Object pooling** — Frequently created/destroyed objects use Groups with `maxSize`
 - [ ] **Delta-based movement** — All motion uses `delta`, not frame count
-- [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
+- [ ] **Mute toggle** — See `mute-button` rule
 - [ ] **Spectacle hooks wired** — Every player action and game event emits a `SPECTACLE_*` event; entrance sequence fires in `create()`
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures
