@@ -112,6 +112,7 @@ Launch a `Task` subagent with these instructions:
 > 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
 > 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
 > 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
+> 9. Check mute button: Is there a speaker icon or mute toggle visible? If not, flag as ISSUE.
 >
 > **Screenshot timeout**: If `browser_take_screenshot` hangs for more than 10 seconds (can happen with continuous WebGL animations), cancel and proceed with code review instead. Do not let a screenshot hang block the entire QA phase.
 >

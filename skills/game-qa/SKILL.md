@@ -494,6 +494,35 @@ each documented interaction matches the code. Flag any entity documented as
 for any flagged entity. This is informational — the flag surfaces the issue
 for human review, it doesn't fail the test suite.
 
+### 7. Mute Button Exists and Toggles
+
+Every game with audio must have a mute toggle. Test that `isMuted` exists on GameState and responds to the M key shortcut:
+
+```js
+test('mute button exists and toggles audio state', async ({ gamePage }) => {
+  await gamePage.keyboard.press('Space');
+  await gamePage.waitForFunction(() => window.__GAME_STATE__.started, null, { timeout: 5000 });
+
+  const hasMuteState = await gamePage.evaluate(() => {
+    return typeof window.__GAME_STATE__.isMuted === 'boolean';
+  });
+  expect(hasMuteState).toBe(true);
+
+  const before = await gamePage.evaluate(() => window.__GAME_STATE__.isMuted);
+  await gamePage.keyboard.press('m');
+  await gamePage.waitForTimeout(100);
+  const after = await gamePage.evaluate(() => window.__GAME_STATE__.isMuted);
+  expect(after).toBe(!before);
+
+  await gamePage.keyboard.press('m');
+  await gamePage.waitForTimeout(100);
+  const restored = await gamePage.evaluate(() => window.__GAME_STATE__.isMuted);
+  expect(restored).toBe(before);
+});
+```
+
+The M key is a testable proxy for the mute button — if the event wiring exists, the visual button does too. Playwright cannot inspect Phaser Graphics objects directly.
+
 ## When Adding QA to a Game
 
 1. Install Playwright: `npm install -D @playwright/test @axe-core/playwright && npx playwright install chromium`

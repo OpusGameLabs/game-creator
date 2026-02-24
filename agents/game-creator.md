@@ -110,6 +110,7 @@ Launch a `Task` subagent with these instructions:
 > 6. Check entity sizing: Is the main character large enough (12–15% screen width for character games)?
 > 7. Wait for game over (or navigate to it), `browser_take_screenshot` — save as `output/qa-gameover.png`
 > 8. Check buttons: Are button labels visible? Blank rectangles = broken button pattern.
+> 9. Check mute button: Is there a speaker icon or mute toggle visible? If not, flag as ISSUE.
 >
 > Without MCP (fallback):
 > 1. Read the iterate screenshots from `output/iterate/shot-*.png`

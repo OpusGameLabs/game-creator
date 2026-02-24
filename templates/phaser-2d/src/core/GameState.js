@@ -1,5 +1,6 @@
 class GameState {
   constructor() {
+    this.isMuted = localStorage.getItem('muted') === 'true';
     this.reset();
   }
 
