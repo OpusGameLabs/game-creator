@@ -46,9 +46,46 @@ curl -L -o public/assets/models/Soldier.glb "https://raw.githubusercontent.com/m
 // Fox:     { idle: 'Survey', walk: 'Walk', run: 'Run' }
 ```
 
+## Character Selection — Tiered Fallback
+
+When a game features named personalities (Trump, Biden, Musk, etc.), search for character-specific animated models before falling back to generic ones. For EACH character:
+
+**Tier 1 — Pre-built in `3d-character-library/`**: Check `manifest.json` for a name/theme match. Copy the GLB. Done.
+
+**Tier 2 — Search Sketchfab for character-specific model**: Use `find-3d-asset.mjs` to search for an animated model matching the character:
+```bash
+# Search by name
+node scripts/find-3d-asset.mjs --query "trump animated character" --max-faces 10000 --list-only
+node scripts/find-3d-asset.mjs --query "biden animated walk" --max-faces 10000 --list-only
+
+# Download if SKETCHFAB_TOKEN is set
+SKETCHFAB_TOKEN=<token> node scripts/find-3d-asset.mjs \
+  --query "trump animated character" --max-faces 10000 \
+  --output public/assets/models/ --slug trump
+```
+After download, log clip names to build the `clipMap`. If it has idle+walk, it's ready.
+
+**Tier 3 — Search by archetype**: If no character-specific model exists, search by what the character looks like:
+```bash
+# Politicians / business people
+node scripts/find-3d-asset.mjs --query "suit man animated walk idle" --max-faces 10000 --list-only
+
+# Athletes → "athlete animated"
+# Scientists → "lab coat animated"
+# Animals → search by species
+```
+
+**Tier 4 — Generic library fallback**: Use the best thematic match from `3d-character-library/`:
+- **Soldier** — action/military/generic human (default)
+- **Xbot** — sci-fi/tech/futuristic
+- **RobotExpressive** — cartoon/casual (most animations, 13 clips)
+- **Fox** — nature/animal
+
+**Multi-character games**: When 2+ characters use the same base model, assign different library models to each (e.g., Soldier for Trump, Xbot for Biden) so players can tell them apart. Note material recoloring opportunities in `MODEL_CONFIG`.
+
 ## Search & Download Script
 
-Use `scripts/find-3d-asset.mjs` for non-character models (props, scenery, buildings):
+Use `scripts/find-3d-asset.mjs` for both character searches AND non-character models (props, scenery, buildings):
 
 ```bash
 node scripts/find-3d-asset.mjs --query "barrel" --source polyhaven --output public/assets/models/

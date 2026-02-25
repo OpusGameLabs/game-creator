@@ -213,7 +213,7 @@ If celebrities are detected:
 - Set `hasCelebrities = true` and list detected names
 - Note in `progress.md` which characters are pre-built vs need building
 - **2D**: The Step 1.5 subagent will use photo-composite characters for these
-- **3D**: Select the best-matching animated character from `3d-character-library/manifest.json` (Soldier for military/action, Robot for tech/sci-fi, Fox for nature/animal themes)
+- **3D**: For each celebrity, try: (1) search `3d-character-library/manifest.json` for a match, (2) search Sketchfab for `"<name> animated character"` with `find-3d-asset.mjs`, (3) search by archetype (e.g. "suit man animated" for politicians), (4) fall back to best-matching library model. Differentiate multiple characters by using different base models.
 
 Create all pipeline tasks upfront using `TaskCreate`:
 
@@ -565,20 +565,65 @@ For 3D games, replace primitives with real GLB models and animated characters. T
 
 **Pre-step: Character Selection**
 
-1. **Read `design-brief.md`** to identify the player character and any named personalities.
+1. **Read `design-brief.md`** to identify all characters (player + opponents/NPCs) and their names.
 
 2. **Resolve the 3D character library** — find `3d-character-library/manifest.json` relative to the plugin root.
 
-3. **Select player character** using this priority:
-   - If the game features a specific personality/theme, pick the best-matching character from the library (e.g., Soldier for military, Robot for sci-fi, Fox for nature)
-   - If no theme match, default to Soldier (best idle/walk/run animations)
-   - Copy the GLB to `<project-dir>/public/assets/models/`:
-     ```bash
-     cp <plugin-root>/3d-character-library/models/Soldier.glb \
-        <project-dir>/public/assets/models/Soldier.glb
-     ```
+3. **For EACH character (player AND opponents), try these tiers in order:**
 
-4. **Search for world objects** — Read `design-brief.md` entity list and search for GLB props:
+**Tier 1 — Pre-built in library**: Check if a matching character exists in `3d-character-library/manifest.json` by name or theme. If yes, copy the GLB:
+```bash
+cp <plugin-root>/3d-character-library/models/<model>.glb \
+   <project-dir>/public/assets/models/<slug>.glb
+```
+Result: Animated character with idle/walk/run. Done.
+
+**Tier 2 — Search Sketchfab for a character-specific animated model**: Use `find-3d-asset.mjs` to search for an animated model matching the character. Search for the character by name or description:
+```bash
+# Search for animated character models with walk/idle
+node <plugin-root>/scripts/find-3d-asset.mjs \
+  --query "<character name> animated character" \
+  --max-faces 10000 --list-only
+
+# If SKETCHFAB_TOKEN is set, download the best match
+SKETCHFAB_TOKEN=<token> node <plugin-root>/scripts/find-3d-asset.mjs \
+  --query "<character name> animated" \
+  --max-faces 10000 --output <project-dir>/public/assets/models/ \
+  --slug <character-slug>
+```
+After download, inspect clip names by loading in a test page or logging them. Create a `clipMap` for the model. If the model has idle+walk animations, it's ready. If not, fall to Tier 3.
+
+**Tier 3 — Search for a thematic character model**: If no character-specific model is found, search by theme/archetype:
+```bash
+# Political figure → "suit man animated", "business man walk"
+# Military figure → use Soldier.glb
+# Tech figure → use Xbot.glb or RobotExpressive.glb
+# Animal → use Fox.glb or search for specific animal
+node <plugin-root>/scripts/find-3d-asset.mjs \
+  --query "low poly <archetype> animated walk" \
+  --max-faces 10000 --list-only
+```
+
+**Tier 4 — Generic library fallback**: Use the best-matching model from `3d-character-library/`:
+- **Soldier** — action/military/default human
+- **Xbot** — sci-fi/tech/futuristic
+- **RobotExpressive** — cartoon/casual/fun (most animations)
+- **Fox** — nature/animal
+
+Copy the GLB and use its pre-defined clipMap from `manifest.json`.
+
+**Differentiate multiple characters**: When a game has 2+ characters using the same base model (e.g., both Trump and Biden fall back to Soldier), differentiate them:
+- Use different models from the library (e.g., Soldier for player, Xbot for opponent)
+- Or use the same model but note in Constants.js that materials should be recolored
+
+**4. Record results** for each character in `progress.md`:
+```
+## 3D Characters
+- trump (player): Tier 2 — downloaded "animated politician" from Sketchfab (idle/walk/run)
+- biden (opponent): Tier 4 — Xbot.glb from 3d-character-library (idle/walk/run)
+```
+
+**5. Search for world objects** — Read `design-brief.md` entity list and search for GLB props:
    ```bash
    # For each entity type that needs a model (buildings, trees, obstacles, collectibles)
    node <plugin-root>/scripts/find-3d-asset.mjs --query "<entity description>" \
