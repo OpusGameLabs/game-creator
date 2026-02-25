@@ -27,6 +27,8 @@ skills/
   design-game/SKILL.md     # Visual design audit + improvements
   add-feature/SKILL.md     # Add feature following patterns
   add-assets/SKILL.md      # Replace shapes with pixel art sprites
+  game-3d-assets/SKILL.md  # 3D model pipeline (GLB download, AssetLoader, animated characters)
+  add-3d-assets/SKILL.md   # Replace 3D primitives with real GLB models
   add-audio/SKILL.md       # Add Strudel.cc audio
   record-promo/SKILL.md    # Record autonomous promo video (standalone command)
   monetize-game/SKILL.md   # Play.fun monetization (register, SDK, redeploy)
@@ -38,6 +40,10 @@ templates/
 scripts/
   iterate-client.js        # Standalone Playwright iterate loop (action → screenshot → state → errors)
   example-actions.json     # Example action payloads for iterate-client.js
+  find-3d-asset.mjs        # Search & download GLB models (Sketchfab, Poly Haven, Poly.pizza)
+3d-character-library/
+  manifest.json            # Index of animated GLB characters with clip maps
+  models/                  # Soldier.glb, Xbot.glb, RobotExpressive.glb, Fox.glb
 submodules/
   playdotfun/              # Git submodule: github.com/OpusGameLabs/skills
 agents/
@@ -48,6 +54,7 @@ agents/
 examples/
   flappy-bird/             # Complete example game (see below)
   nick-land-dodger/        # Dodge game with photo-composite character + promo video
+  3d-asset-test/           # 3D asset pipeline demo (animated characters, model loading, OrbitControls)
 ```
 
 **Game creation directory**: When the `/make-game` pipeline is launched from within the `game-creator` repository (i.e., the current working directory is `game-creator/` or a subdirectory), new games **must be created in `examples/`** (e.g., `examples/<game-name>/`). This keeps the repo organized and ensures example games are versioned alongside the plugin. When launched from any other directory, games are created in the current working directory as normal.

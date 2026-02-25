@@ -1,0 +1,233 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "CheeseBox_01"
+    },
+    {
+      "mesh": 1,
+      "name": "CheeseBox_01_lid",
+      "translation": [
+        0,
+        0.0023373784497380257,
+        0
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "CheeseBox_01",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.001",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Plane.003",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/jpeg",
+      "name": "CheeseBox_01_nor_gl",
+      "uri": "textures/CheeseBox_01_nor_gl_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "CheeseBox_01_diff",
+      "uri": "textures/CheeseBox_01_diff_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "CheeseBox_01_metallic-CheeseBox_01_roughness",
+      "uri": "textures/CheeseBox_01_arm_1k.jpg"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 657,
+      "max": [
+        0.12019958347082138,
+        0.0639643445611,
+        0.053206901997327805
+      ],
+      "min": [
+        -0.12019599229097366,
+        0.000004551606252789497,
+        -0.05320000648498535
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 657,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 657,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 2094,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 176,
+      "max": [
+        0.11877112835645676,
+        0.06363740563392639,
+        0.05342541262507439
+      ],
+      "min": [
+        -0.11976752430200577,
+        0.059763867408037186,
+        -0.05194675922393799
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 176,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 176,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 558,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 7884,
+      "byteOffset": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 7884,
+      "byteOffset": 7884
+    },
+    {
+      "buffer": 0,
+      "byteLength": 5256,
+      "byteOffset": 15768
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4188,
+      "byteOffset": 21024
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2112,
+      "byteOffset": 25212
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2112,
+      "byteOffset": 27324
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1408,
+      "byteOffset": 29436
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1116,
+      "byteOffset": 30844
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 31960,
+      "uri": "CheeseBox_01.bin"
+    }
+  ]
+}

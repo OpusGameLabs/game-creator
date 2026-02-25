@@ -1,18 +1,19 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GAME, CAMERA, COLORS } from './Constants.js';
+import { GAME, CAMERA, COLORS, CHARACTERS } from './Constants.js';
 import { eventBus, Events } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
 import { Player } from '../gameplay/Player.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Menu } from '../ui/Menu.js';
+import { preloadAll } from '../level/AssetLoader.js';
 
 export class Game {
   constructor() {
     this.clock = new THREE.Clock();
 
-    // Renderer (DPR capped for mobile GPU performance)
+    // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, GAME.MAX_DPR));
@@ -29,7 +30,7 @@ export class Game {
     );
     this.camera.position.set(0, CAMERA.HEIGHT, CAMERA.DISTANCE);
 
-    // OrbitControls — third-person camera orbiting the player
+    // OrbitControls
     this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
     this.orbitControls.enablePan = false;
     this.orbitControls.enableDamping = true;
@@ -48,39 +49,50 @@ export class Game {
 
     // Events
     eventBus.on(Events.GAME_RESTART, () => this.restart());
-
-    // Resize
     window.addEventListener('resize', () => this.onResize());
 
-    // Auto-start game (no title screen — Play.fun handles the chrome)
-    this.startGame();
+    // Preload all characters, then start
+    this._preloadAndStart();
 
-    // Start render loop (official Three.js pattern — pauses when tab hidden)
+    // Start render loop immediately (shows scene while loading)
     this.renderer.setAnimationLoop(() => this.animate());
+  }
+
+  async _preloadAndStart() {
+    const loadingEl = document.getElementById('loading');
+    const paths = CHARACTERS.map(c => c.path);
+
+    try {
+      await preloadAll(paths, (loaded, total) => {
+        if (loadingEl) {
+          loadingEl.textContent = `Loading characters... ${loaded}/${total}`;
+        }
+      });
+    } catch (err) {
+      console.warn('Some characters failed to preload:', err);
+    }
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    this.startGame();
   }
 
   startGame() {
     gameState.reset();
     gameState.started = true;
     this.player = new Player(this.scene);
-    this.input.setGameActive(true);
   }
 
   restart() {
-    if (this.player) {
-      this.player.destroy();
-      this.player = null;
-    }
+    if (this.player) { this.player.destroy(); this.player = null; }
     this.startGame();
   }
 
   animate() {
     const delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
 
-    this.input.update();
+    this.level.update(delta);
 
     if (gameState.started && !gameState.gameOver && this.player) {
-      // Camera-relative movement via OrbitControls azimuth
       const azimuth = this.orbitControls.getAzimuthalAngle();
 
       const oldX = this.player.mesh.position.x;
@@ -88,7 +100,7 @@ export class Game {
 
       this.player.update(delta, this.input, azimuth);
 
-      // Camera follows player — move both target and camera by the same delta
+      // Camera follows player
       const dx = this.player.mesh.position.x - oldX;
       const dz = this.player.mesh.position.z - oldZ;
       this.orbitControls.target.x += dx;
@@ -100,6 +112,18 @@ export class Game {
 
     this.orbitControls.update();
     this.renderer.render(this.scene, this.camera);
+
+    // Debug HUD
+    const dbg = document.getElementById('debug');
+    if (dbg && this.player) {
+      const p = this.player.mesh.position;
+      const anim = this.player.activeAction?._clip?.name || '...';
+      dbg.textContent = [
+        `${this.player.characterName}  [C] cycle`,
+        `anim: ${anim}`,
+        `pos: ${p.x.toFixed(1)}, ${p.z.toFixed(1)}`,
+      ].join('\n');
+    }
   }
 
   onResize() {

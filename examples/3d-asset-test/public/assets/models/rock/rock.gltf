@@ -1,0 +1,155 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "Rockingchair_01"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Rockingchair_01",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Mesh.001",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/jpeg",
+      "name": "Rockingchair_01_nor_gl",
+      "uri": "textures/Rockingchair_01_nor_gl_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "Rockingchair_01_diff",
+      "uri": "textures/Rockingchair_01_diff_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "Rockingchair_01_metallic-Rockingchair_01_roughness",
+      "uri": "textures/Rockingchair_01_arm_1k.jpg"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 10017,
+      "max": [
+        0.35406404733657837,
+        1.0965677499771118,
+        0.4790112376213074
+      ],
+      "min": [
+        -0.35406404733657837,
+        0.1016392931342125,
+        -0.35447078943252563
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 10017,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 10017,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 35598,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 120204,
+      "byteOffset": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 120204,
+      "byteOffset": 120204
+    },
+    {
+      "buffer": 0,
+      "byteLength": 80136,
+      "byteOffset": 240408
+    },
+    {
+      "buffer": 0,
+      "byteLength": 71196,
+      "byteOffset": 320544
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 391740,
+      "uri": "Rockingchair_01.bin"
+    }
+  ]
+}

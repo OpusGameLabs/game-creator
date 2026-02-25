@@ -212,12 +212,13 @@ After determining the game concept, scan the concept description, tweet text, an
 If celebrities are detected:
 - Set `hasCelebrities = true` and list detected names
 - Note in `progress.md` which characters are pre-built vs need building
-- The Step 1.5 subagent will use photo-composite characters for these
+- **2D**: The Step 1.5 subagent will use photo-composite characters for these
+- **3D**: Select the best-matching animated character from `3d-character-library/manifest.json` (Soldier for military/action, Robot for tech/sci-fi, Fox for nature/animal themes)
 
 Create all pipeline tasks upfront using `TaskCreate`:
 
 1. Scaffold game from template
-2. Add pixel art sprites and backgrounds (2D only; marked N/A for 3D)
+2. Add assets: pixel art sprites (2D) or GLB models + animated characters (3D)
 3. Add visual polish (particles, transitions, juice)
 4. Record promo video (autonomous 50 FPS capture)
 5. Add audio (BGM + SFX)
@@ -437,9 +438,9 @@ Mark task 1 as `completed`.
 
 **Wait for user confirmation before proceeding.**
 
-### Step 1.5: Add pixel art sprites and backgrounds
+### Step 1.5: Add game assets
 
-**For 2D games, always run this step.** For 3D games, mark task 2 as `completed` (N/A) and skip to Step 2.
+**Always run this step for both 2D and 3D games.** 2D games get pixel art sprites; 3D games get GLB models and animated characters.
 
 Mark task 2 as `in_progress`.
 
@@ -554,13 +555,99 @@ Launch a `Task` subagent with these instructions:
 >
 > Do NOT run builds — the orchestrator handles verification.
 
-**After subagent returns**, run the Verification Protocol.
+**After 2D subagent returns**, run the Verification Protocol.
 
-**Tell the user:**
+---
+
+#### 3D Asset Flow (Three.js games)
+
+For 3D games, replace primitives with real GLB models and animated characters. This is the 3D parallel of the 2D pixel art step above.
+
+**Pre-step: Character Selection**
+
+1. **Read `design-brief.md`** to identify the player character and any named personalities.
+
+2. **Resolve the 3D character library** — find `3d-character-library/manifest.json` relative to the plugin root.
+
+3. **Select player character** using this priority:
+   - If the game features a specific personality/theme, pick the best-matching character from the library (e.g., Soldier for military, Robot for sci-fi, Fox for nature)
+   - If no theme match, default to Soldier (best idle/walk/run animations)
+   - Copy the GLB to `<project-dir>/public/assets/models/`:
+     ```bash
+     cp <plugin-root>/3d-character-library/models/Soldier.glb \
+        <project-dir>/public/assets/models/Soldier.glb
+     ```
+
+4. **Search for world objects** — Read `design-brief.md` entity list and search for GLB props:
+   ```bash
+   # For each entity type that needs a model (buildings, trees, obstacles, collectibles)
+   node <plugin-root>/scripts/find-3d-asset.mjs --query "<entity description>" \
+     --source polyhaven --output <project-dir>/public/assets/models/
+
+   # Poly Haven is best for props (no auth, CC0, GLTF with textures)
+   # Sketchfab for more variety (needs SKETCHFAB_TOKEN for download)
+   # Use --list-only first to review results before downloading
+   ```
+
+5. **Record results** in `progress.md`:
+   ```
+   ## 3D Assets
+   - Player: Soldier.glb (from 3d-character-library, idle/walk/run)
+   - Building: house.gltf (from Poly Haven, CC0)
+   - Tree: downloaded via find-3d-asset.mjs (Sketchfab, CC-BY)
+   - Barrel: barrel.gltf (from Poly Haven, CC0)
+   ```
+
+**Launch a `Task` subagent with these instructions:**
+
+> You are implementing Step 1.5 (3D Assets) of the game creation pipeline.
+>
+> **Project path**: `<project-dir>`
+> **Engine**: 3D (Three.js)
+> **Skill to load**: `game-3d-assets`
+>
+> **Read `progress.md`** at the project root before starting. It lists downloaded models and the selected player character.
+>
+> **Character GLB is already copied** to `public/assets/models/`. Set up the character controller:
+>
+> 1. Create `src/level/AssetLoader.js` — **CRITICAL: use `SkeletonUtils.clone()` for animated models** (regular `.clone()` breaks skeleton bindings → T-pose). Import from `three/addons/utils/SkeletonUtils.js`.
+> 2. Add `CHARACTER` config to `Constants.js` with: `path`, `scale`, `facingOffset`, `clipMap` (mapping `idle`/`walk`/`run` to actual clip names — these vary per model)
+> 3. Update `Player.js`:
+>    - Use `THREE.Group` as position anchor
+>    - Load model with `loadAnimatedModel()`, set up `AnimationMixer`
+>    - Implement `fadeToAction()` pattern: `activeAction.fadeOut(0.3)` then `next.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(0.3).play()`
+>    - Camera-relative WASD: `inputVec.applyAxisAngle(UP, cameraAzimuth)`
+>    - Model facing: `Math.atan2(v.x, v.z) + CHARACTER.facingOffset` (models face different directions)
+>    - `model.quaternion.rotateTowards(targetQuat, turnSpeed * delta)` for smooth rotation
+> 4. Update `Game.js`:
+>    - Add `OrbitControls` from `three/addons/controls/OrbitControls.js`
+>    - Camera follows player: move both `orbitControls.target` and `camera.position` by player delta each frame
+>    - Pass `orbitControls.getAzimuthalAngle()` to `Player.update()` for camera-relative movement
+>    - Do NOT call `camera.lookAt()` — OrbitControls manages this
+> 5. Replace entity primitives with downloaded GLB models via `loadModel()` (static) or `loadAnimatedModel()` (animated)
+> 6. Add `ASSET_PATHS` and `MODEL_CONFIG` to Constants.js for each downloaded model
+> 7. Add `THREE.GridHelper` to ground for visible movement reference
+> 8. Add primitive fallback in `.catch()` for every model load
+>
+> **After completing your work**, append a `## Step 1.5: 3D Assets` section to `progress.md` with: player character used, models loaded, any scale/orientation adjustments.
+>
+> Do NOT run builds — the orchestrator handles verification.
+
+**After 3D subagent returns**, run the Verification Protocol.
+
+---
+
+**Tell the user (2D):**
 > Your game now has pixel art sprites and backgrounds! Every character, enemy, item, and background tile has a distinct visual identity. Here's what was created:
 > - `src/core/PixelRenderer.js` — rendering engine
 > - `src/sprites/` — all sprite data, palettes, and background tiles
->
+
+**Tell the user (3D):**
+> Your game now has real 3D models and an animated character controller! The player walks, runs, and idles with proper animations. Props and scenery are loaded from GLB files. Here's what was created:
+> - `src/level/AssetLoader.js` — model loader with SkeletonUtils
+> - `public/assets/models/` — downloaded GLB models
+> - OrbitControls camera with WASD movement
+
 > **Next up: visual polish.** I'll add particles, screen transitions, and juice effects. Ready?
 
 Mark task 2 as `completed`.

@@ -1,0 +1,14 @@
+{
+  "slug": "crate",
+  "name": "CheeseBox_01",
+  "source": "polyhaven",
+  "sourceId": "CheeseBox_01",
+  "author": "Gabriel Radić",
+  "license": "CC0",
+  "faces": 884,
+  "viewUrl": null,
+  "thumbnail": "https://cdn.polyhaven.com/asset_img/thumbs/CheeseBox_01.png?width=256&height=256",
+  "animations": 0,
+  "downloadedAt": "2026-02-25T18:16:12.737Z",
+  "modelPath": "crate.gltf"
+}
