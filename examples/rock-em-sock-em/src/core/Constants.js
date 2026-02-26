@@ -23,11 +23,11 @@ export const SAFE_ZONE = {
 // --- Camera (fixed behind player robot, looking at opponent) ---
 export const CAMERA = {
   POSITION_X: 0,
-  POSITION_Y: 3.5,
-  POSITION_Z: 4.5,
+  POSITION_Y: 3.0,
+  POSITION_Z: 3.0,
   LOOK_AT_X: 0,
-  LOOK_AT_Y: 1.8,
-  LOOK_AT_Z: -1.0,
+  LOOK_AT_Y: 1.5,
+  LOOK_AT_Z: 0,
 };
 
 // --- Boxing Ring ---
@@ -97,7 +97,7 @@ export const PLAYER = {
   COLOR_DARK: 0x1a4f99,
   COLOR_GLOVE: 0x3388ee,
   COLOR_ACCENT: 0x55aaff,
-  POSITION_Z: 2.0,          // Player stands at +Z (closer to camera)
+  POSITION_Z: 0.8,           // Player stands at +Z (closer to camera)
 };
 
 // --- AI Opponent (Red Rocker) ---
@@ -106,7 +106,7 @@ export const OPPONENT = {
   COLOR_DARK: 0x991a1a,
   COLOR_GLOVE: 0xee3333,
   COLOR_ACCENT: 0xff5555,
-  POSITION_Z: -2.0,         // Opponent stands at -Z (far side)
+  POSITION_Z: -0.8,          // Opponent stands at -Z (far side)
 };
 
 // --- Combat ---
@@ -127,7 +127,7 @@ export const COMBAT = {
   BLOCK_DAMAGE_REDUCTION: 0.75,  // 75% reduction
 
   // Hit detection
-  HIT_RANGE: 2.0,            // Max Z-distance for a punch to connect
+  HIT_RANGE: 1.8,            // Max Z-distance for a punch to connect
 
   // Combo
   COMBO_WINDOW: 1.5,         // Seconds to chain hits for combo
