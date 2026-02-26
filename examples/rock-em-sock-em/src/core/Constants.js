@@ -177,17 +177,17 @@ export const MODELS = {
   BLUE_BOMBER: {
     path: 'assets/models/blue-bomber.glb',
     scale: 1.0,
-    rotationY: 0,        // faces -Z by default (toward opponent)
+    rotationY: Math.PI,  // Meshy models face +Z; rotate to face -Z (toward opponent)
   },
   RED_ROCKER: {
     path: 'assets/models/red-rocker.glb',
     scale: 1.0,
-    rotationY: Math.PI,  // flip to face +Z (toward player)
+    rotationY: 0,        // faces +Z by default (toward player) — correct
   },
   BOXING_RING: {
     path: 'assets/models/boxing-ring.glb',
-    scale: 1.5,
-    positionY: 0,        // ground level
+    scale: 3.0,          // scaled up to contain both robots
+    positionY: 0,
   },
 };
 

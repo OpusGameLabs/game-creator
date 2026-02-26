@@ -298,14 +298,28 @@ if (isMoving) {
 if (mixer) mixer.update(delta);
 ```
 
+## Post-Load Verification (MANDATORY)
+
+After loading ANY 3D model (Meshy-generated, library, or Sketchfab), **always verify orientation and scale**. Skipping this leads to backwards characters and models that overflow their containers.
+
+1. **Log bounding box** immediately after loading — size and center
+2. **Check facing direction** — most Meshy models face +Z, most library models vary. Set `rotationY` per model in Constants.js. Start with `Math.PI` for Meshy models.
+3. **Check scale** — calculate auto-scale to fit target height. Ensure models fit within their environment (e.g., characters inside a ring, players on a platform).
+4. **Align to floor** — set `position.y = -box.min.y` to plant feet on ground
+5. **Take a Playwright screenshot** to visually confirm facing + fit. Don't skip this.
+
+See the `meshyai` skill's "Post-Generation Verification" section for detailed code patterns.
+
 ## Common Pitfalls
 
 1. **T-posing animated characters** — You used `.clone()` instead of `SkeletonUtils.clone()`. The skeleton binding is broken.
-2. **Model faces wrong direction** — Most GLB models face +Z. Add `Math.PI` offset when computing facing angle from `atan2()`.
-3. **Animation not playing** — Forgot `mixer.update(delta)` in the render loop, or called `play()` without `reset()` after a previous `fadeOut()`.
-4. **Camera fights with OrbitControls** — Never call `camera.lookAt()` when using OrbitControls. It manages lookAt internally.
-5. **"Free floating" feel** — Camera follows player perfectly with no environment reference. Add a grid (`THREE.GridHelper`) and place props near spawn so movement is visible.
-6. **Clip names differ per model** — Always log `clips.map(c => c.name)` on load and define a `clipMap` per character. Never hardcode clip names.
+2. **Model faces wrong direction** — Meshy models typically face +Z. Add `rotationY: Math.PI` in Constants.js. **Always verify with a screenshot.**
+3. **Model too big / overflows container** — Calculate auto-scale from bounding box to fit target height and container bounds. Never assume scale=1.0 is correct.
+4. **Animation not playing** — Forgot `mixer.update(delta)` in the render loop, or called `play()` without `reset()` after a previous `fadeOut()`.
+5. **Camera fights with OrbitControls** — Never call `camera.lookAt()` when using OrbitControls. It manages lookAt internally.
+6. **"Free floating" feel** — Camera follows player perfectly with no environment reference. Add a grid (`THREE.GridHelper`) and place props near spawn so movement is visible.
+7. **Clip names differ per model** — Always log `clips.map(c => c.name)` on load and define a `clipMap` per character. Never hardcode clip names.
+8. **Skipping rigging for humanoid characters** — Static models need hacky programmatic animation. Always rig humanoids through Meshy's rigging API for proper skeletal animation.
 
 ## Process
 

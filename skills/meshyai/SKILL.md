@@ -271,67 +271,159 @@ Poll at 5-second intervals. Tasks typically complete in 30s–5min depending on 
 
 Meshy retains generated assets for **3 days** (unlimited for Enterprise). Download promptly.
 
-## Full Pipeline: Generate → Rig → Integrate
+## Quick Reference: Static Props (no rig needed)
 
-The most common workflow for game characters:
+For non-humanoid assets (props, scenery, buildings), skip rigging:
 
-### Step 1: Generate the model
+```bash
+# Generate
+MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
+  --mode text-to-3d --prompt "a wooden barrel, low poly game asset" \
+  --polycount 5000 --output public/assets/models/ --slug barrel
 
+# Integrate with loadModel (regular clone, no SkeletonUtils)
+const barrel = await loadModel('assets/models/barrel.glb');
+scene.add(barrel);
+```
+
+## Post-Generation Verification (MANDATORY)
+
+After loading any Meshy-generated model, **always verify orientation and scale** before proceeding. Meshy models have unpredictable facing directions and scales. Skipping this step leads to backwards-facing characters and models that overflow their containers.
+
+### Auto-Orientation Check
+
+Meshy models typically face +Z, but this varies. After loading, **log the bounding box and visually verify** via Playwright MCP or dev tools:
+
+```js
+// Add this immediately after loading any GLB
+model.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(model);
+const size = box.getSize(new THREE.Vector3());
+const center = box.getCenter(new THREE.Vector3());
+console.log(`[Model] ${slug} — size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+console.log(`[Model] ${slug} — center: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
+```
+
+**Fixing facing direction:**
+- Start with `rotationY: Math.PI` (180 degrees) — most Meshy models need this to face -Z
+- If the model faces +Z by default and needs to face the camera: `rotationY: 0`
+- If in doubt: take a screenshot, check which way the face/front is pointing, adjust
+- Store `rotationY` in Constants.js per model — never hardcode in entity files
+
+### Auto-Scale Fitting
+
+Models must fit within their game context. After loading:
+
+```js
+// Calculate scale to fit a target height
+const box = new THREE.Box3().setFromObject(model);
+const currentHeight = box.max.y - box.min.y;
+const targetHeight = 2.0; // desired height in world units
+const autoScale = targetHeight / currentHeight;
+model.scale.setScalar(autoScale);
+```
+
+For container fitting (e.g., robots inside a ring):
+```js
+// Ensure model fits within container bounds
+const containerWidth = RING.PLATFORM_WIDTH * 0.8; // 80% of ring width
+const modelWidth = box.max.x - box.min.x;
+if (modelWidth * currentScale > containerWidth) {
+  const fitScale = containerWidth / modelWidth;
+  model.scale.setScalar(Math.min(currentScale, fitScale));
+}
+```
+
+**Always take a Playwright screenshot after model integration** to visually verify:
+1. Characters face the correct direction
+2. Characters fit within their environment
+3. Characters don't clip through floors/walls/each other
+
+### Floor Alignment
+
+Center the model on X/Z and plant feet on Y=0:
+```js
+const box = new THREE.Box3().setFromObject(model);
+const center = box.getCenter(new THREE.Vector3());
+model.position.y = -box.min.y;      // feet on ground
+model.position.x = -center.x;       // centered X
+model.position.z = -center.z;       // centered Z
+```
+
+## Rigging: Mandatory for Humanoid Characters
+
+**Every humanoid character MUST be rigged.** Static models require hacky programmatic animation (moving wrapper groups) that looks artificial. Rigged models get proper skeletal animation — walk, run, punch, etc.
+
+### When to Rig
+
+| Model type | Rig? | Why |
+|-----------|------|-----|
+| Humanoid character (player, NPC, enemy) | **YES — always** | Skeletal animation for walk/run/idle/attack |
+| Animal with legs | **YES** | Walk/run animations |
+| Vehicle, prop, building | No | Static or simple rotation |
+| Abstract shape, particle | No | Procedural animation |
+
+### Full Pipeline: Generate → Rig → Animate → Integrate
+
+**Step 1: Generate the model**
 ```bash
 MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
   --mode text-to-3d \
-  --prompt "a stylized goblin warrior with a wooden club, low poly game character" \
-  --pbr \
-  --polycount 15000 \
-  --output public/assets/models/ \
-  --slug goblin
+  --prompt "a stylized robot boxer, low poly game character, full body" \
+  --pbr --polycount 15000 \
+  --output public/assets/models/ --slug robot
 ```
 
-### Step 2: Rig for animation (humanoid only)
-
-Read the meta.json to get the refine task ID:
+**Step 2: Rig** (reads refineTaskId from meta.json automatically)
 ```bash
-# Get the refine task ID from meta
-cat public/assets/models/goblin.meta.json | grep refineTaskId
-
 MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
   --mode rig \
-  --task-id <refine-task-id> \
-  --height 1.2 \
-  --output public/assets/models/ \
-  --slug goblin-rigged
+  --task-id <refine-task-id-from-meta.json> \
+  --height 1.7 \
+  --output public/assets/models/ --slug robot-rigged
 ```
 
-### Step 3: Integrate into Three.js game
+Rigging returns:
+- `rigged_character_glb_url` — rigged GLB with skeleton (use this as the base model)
+- `basic_animations.walking` — walking animation GLB (free, included)
+- `basic_animations.running` — running animation GLB (free, included)
 
-Use the same `AssetLoader.js` pattern from the `game-3d-assets` skill:
+**Step 3: Add custom animations** (optional, for game-specific actions)
+```bash
+# Each action_id corresponds to a different animation
+MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
+  --mode animate \
+  --task-id <rig-task-id> \
+  --action-id <id> \
+  --output public/assets/models/ --slug robot-punch
+```
 
+**Step 4: Integrate** with `loadAnimatedModel()` + `AnimationMixer`:
 ```js
-import { loadAnimatedModel, loadModel } from './level/AssetLoader.js';
+import { loadAnimatedModel } from './level/AssetLoader.js';
+import * as THREE from 'three';
 
-// For rigged/animated models (from Meshy rig output)
-const { model, clips } = await loadAnimatedModel('assets/models/goblin-rigged.glb');
+// Load rigged model (SkeletonUtils.clone preserves bone bindings)
+const { model, clips } = await loadAnimatedModel('assets/models/robot-rigged.glb');
 const mixer = new THREE.AnimationMixer(model);
 
-// Log clip names to build clipMap
+// Log clip names — they vary per model
 console.log('Clips:', clips.map(c => c.name));
 
-// For static models (from text-to-3d or image-to-3d, no rig)
-const prop = await loadModel('assets/models/crystal-sword.glb');
-scene.add(prop);
-```
+// Load additional animation GLBs and add their clips to the same mixer
+const walkData = await loadAnimatedModel('assets/models/robot-walk.glb');
+const walkClip = walkData.clips[0];
+const walkAction = mixer.clipAction(walkClip);
 
-### Step 4: Wire animations
-
-If rigging returned `basic_animations`, download those GLBs and load their clips:
-
-```js
-// basic_animations from rig step often include walk/run
-const walkGltf = await loadAnimatedModel('assets/models/goblin-walk.glb');
-const walkClip = walkGltf.clips.find(c => c.name.includes('walk') || c.name.includes('Walk'));
-if (walkClip) {
-  const walkAction = mixer.clipAction(walkClip);
+// fadeToAction pattern for smooth transitions
+function fadeToAction(nextAction, duration = 0.3) {
+  if (activeAction) activeAction.fadeOut(duration);
+  nextAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(duration).play();
+  activeAction = nextAction;
 }
+
+// In update loop:
+mixer.update(delta);
 ```
 
 ## Prompt Engineering Tips
@@ -376,8 +468,11 @@ All sources output GLB files into `public/assets/models/`. The `AssetLoader.js` 
 
 - [ ] `MESHY_API_KEY` checked — prompted user if not set, or user skipped to fallbacks
 - [ ] Prompt is specific (style, poly count, single object)
-- [ ] Humanoid characters rigged after generation (for walk/run/idle)
+- [ ] **All humanoid characters rigged** — never skip rigging for bipedal models
 - [ ] Downloaded GLB before 3-day expiration
+- [ ] **Post-generation verification done** — orientation, scale, floor alignment checked
+- [ ] **Playwright screenshot taken** — visually confirmed facing direction + fit in environment
+- [ ] `rotationY` set per model in Constants.js (most Meshy models need `Math.PI`)
 - [ ] Static models use `loadModel()` (regular clone)
 - [ ] Rigged models use `loadAnimatedModel()` (SkeletonUtils.clone)
 - [ ] Clip names logged and `clipMap` defined for animated models
