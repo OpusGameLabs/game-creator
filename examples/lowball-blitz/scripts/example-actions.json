@@ -1,0 +1,65 @@
+{
+  "_comment": "Example action payloads for iterate-client.js — auto-runner with left/right dodging and space to throw envelopes",
+  "steps": [
+    {
+      "_comment": "Throw envelope at houses",
+      "buttons": ["Space"],
+      "frames": 10
+    },
+    {
+      "_comment": "Dodge left",
+      "buttons": ["ArrowLeft"],
+      "frames": 15
+    },
+    {
+      "_comment": "Throw while moving left",
+      "buttons": ["Space"],
+      "frames": 5
+    },
+    {
+      "_comment": "Coast forward",
+      "buttons": [],
+      "frames": 20
+    },
+    {
+      "_comment": "Dodge right",
+      "buttons": ["ArrowRight"],
+      "frames": 15
+    },
+    {
+      "_comment": "Throw from right lane",
+      "buttons": ["Space"],
+      "frames": 5
+    },
+    {
+      "_comment": "Dodge left again",
+      "buttons": ["ArrowLeft"],
+      "frames": 10
+    },
+    {
+      "_comment": "Throw again",
+      "buttons": ["Space"],
+      "frames": 10
+    },
+    {
+      "_comment": "Coast",
+      "buttons": [],
+      "frames": 15
+    },
+    {
+      "_comment": "Dodge right",
+      "buttons": ["ArrowRight"],
+      "frames": 10
+    },
+    {
+      "_comment": "Throw",
+      "buttons": ["Space"],
+      "frames": 5
+    },
+    {
+      "_comment": "Watch the chaos unfold",
+      "buttons": [],
+      "frames": 80
+    }
+  ]
+}
