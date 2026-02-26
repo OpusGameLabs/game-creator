@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { GAME, CAMERA, COLORS, GAMEPLAY, STREET } from './Constants.js';
+import { GAME, CAMERA, COLORS, GAMEPLAY, STREET, ENVELOPE } from './Constants.js';
 import { eventBus, Events } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { InputSystem } from '../systems/InputSystem.js';
 import { StreetGenerator } from '../systems/StreetGenerator.js';
+import { SpectacleSystem } from '../systems/SpectacleSystem.js';
 import { Player } from '../gameplay/Player.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Homeowner } from '../entities/Homeowner.js';
@@ -36,6 +37,7 @@ export class Game {
     this.input = new InputSystem();
     this.level = new LevelBuilder(this.scene);
     this.streetGen = null;
+    this.spectacle = new SpectacleSystem(this.scene, this.camera);
     this.menu = new Menu();
     this.player = null;
 
@@ -70,6 +72,9 @@ export class Game {
     // Create player
     this.player = new Player(this.scene);
     this.input.setGameActive(true);
+
+    // Spectacle entrance effect
+    eventBus.emit(Events.SPECTACLE_ENTRANCE);
   }
 
   restart() {
@@ -78,6 +83,7 @@ export class Game {
       this.player = null;
     }
     this._clearEntities();
+    this.spectacle.reset();
     this.startGame();
   }
 
@@ -95,6 +101,12 @@ export class Game {
 
     if (gameState.started && !gameState.gameOver && this.player) {
       const playerZ = this.player.mesh.position.z;
+
+      // Handle throw input here (Game has access to streetGen for targeting)
+      if (this.input.throwPressed) {
+        const target = this._findThrowTarget(this.player.mesh.position);
+        this.player.throwEnvelope(target);
+      }
 
       // Update player (auto-run + input)
       this.player.update(delta, this.input);
@@ -119,6 +131,12 @@ export class Game {
 
       // Update camera to follow player
       this._updateCamera();
+
+      // Update spectacle system (particles, shake, flashes, trails)
+      this.spectacle.update(delta, this.player.mesh.position, this.player.envelopes);
+
+      // Apply spectacle camera effects (shake, zoom, entrance) after base camera is set
+      this.spectacle.applyCameraEffects();
 
       // Update directional light to follow player
       this.level.updateLightTarget(this.player.mesh.position);
@@ -265,6 +283,42 @@ export class Game {
         }
       }
     }
+  }
+
+  /**
+   * Find the nearest unhit house ahead of the player within targeting range.
+   * Alternates sides (left/right) to spread throws evenly.
+   * @returns {THREE.Vector3|null}
+   */
+  _findThrowTarget(playerPos) {
+    const houses = this.streetGen.getHousesInRange(playerPos.z, ENVELOPE.TARGET_RANGE);
+
+    // Filter to houses ahead of the player (lower Z = further ahead)
+    const ahead = houses.filter(h => h.mesh.position.z < playerPos.z);
+    if (ahead.length === 0) return null;
+
+    // Sort by distance (nearest first)
+    ahead.sort((a, b) => {
+      const distA = Math.abs(a.mesh.position.z - playerPos.z);
+      const distB = Math.abs(b.mesh.position.z - playerPos.z);
+      return distA - distB;
+    });
+
+    // Pick the nearest house — prefer whichever side is closer to the player's X
+    let best = null;
+    let bestDist = Infinity;
+
+    for (const house of ahead) {
+      const dx = house.mesh.position.x - playerPos.x;
+      const dz = house.mesh.position.z - playerPos.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = house;
+      }
+    }
+
+    return best ? best.mesh.position.clone() : null;
   }
 
   _updateCamera() {

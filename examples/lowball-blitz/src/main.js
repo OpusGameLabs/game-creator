@@ -12,15 +12,8 @@ window.__EVENT_BUS__ = eventBus;
 window.__EVENTS__ = Events;
 
 // --- Combo HUD ---
-const comboDisplay = document.getElementById('combo-display');
-eventBus.on(Events.COMBO_CHANGED, ({ combo }) => {
-  if (combo >= 2 && comboDisplay) {
-    comboDisplay.textContent = `${combo}x COMBO!`;
-    comboDisplay.classList.add('visible');
-  } else if (comboDisplay) {
-    comboDisplay.classList.remove('visible');
-  }
-});
+// NOTE: Combo display updates (text, visible, mega classes) are handled
+// by SpectacleSystem._onComboChanged via EventBus. No duplicate listener needed.
 
 // --- Mobile UI ---
 if (IS_MOBILE) {

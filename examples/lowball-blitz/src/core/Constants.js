@@ -53,6 +53,9 @@ export const ENVELOPE = {
   MAX_DISTANCE: 40,     // auto-destroy after this distance
   COLOR: 0xffffff,
   SPIN_SPEED: 8,        // radians per second rotation
+  ARC_HEIGHT: 1.5,      // peak height of parabolic lob
+  TARGET_RANGE: 30,     // how far ahead to search for target houses
+  COLLISION_THRESHOLD: 3, // generous collision distance for house hits
 };
 
 export const HOUSE = {
@@ -95,6 +98,8 @@ export const HOMEOWNER = {
   SPEED: 3,
   PANIC_DURATION: 3,    // seconds the homeowner runs around
   DROP_INTERVAL: 0.4,   // seconds between panic point drops
+  MODEL_PATH: 'assets/models/boomer.glb',
+  MODEL_SCALE: 0.5,
   COLORS: [
     0xff6347, // tomato
     0x4169e1, // royal blue
@@ -186,6 +191,62 @@ export const CHARACTER = {
     run: 'Running',
     throw: 'Punch',
   },
+};
+
+export const SPECTACLE = {
+  PARTICLE_POOL_SIZE: 500,
+  PARTICLE_SIZE: 0.15,
+  PARTICLE_GRAVITY: -5,
+
+  ENTRANCE_BURST_COUNT: 30,
+  ENTRANCE_FLASH_DURATION: 0.3,
+  ENTRANCE_CAMERA_EXTRA: 5,
+  ENTRANCE_CAMERA_TWEEN: 1.5,
+
+  THROW_BURST_COUNT: 8,
+  THROW_CAMERA_NUDGE: 0.1,
+  THROW_CAMERA_NUDGE_DURATION: 0.15,
+
+  HIT_BURST_COUNT: 20,
+  HIT_FLASH_DURATION: 0.3,
+  HIT_LIGHT_INTENSITY: 3,
+  HIT_LIGHT_DISTANCE: 8,
+  HIT_SHAKE_INTENSITY: 0.05,
+  HIT_SHAKE_DURATION: 0.2,
+
+  PANIC_BURST_COUNT: 10,
+  PANIC_FLASH_DURATION: 0.15,
+
+  COMBO_BURST_COUNT: 25,
+  COMBO_SHAKE_INTENSITY: 0.08,
+  COMBO_SHAKE_DURATION: 0.3,
+  COMBO_SPEED_LINE_COUNT: 6,
+  COMBO_SPEED_LINE_LENGTH: 3,
+  COMBO_SPEED_LINE_SPEED: 60,
+  COMBO_SPEED_LINE_LIFETIME: 0.5,
+
+  STREAK_BURST_COUNT: 40,
+  STREAK_FLASH_DURATION: 0.4,
+  STREAK_ZOOM_AMOUNT: 0.5,
+  STREAK_ZOOM_DURATION: 0.3,
+
+  NEAR_MISS_BURST_COUNT: 12,
+  NEAR_MISS_SLOWMO_FACTOR: 0.7,
+  NEAR_MISS_SLOWMO_DURATION: 0.1,
+
+  DAMAGE_BURST_COUNT: 15,
+  DAMAGE_SHAKE_INTENSITY: 0.12,
+  DAMAGE_SHAKE_DURATION: 0.4,
+
+  TRAIL_PARTICLES_PER_SEC: 30,
+  TRAIL_LIFETIME: 0.8,
+  TRAIL_COLOR: 0x88ccff,
+
+  SCORE_FLOAT_DURATION: 1.0,
+  SCORE_FLOAT_HEIGHT: 2.0,
+
+  SPEED_LINE_THRESHOLD: 15,
+  SPEED_LINE_INTERVAL: 0.15,
 };
 
 export const ASSET_PATHS = {};
