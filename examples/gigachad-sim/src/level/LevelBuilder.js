@@ -106,18 +106,18 @@ export class LevelBuilder {
     this.scene.add(ambient);
 
     // Main directional light (overhead, slight angle)
-    const dirLight = new THREE.DirectionalLight(COLORS.DIR_LIGHT, COLORS.DIR_INTENSITY);
-    dirLight.position.set(2, 15, 5);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 30;
-    dirLight.shadow.camera.left = -ARENA.HALF_WIDTH;
-    dirLight.shadow.camera.right = ARENA.HALF_WIDTH;
-    dirLight.shadow.camera.top = 10;
-    dirLight.shadow.camera.bottom = -5;
-    this.scene.add(dirLight);
+    this.dirLight = new THREE.DirectionalLight(COLORS.DIR_LIGHT, COLORS.DIR_INTENSITY);
+    this.dirLight.position.set(2, 15, 5);
+    this.dirLight.castShadow = true;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
+    this.dirLight.shadow.camera.near = 1;
+    this.dirLight.shadow.camera.far = 30;
+    this.dirLight.shadow.camera.left = -ARENA.HALF_WIDTH;
+    this.dirLight.shadow.camera.right = ARENA.HALF_WIDTH;
+    this.dirLight.shadow.camera.top = 10;
+    this.dirLight.shadow.camera.bottom = -5;
+    this.scene.add(this.dirLight);
 
     // Spot light (gym spotlight effect pointing down at center)
     const spot = new THREE.SpotLight(COLORS.SPOT_LIGHT, COLORS.SPOT_INTENSITY, 25, Math.PI / 4, 0.5);

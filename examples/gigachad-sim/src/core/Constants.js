@@ -125,7 +125,7 @@ export const MODELS = {
     path: '/assets/models/gigachad.glb',
     walkPath: '/assets/models/gigachad-walk.glb',
     runPath: '/assets/models/gigachad-run.glb',
-    scale: 2.0,           // fills ~40% of screen height
+    scale: 1.0,           // model native 2u → 3u tall at PLAYER.HEIGHT
     rotationY: Math.PI,   // Meshy models face +Z, flip to face camera
   },
   WEIGHTS: {
@@ -155,4 +155,74 @@ export const SPECTACLE = {
   SCREEN_SHAKE_DURATION: 0.2,
   CATCH_SCALE_POP: 1.3,   // scale player up briefly on catch
   CATCH_POP_DURATION: 0.2,
+};
+
+// Visual effects configuration
+export const EFFECTS = {
+  // Particle pool
+  PARTICLE_POOL_SIZE: 200,
+
+  // Burst counts per event
+  CATCH_PARTICLES: 15,
+  MISS_PARTICLES: 10,
+  POWERUP_PARTICLES: 20,
+  STREAK_PARTICLES: 40,
+  ENTRANCE_PARTICLES: 20,
+  COMBO_BASE_PARTICLES: 10,
+  COMBO_PARTICLE_GROWTH: 3,     // extra particles per combo level
+
+  // Particle physics
+  PARTICLE_SIZE: 0.15,
+  PARTICLE_SPEED_MIN: 2,
+  PARTICLE_SPEED_MAX: 6,
+  PARTICLE_LIFETIME: 0.8,
+  PARTICLE_GRAVITY: -8,
+
+  // Ambient particles (gym chalk / dust motes)
+  AMBIENT_PARTICLE_COUNT: 30,
+  AMBIENT_DRIFT_SPEED: 0.3,
+  AMBIENT_SIZE: 0.06,
+  AMBIENT_OPACITY: 0.25,
+
+  // Floating score text
+  FLOAT_TEXT_DURATION: 1.0,
+  FLOAT_TEXT_RISE: 2.0,         // world units to rise
+  FLOAT_TEXT_BASE_SIZE: 28,     // px
+  FLOAT_TEXT_COMBO_GROWTH: 4,   // px per combo level
+  FLOAT_TEXT_MAX_SIZE: 56,      // px
+
+  // Flash overlay
+  FLASH_DURATION: 0.3,
+  FLASH_WHITE_ALPHA: 0.6,
+  FLASH_RED_ALPHA: 0.4,
+  FLASH_GREEN_ALPHA: 0.35,
+
+  // Hit freeze (brief pause for impact)
+  FREEZE_DURATION: 0.06,
+
+  // Camera FOV pulse
+  FOV_PULSE_AMOUNT: 5,         // degrees to decrease
+  FOV_PULSE_IN: 0.1,           // seconds to zoom in
+  FOV_PULSE_OUT: 0.2,          // seconds to zoom out
+
+  // Light pulse
+  LIGHT_PULSE_AMOUNT: 0.3,
+  LIGHT_PULSE_DURATION: 0.2,
+
+  // Shockwave ring (expanding ring on floor)
+  SHOCKWAVE_RADIUS_START: 0.5,
+  SHOCKWAVE_RADIUS_END: 3.0,
+  SHOCKWAVE_DURATION: 0.5,
+  SHOCKWAVE_COLOR: 0xff4444,
+  SHOCKWAVE_STREAK_COLOR: 0xffdd44,
+
+  // Weight type colors for particles
+  WEIGHT_COLORS: {
+    dumbbell: 0x4488ff,
+    barbell: 0xff4444,
+    kettlebell: 0xffd700,
+  },
+  POWERUP_COLOR: 0x44ff44,
+  MISS_COLOR: 0xff2222,
+  ENTRANCE_COLOR: 0xffffff,
 };

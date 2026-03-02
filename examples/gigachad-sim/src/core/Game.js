@@ -3,6 +3,7 @@
 // Initializes all systems, manages the render loop, wires up EventBus.
 // Preloads all GLB models before starting gameplay.
 // Third-person camera behind and above GigaChad, fixed position.
+// Integrates visual effects: particles, floating text, screen effects.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -16,6 +17,9 @@ import { PowerupManager } from '../gameplay/PowerupManager.js';
 import { LevelBuilder } from '../level/LevelBuilder.js';
 import { Menu } from '../ui/Menu.js';
 import { preloadAll } from '../level/AssetLoader.js';
+import { ParticleManager } from '../effects/ParticleManager.js';
+import { FloatingText } from '../effects/FloatingText.js';
+import { ScreenEffects } from '../effects/ScreenEffects.js';
 
 export class Game {
   constructor() {
@@ -57,14 +61,21 @@ export class Game {
     this.weightManager = null;
     this.powerupManager = null;
 
-    // Screen shake state
-    this._shakeTimer = 0;
-    this._shakeIntensity = 0;
+    // Camera base position for shake
     this._baseCameraPos = this.camera.position.clone();
+
+    // --- Visual effects systems ---
+    // ParticleManager handles burst particles, ambient dust, and shockwaves
+    this.particleManager = new ParticleManager(this.scene);
+
+    // FloatingText handles CSS-based "+N" score popups
+    this.floatingText = new FloatingText(this.camera, this.renderer);
+
+    // ScreenEffects handles flash overlay, FOV pulse, light pulse, freeze, shake
+    this.screenEffects = new ScreenEffects(this.camera, this.level.dirLight);
 
     // Events
     eventBus.on(Events.GAME_RESTART, () => this.restart());
-    eventBus.on(Events.PLAYER_HIT, () => this._triggerScreenShake());
     eventBus.on(Events.WEIGHT_CAUGHT, () => {
       if (this.player) this.player.triggerLift();
     });
@@ -142,40 +153,37 @@ export class Game {
   animate() {
     const delta = Math.min(this.clock.getDelta(), GAME.MAX_DELTA);
 
-    this.input.update();
+    // --- Update screen effects (flash, FOV pulse, light pulse, freeze, shake) ---
+    const fx = this.screenEffects.update(delta);
 
-    if (gameState.started && !gameState.gameOver) {
-      if (this.player) {
-        this.player.update(delta, this.input);
-      }
+    // --- Update particles and floating text (always, even during freeze) ---
+    this.particleManager.update(delta);
+    this.floatingText.update(delta);
 
-      if (this.weightManager && this.player) {
-        this.weightManager.update(delta, this.player.getPosition());
-      }
+    // --- Gameplay updates (skipped during hit freeze) ---
+    if (!fx.frozen) {
+      this.input.update();
 
-      if (this.powerupManager && this.player) {
-        this.powerupManager.update(delta, this.player.getPosition());
+      if (gameState.started && !gameState.gameOver) {
+        if (this.player) {
+          this.player.update(delta, this.input);
+        }
+
+        if (this.weightManager && this.player) {
+          this.weightManager.update(delta, this.player.getPosition());
+        }
+
+        if (this.powerupManager && this.player) {
+          this.powerupManager.update(delta, this.player.getPosition());
+        }
       }
     }
 
-    // Screen shake
-    if (this._shakeTimer > 0) {
-      this._shakeTimer -= delta;
-      const shakeX = (Math.random() - 0.5) * this._shakeIntensity * 2;
-      const shakeY = (Math.random() - 0.5) * this._shakeIntensity * 2;
-      this.camera.position.x = this._baseCameraPos.x + shakeX;
-      this.camera.position.y = this._baseCameraPos.y + shakeY;
-    } else {
-      this.camera.position.x = this._baseCameraPos.x;
-      this.camera.position.y = this._baseCameraPos.y;
-    }
+    // --- Apply screen shake from ScreenEffects ---
+    this.camera.position.x = this._baseCameraPos.x + fx.shakeX;
+    this.camera.position.y = this._baseCameraPos.y + fx.shakeY;
 
     this.renderer.render(this.scene, this.camera);
-  }
-
-  _triggerScreenShake() {
-    this._shakeTimer = 0.2;
-    this._shakeIntensity = 0.15;
   }
 
   onResize() {

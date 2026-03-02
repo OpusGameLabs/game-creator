@@ -65,25 +65,50 @@ export class Player {
     const { model, clips } = await loadAnimatedModel(cfg.path);
     console.log('GigaChad base clips:', clips.map(c => c.name));
 
-    // Compute bounding box to determine model size
-    const bbox = new THREE.Box3().setFromObject(model);
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
-    console.log('GigaChad bounding box size:', size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2));
+    // SkinnedMesh bounding boxes are unreliable (bind-pose vertices near origin).
+    // Instead, compute bounds from the raw geometry positions of all child meshes.
+    let minY = Infinity, maxY = -Infinity;
+    model.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        child.geometry.computeBoundingBox();
+        const gb = child.geometry.boundingBox;
+        if (gb) {
+          // Account for the child's local position offset
+          minY = Math.min(minY, gb.min.y + child.position.y);
+          maxY = Math.max(maxY, gb.max.y + child.position.y);
+        }
+      }
+    });
+    const geoHeight = maxY - minY;
+    console.log('GigaChad geometry height:', geoHeight.toFixed(3), 'minY:', minY.toFixed(3));
 
-    // Scale model to target height (~PLAYER.HEIGHT)
+    // Scale to target height
     const targetHeight = PLAYER.HEIGHT;
-    const currentHeight = size.y;
-    const scaleFactor = (targetHeight / currentHeight) * cfg.scale;
+    const scaleFactor = geoHeight > 0.01 ? (targetHeight / geoHeight) * cfg.scale : cfg.scale;
     model.scale.setScalar(scaleFactor);
+    console.log('GigaChad scale factor:', scaleFactor.toFixed(2));
 
-    // Recompute bounding box after scaling for floor alignment
-    const scaledBbox = new THREE.Box3().setFromObject(model);
-    // Align feet to floor: shift up so bounding box min.y = 0
-    model.position.y = -scaledBbox.min.y;
+    // Align feet to floor after scaling
+    model.position.y = -minY * scaleFactor;
 
     // Face the camera (Meshy models typically face +Z)
     model.rotation.y = cfg.rotationY;
+
+    // Fix PBR materials — Meshy exports MeshPhysicalMaterial that appears black
+    // without environment maps. Convert to Lambert for reliable scene lighting.
+    model.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const mat = child.material;
+        if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+          const newMat = new THREE.MeshLambertMaterial({
+            color: mat.color ?? new THREE.Color(PLAYER.SKIN_COLOR),
+            map: mat.map,
+          });
+          child.material = newMat;
+          mat.dispose();
+        }
+      }
+    });
 
     this.mesh.add(model);
     this._glbModel = model;
