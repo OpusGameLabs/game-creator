@@ -1,7 +1,6 @@
 ---
 name: game-assets
 description: Game asset engineer that creates pixel art sprites, animated characters, and visual entities for browser games. Use when a game needs better character art, enemy sprites, item visuals, or any upgrade from basic geometric shapes to recognizable pixel art.
-user-invocable: false
 ---
 
 # Game Asset Engineer (Pixel Art + Asset Pipeline)

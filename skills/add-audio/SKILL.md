@@ -1,23 +1,21 @@
 ---
 name: add-audio
-description: Add music and sound effects to a game using Strudel.cc — background music, gameplay themes, and SFX
+description: Add music and sound effects to a game using the Web Audio API — background music, gameplay themes, and SFX. Zero dependencies.
 argument-hint: "[path-to-game]"
-disable-model-invocation: true
 ---
 
 # Add Audio
 
-Add procedural music and sound effects to an existing game. BGM uses Strudel.cc for looping patterns. SFX use the Web Audio API directly for true one-shot playback. No audio files needed — everything is synthesized in the browser.
+Add procedural music and sound effects to an existing game. BGM uses a Web Audio API step sequencer for looping patterns. SFX use the Web Audio API directly for true one-shot playback. No audio files or npm packages needed — everything is synthesized in the browser.
 
 ## Instructions
 
 Analyze the game at `$ARGUMENTS` (or the current directory if no path given).
 
-First, load the game-audio skill to get the full Strudel patterns and integration guide.
+First, load the game-audio skill to get the full Web Audio patterns and integration guide.
 
 ### Step 1: Audit
 
-- Read `package.json` to identify the engine and check if `@strudel/web` is installed
 - Read `src/core/EventBus.js` to see what game events exist (flap, score, death, etc.)
 - Read all scene files to understand the game flow (gameplay, game over)
 - Identify what music and SFX would fit the game's genre and mood
@@ -38,24 +36,21 @@ Explain in plain English: "Background music will automatically loop during each 
 
 ### Step 3: Implement
 
-1. Install `@strudel/web` if not already present
-2. Create `src/audio/AudioManager.js` — manages Strudel init, BGM play/stop (uses `hush()` + 100ms delay before new `.play()`)
-3. Create `src/audio/AudioBridge.js` — wires EventBus events to AudioManager for BGM, calls SFX functions directly
-4. Create `src/audio/music.js` with BGM for each scene (Strudel `stack()` + `.play()` — these loop continuously)
-5. Create `src/audio/sfx.js` with SFX for each event (**Web Audio API** — OscillatorNode + GainNode + BiquadFilterNode for true one-shot playback)
-6. Add audio events to `EventBus.js` (`AUDIO_INIT`, `MUSIC_GAMEPLAY`, `MUSIC_GAMEOVER`, `MUSIC_STOP`)
-7. Wire `initAudioBridge()` in `main.js`
-8. Emit `AUDIO_INIT` on first user interaction (game starts immediately, no menu)
-9. Emit music events at scene transitions and SFX events at game actions
-
-**Critical**: Strudel's `.play()` starts a continuously looping pattern — correct for BGM, wrong for SFX. SFX **must** use the Web Audio API directly (see game-audio skill). Import `stack`, `note`, `s`, `hush` from `@strudel/web` for BGM only.
+1. Create `src/audio/AudioManager.js` — AudioContext init, master gain node, BGM sequencer play/stop
+2. Create `src/audio/AudioBridge.js` — wires EventBus events to AudioManager for BGM, calls SFX functions directly
+3. Create `src/audio/music.js` with BGM patterns for each scene (Web Audio step sequencer — note arrays that loop continuously)
+4. Create `src/audio/sfx.js` with SFX for each event (Web Audio API — OscillatorNode + GainNode + BiquadFilterNode for true one-shot playback)
+5. Add audio events to `EventBus.js` if not present (`AUDIO_INIT`, `MUSIC_GAMEPLAY`, `MUSIC_GAMEOVER`, `MUSIC_STOP`, `AUDIO_TOGGLE_MUTE`)
+6. Wire `initAudioBridge()` in `main.js`
+7. Emit `AUDIO_INIT` on first user interaction (game starts immediately, no menu)
+8. Emit music events at scene transitions and SFX events at game actions
+9. Add mute toggle — `AUDIO_TOGGLE_MUTE` event, UI button, M key shortcut
 
 ### Step 4: Verify
 
 - Run `npm run build` to confirm no errors
 - List all files created/modified
 - Remind the user: "Click/tap once to activate audio, then you'll hear the music"
-- Note the AGPL-3.0 license requirement for `@strudel/web`
 
 ## Next Step
 

@@ -2,7 +2,6 @@
 name: improve-game
 description: Analyze a game, find what needs work, and implement the highest-impact improvements
 argument-hint: "[area-to-focus]"
-disable-model-invocation: true
 ---
 
 # Improve Game

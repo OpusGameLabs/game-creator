@@ -16,10 +16,11 @@ skills/
   threejs-game/SKILL.md    # 3D game patterns (Three.js, event-driven)
   game-assets/SKILL.md     # Pixel art sprites (code-only, no external files)
   game-designer/SKILL.md   # Visual polish (gradients, particles, juice, transitions)
-  game-audio/SKILL.md      # Procedural audio (Strudel.cc BGM + SFX)
+  game-audio/SKILL.md      # Procedural audio (Web Audio API BGM + SFX)
   game-qa/SKILL.md         # Playwright testing (gameplay, visual, perf)
   game-architecture/SKILL.md  # Reference architecture patterns
   game-deploy/SKILL.md     # Deployment (here.now default, GitHub Pages, Vercel, etc.)
+  use-template/SKILL.md    # Clone a gallery template as a starting point
   playdotfun/SKILL.md      # Play.fun monetization (git submodule → submodules/playdotfun)
   promo-video/SKILL.md     # Autonomous 50 FPS gameplay recording (Playwright + FFmpeg)
   make-game/SKILL.md       # Full pipeline: scaffold → assets → design → promo video → audio → deploy (here.now) → monetize (QA at every step)
@@ -30,7 +31,7 @@ skills/
   game-3d-assets/SKILL.md  # 3D model pipeline (GLB download, AssetLoader, animated characters)
   meshyai/SKILL.md         # Meshy AI — generate 3D models from text/images, auto-rig, animate
   add-3d-assets/SKILL.md   # Replace 3D primitives with real GLB models
-  add-audio/SKILL.md       # Add Strudel.cc audio
+  add-audio/SKILL.md       # Add procedural audio (Web Audio API)
   record-promo/SKILL.md    # Record autonomous promo video (standalone command)
   monetize-game/SKILL.md   # Play.fun monetization (register, SDK, redeploy)
   qa-game/SKILL.md         # Add Playwright QA tests
@@ -46,6 +47,16 @@ scripts/
 3d-character-library/
   manifest.json            # Index of animated GLB characters with clip maps
   models/                  # Soldier.glb, Xbot.glb, RobotExpressive.glb, Fox.glb
+gallery/
+  manifest.json              # Source of truth: metadata for all templates
+  build.js                   # Node script: manifest → _site/gallery/index.html
+  capture-screenshots.js     # Playwright: auto-capture thumbnails for each game
+  thumbnails/                # 400x225 PNGs (committed to git)
+  telemetry/
+    server.js                # Express telemetry API (ingestion + stats)
+    schema.sql               # PostgreSQL schema
+    Dockerfile               # Railway container
+    package.json             # Express, pg, cors
 submodules/
   playdotfun/              # Git submodule: github.com/OpusGameLabs/skills
 agents/
@@ -93,7 +104,7 @@ Located at `examples/flappy-bird/`. Demonstrates all patterns.
 - `src/core/GameState.js` — score, bestScore, started, gameOver.
 - `src/scenes/GameScene.js` — Main gameplay. Two-stage start (GET READY → playing). AABB collision. Death slow-mo.
 - `src/scenes/UIScene.js` — Parallel overlay scene for HUD score display.
-- `src/audio/AudioManager.js` — Wraps Strudel `initStrudel()`, `hush()`, `.play()`. Uses explicit imports from `@strudel/web`.
+- `src/audio/AudioManager.js` — AudioContext init, master gain, BGM sequencer play/stop.
 - `src/audio/music.js` — Three BGM patterns: menu (100 cpm), gameplay (130 cpm), game over (60 cpm).
 - `src/audio/sfx.js` — Four SFX: flap, score, death, button click.
 
@@ -120,15 +131,15 @@ tests/
 
 ### Audio integration
 
-Strudel audio requires user interaction to start (browser autoplay policy). The flow:
-1. GameScene first input → `AUDIO_INIT` event → `initStrudel()` called
+Audio requires user interaction to start (browser autoplay policy). The flow:
+1. GameScene first input → `AUDIO_INIT` event → AudioContext created/resumed
 2. GameScene `startPlaying()` → `MUSIC_GAMEPLAY` → gameplay BGM
 3. Bird dies → `BIRD_DIED` (death SFX) + `MUSIC_STOP`
 4. GameOverScene create → `MUSIC_GAMEOVER` → somber theme
 
 SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners.
 
-`hush()` stops ALL patterns globally. BGM uses a 100ms `setTimeout` between `hush()` and `.play()` to let Strudel's scheduler process the stop.
+BGM uses a Web Audio API step sequencer. SFX use one-shot OscillatorNodes. All audio routes through a master GainNode for mute control.
 
 ## Dependencies
 
@@ -136,16 +147,15 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 |---------|---------|---------|
 | phaser | ^3.90.0 | 2D game engine (Phaser template) |
 | three | ^0.183.0 | 3D game engine (Three.js template) |
-| @strudel/web | ^1.3.0 | Procedural audio (AGPL-3.0) |
-| @playwright/test | ^1.58.0 | Automated QA (dev) |
-| @axe-core/playwright | ^4.11.0 | Accessibility testing (dev) |
 | vite | ^7.3.1 | Build tool (dev) |
+
+Audio uses the built-in Web Audio API (zero dependencies). Strudel.cc (`@strudel/web`, AGPL-3.0) is available as an optional upgrade for richer BGM — see the game-audio skill.
 
 ## Common Tasks
 
 **Add a new skill**: Create `skills/<name>/SKILL.md`. Follow existing skill format with tech stack, architecture, code examples, and checklist.
 
-**Add a new user-invocable skill** (slash command): Create `skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`, `argument-hint`, `disable-model-invocation: true`). Body contains the prompt instructions.
+**Add a new user-invocable skill** (slash command): Create `skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`, `argument-hint`). Body contains the prompt instructions.
 
 **Sync to plugin cache**: After editing skill files, copy to your agent's plugin cache directory (e.g. `~/.claude/plugins/cache/local-plugins/game-creator/1.3.0/` for Claude Code).
 
@@ -157,10 +167,42 @@ SFX fires on `BIRD_FLAP`, `SCORE_CHANGED`, `BIRD_DIED` via AudioBridge listeners
 
 ## Notes
 
-- Strudel.cc is AGPL-3.0. Games using `@strudel/web` must be open source.
 - Playwright screenshot tests use high pixel tolerance (3000 maxDiffPixels) because parallax clouds scroll between captures.
 - Headless Chromium reports low FPS (~7-9). FPS threshold in tests is set to 5. Use Playwright MCP for accurate FPS measurement.
 - The `playdotfun` skill is a git submodule at `submodules/playdotfun` (repo: `github.com/playdotfun/skills`). The symlink `skills/playdotfun → ../submodules/playdotfun/skills` makes SKILL.md resolve correctly. After cloning, run `git submodule update --init` to pull the submodule.
+
+## Template Gallery
+
+The gallery is a browsable page of all game templates (examples + starters) at `_site/gallery/index.html`.
+
+**Source of truth**: `gallery/manifest.json` — 20 entries with id, name, description, engine, genre, complexity, features, source path, thumbnail, and demoUrl.
+
+**Build the gallery**: `npm run build:gallery` (runs `node gallery/build.js`). Reads manifest, generates `_site/gallery/index.html`, copies thumbnails.
+
+**Capture thumbnails**: `npm run capture:thumbnails` (runs `node gallery/capture-screenshots.js`). For each template, reuses existing QA screenshots from `output/` or boots the game in headless Chromium. Output: 400x225 PNGs in `gallery/thumbnails/`.
+
+**Clone a template**: `/use-template <template-id> [project-name]` — copies template source, updates package.json/title, runs npm install. 10-second copy vs 10-minute `/make-game` pipeline.
+
+**Adding a new template to the gallery**: Add an entry to `gallery/manifest.json`, run `npm run capture:thumbnails`, then `npm run build:gallery`.
+
+## Template Telemetry
+
+Anonymous, append-only telemetry tracks template usage (clones and clicks). No user data or IPs logged.
+
+**Backend**: `gallery/telemetry/` — Express + PostgreSQL, deployed on Railway.
+
+**Endpoints**:
+- `GET /t?event=clone|click&template=<id>&source=gallery|skill&v=1` — ingestion (returns 204)
+- `GET /stats` — aggregated clone/click counts per template (cached 60s)
+- `GET /health` — health check
+
+**Telemetry sources**:
+- Gallery page fires `click` event on "Use Template" button
+- `/use-template` skill fires `clone` event after successful copy (respects `DO_NOT_TRACK` / `DISABLE_TELEMETRY` env vars)
+
+**Gallery integration**: `gallery/build.js` fetches `/stats` at build time, enriches manifest with clone counts, and embeds them in the HTML. Sort controls (Default/Popular/Trending) re-order cards client-side.
+
+**Environment**: Set `TELEMETRY_URL` to override the default Railway URL. `DATABASE_URL` is required for the backend.
 
 ## Play.fun (OpenGameProtocol) Integration
 

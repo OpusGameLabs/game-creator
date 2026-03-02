@@ -1,7 +1,6 @@
 ---
 name: meshyai
 description: Generate custom 3D models from text or images using Meshy AI, then auto-rig and animate them for Three.js games. The preferred source for all 3D game assets.
-user-invocable: false
 ---
 
 # Meshy AI — 3D Model Generation, Rigging & Animation

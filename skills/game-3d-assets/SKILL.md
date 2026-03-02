@@ -1,7 +1,6 @@
 ---
 name: game-3d-assets
 description: 3D asset engineer that finds, downloads, and integrates GLB/GLTF models into Three.js browser games. Use when a 3D game needs real models instead of primitive BoxGeometry/SphereGeometry shapes.
-user-invocable: false
 ---
 
 # Game 3D Asset Engineer (Model Pipeline)

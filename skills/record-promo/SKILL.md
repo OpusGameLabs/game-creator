@@ -2,7 +2,6 @@
 name: record-promo
 description: Record an autonomous 50 FPS promo video of your game for social media
 argument-hint: "[path-to-game]"
-disable-model-invocation: true
 ---
 
 # Record Promo Video

@@ -2,7 +2,6 @@
 name: add-3d-assets
 description: Replace primitive 3D shapes with real GLB models — animated characters, world props, buildings, and scenery for Three.js games
 argument-hint: "[path-to-game]"
-disable-model-invocation: true
 ---
 
 # Add 3D Assets

@@ -1,7 +1,6 @@
 ---
 name: fetch-tweet
 description: Fetch tweet content directly from fxtwitter API. Use when given a tweet/X URL to extract the tweet text, author, media, and engagement stats without loading x.com.
-user-invocable: false
 ---
 
 # Fetch Tweet

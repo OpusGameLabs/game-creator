@@ -2,7 +2,6 @@
 name: make-game
 description: Full guided pipeline — scaffold, design, audio, deploy, and monetize a game from scratch
 argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
-disable-model-invocation: true
 ---
 
 # Make Game (Full Pipeline)
@@ -892,13 +891,15 @@ Launch a `Task` subagent with these instructions:
 > **Read `progress.md`** at the project root before starting. It describes the game's entities, events, constants, and what previous steps have done.
 >
 > Apply the game-audio skill:
-> 1. Audit the game: check for `@strudel/web`, read EventBus events, read all scenes
-> 2. Install `@strudel/web` if needed
-> 3. Create `src/audio/AudioManager.js`, `music.js`, `sfx.js`, `AudioBridge.js`
-> 4. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
-> 5. Wire audio into main.js and all scenes
-> 6. **Important**: Use explicit imports from `@strudel/web` (`import { stack, note, s } from '@strudel/web'`) — do NOT rely on global registration
-> 7. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to `gameState.game.isMuted`. Add M key shortcut and a speaker icon UI button. See the `mute-button` rule and the game-audio skill "Mute Button" section for requirements and drawing code.
+> 1. Audit the game: read EventBus events, read all scenes
+> 2. Create `src/audio/AudioManager.js` — AudioContext init, master gain, BGM sequencer play/stop
+> 3. Create `src/audio/music.js` — BGM patterns as note arrays using the Web Audio step sequencer
+> 4. Create `src/audio/sfx.js` — SFX using Web Audio API (OscillatorNode + GainNode + BiquadFilterNode)
+> 5. Create `src/audio/AudioBridge.js` — wire EventBus events to audio
+> 6. Add audio events to EventBus.js (including `AUDIO_TOGGLE_MUTE`)
+> 7. Wire audio into main.js and all scenes
+> 8. **Mute toggle**: Wire `AUDIO_TOGGLE_MUTE` to master gain. Add M key shortcut and a speaker icon UI button. See the game-audio skill "Mute Button" section for requirements and drawing code.
+> 9. **No npm packages needed** — all audio uses the built-in Web Audio API
 >
 > **After completing your work**, append a `## Step 3: Audio` section to `progress.md` with: BGM patterns added, SFX event mappings, mute wiring confirmation.
 >
@@ -908,7 +909,6 @@ Launch a `Task` subagent with these instructions:
 
 **Tell the user:**
 > Your game now has music and sound effects! Click/tap once to activate audio, then you'll hear the music.
-> Note: Strudel is AGPL-3.0, so your project needs a compatible open source license.
 >
 > **Next up: deploy to the web.** I'll publish your game to here.now for an instant public URL. Ready?
 

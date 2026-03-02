@@ -2,7 +2,6 @@
 name: qa-game
 description: Add Playwright QA tests to a game — visual regression, gameplay verification, performance, and accessibility
 argument-hint: "[path-to-game]"
-disable-model-invocation: true
 ---
 
 # QA Game

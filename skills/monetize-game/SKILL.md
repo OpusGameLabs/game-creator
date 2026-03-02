@@ -2,8 +2,6 @@
 name: monetize-game
 description: Register your game on Play.fun (OpenGameProtocol), add the browser SDK, and get a monetized play.fun URL
 argument-hint: "[game-path]"
-disable-model-invocation: true
-allowed-tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "Task"]
 ---
 
 # Monetize Game (Play.fun / OpenGameProtocol)

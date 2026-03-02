@@ -1,7 +1,6 @@
 ---
 name: game-deploy
 description: Deploy browser games to here.now (default), GitHub Pages, or other hosting. Use when deploying a game, setting up hosting, or publishing a game build.
-disable-model-invocation: true
 ---
 
 # Game Deployment

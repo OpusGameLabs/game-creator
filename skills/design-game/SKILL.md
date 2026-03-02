@@ -2,7 +2,6 @@
 name: design-game
 description: Audit and improve the visual design, polish, and player experience of an existing game
 argument-hint: "[path-to-game]"
-disable-model-invocation: true
 ---
 
 # Design Game
