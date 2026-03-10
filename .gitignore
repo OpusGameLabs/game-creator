@@ -21,3 +21,6 @@ test-*.png
 
 # Gallery build artifacts
 gallery/thumbnails/
+
+# Deployment artifacts
+.herenow/
