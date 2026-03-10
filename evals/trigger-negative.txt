@@ -1,0 +1,25 @@
+# Generic coding (not game-related)
+write a Python script to parse CSV files
+help me set up a React app
+create a REST API with Express
+fix the TypeScript errors in my project
+write unit tests for this function
+
+# Non-game creative
+design a logo for my company
+create a marketing landing page
+write a blog post about AI
+
+# Other domains
+what's the weather in San Francisco
+help me with my resume
+explain how Docker containers work
+set up a PostgreSQL database
+create a Kubernetes deployment
+
+# Adjacent but wrong
+create an NFT collection
+build a blockchain app
+make a mobile app with React Native
+create a Discord bot
+build a Chrome extension

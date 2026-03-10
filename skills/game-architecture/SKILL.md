@@ -1,6 +1,12 @@
 ---
 name: game-architecture
 description: Game architecture patterns and best practices for browser games. Use when designing game systems, planning architecture, structuring a game project, or making architectural decisions about game code.
+argument-hint: "[topic]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, architecture, patterns, eventbus, gamestate, best-practices]
 ---
 
 # Game Architecture Patterns

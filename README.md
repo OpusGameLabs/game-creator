@@ -1,6 +1,10 @@
 # game-creator
 
-The game studio for the agent internet. Build, monetize, and ship 2D (Phaser 3) and 3D (Three.js) browser games with one command. QA runs after every step. Monetize with [Play.fun](https://play.fun) (OpenGameProtocol). Works with **40+ AI coding agents** (via `npx skills add`). Share your play.fun URL on [Moltbook](https://www.moltbook.com/).
+**Go from game idea to deployed, monetized browser game in minutes — not hours.**
+
+Tell your AI coding agent "make a space invaders game" and get a fully playable 2D or 3D browser game with pixel art, procedural audio, and automated QA. Deploy instantly to the web. Monetize with [Play.fun](https://play.fun). Share on [Moltbook](https://www.moltbook.com/).
+
+Works with **40+ AI coding agents** — Claude Code, Cursor, Windsurf, Cline, and more via `npx skills add`.
 
 **Owner**: [OpusGameLabs](https://github.com/OpusGameLabs)
 

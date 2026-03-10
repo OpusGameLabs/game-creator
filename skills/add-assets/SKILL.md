@@ -1,12 +1,19 @@
 ---
 name: add-assets
-description: Replace geometric shapes with pixel art sprites — recognizable characters, enemies, and items with optional animation. Use when the user says "add sprites", "replace the shapes with real art", "add pixel art", "make the characters look real", or "add game assets". For 3D games, use add-3d-assets instead.
+description: Replace geometric shapes with pixel art sprites — recognizable characters, enemies, and items with optional animation. Use when the user says "add sprites", "replace the shapes with real art", "add pixel art", "make the characters look real", or "add game assets". For 3D games, use add-3d-assets instead. Do NOT use for 3D models (use add-3d-assets) or gameplay changes (use add-feature).
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, assets, sprites, pixel-art, characters, 2d]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Add Assets
 
@@ -68,6 +75,30 @@ Grid sizes range from 8x8 (tiny pickups) through 16x16 (standard entities) to 32
 - List all files created and modified
 - Remind the user to run the game and check visuals
 - Suggest running `/game-creator:qa-game` to update visual regression snapshots since all entities look different now
+
+## Example Usage
+
+### Standard game
+```
+/add-assets examples/asteroid-dodge
+```
+Result: Audits all entities using geometric shapes → creates `src/sprites/` with player, asteroids, and gem pixel art → replaces `fillCircle()`/`fillRect()` with `renderPixelArt()` → collision bounds adjusted.
+
+### Personality game (from tweet)
+```
+/add-assets examples/nick-land-dodger
+```
+Result: Detects named personality → uses 32x48 Personality archetype at scale 4 → recognizable caricature as player character → enemies and items get themed pixel art.
+
+## Troubleshooting
+
+### Sprites appear but are wrong size
+**Cause:** Pixel art dimensions don't match original hitbox.
+**Fix:** Keep sprite dimensions close to the original fillRect/fillCircle size. Adjust collision bounds if needed.
+
+### Sprites don't appear
+**Cause:** Canvas texture not created before first render frame.
+**Fix:** Generate textures in scene preload() or create(), not in update().
 
 ## Next Step
 

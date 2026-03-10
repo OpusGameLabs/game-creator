@@ -1,6 +1,13 @@
 ---
 name: game-deploy
-description: Deploy browser games to here.now (default), GitHub Pages, or other hosting. Use when deploying a game, setting up hosting, or publishing a game build.
+description: Deploy browser games to here.now (default), GitHub Pages, or other hosting. Use when deploying a game, setting up hosting, or publishing a game build. Do NOT use for local development servers (use npm run dev).
+argument-hint: "[platform]"
+license: MIT
+compatibility: Requires internet access. Uses npx (here.now) or gh CLI (GitHub Pages) for deployment.
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, deploy, hosting, here-now, github-pages]
 ---
 
 # Game Deployment
@@ -169,6 +176,42 @@ await client.games.register({
 - **Netlify**: Connect repo, set build command to `npm run build`, publish dir to `dist`
 - **Railway**: Use the Railway skill for deployment
 - **itch.io**: Upload the `dist/` folder as an HTML5 game
+
+## Example Usage
+
+### Default (here.now)
+```
+/game-deploy
+```
+Result: Builds `dist/` → publishes via here.now → game live at `https://<slug>.here.now/` in seconds. Adds `npm run deploy` script for future one-command deploys.
+
+### GitHub Pages
+```
+/game-deploy github-pages
+```
+Result: Builds with correct base path → pushes to `gh-pages` branch → game live at `https://<user>.github.io/<game>/` in 1-2 minutes.
+
+## Troubleshooting
+
+### here.now 429 rate limit
+**Cause:** Too many deployments in a short period. here.now has rate limiting on anonymous deployments.
+**Fix:** Wait a few minutes and retry. For frequent deployments, consider using GitHub Pages or Vercel instead.
+
+### Anonymous here.now site expired
+**Cause:** Anonymous here.now deployments are temporary and expire after a period of inactivity.
+**Fix:** Redeploy with `npx here.now`. For persistent hosting, use GitHub Pages (`gh-pages` branch) or Vercel, which don't expire.
+
+### GitHub Pages 404 after deployment
+**Cause:** Vite's base path doesn't match the GitHub Pages URL structure (`/<repo-name>/`).
+**Fix:** Set `base: '/<repo-name>/'` in `vite.config.js`. Ensure the `gh-pages` branch is selected as the source in the repository's Pages settings. Wait 1-2 minutes for GitHub's CDN to propagate.
+
+### Blank page after deployment (asset paths)
+**Cause:** Asset paths use absolute URLs (`/assets/...`) that don't resolve correctly on the deployment host.
+**Fix:** Use relative paths (`./assets/...`) or configure Vite's `base` option to match the deployment URL. Run `npm run build` locally and test the `dist/` folder with a local server before deploying.
+
+### gh-pages push rejected
+**Cause:** The remote `gh-pages` branch has diverged or the force push was blocked by branch protection rules.
+**Fix:** Use `git push origin gh-pages --force` if you own the repo and there's no branch protection. If protected, delete the remote `gh-pages` branch first: `git push origin --delete gh-pages`, then redeploy.
 
 ## Pre-Deploy Checklist
 

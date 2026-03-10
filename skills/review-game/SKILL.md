@@ -1,12 +1,19 @@
 ---
 name: review-game
-description: Review an existing game codebase for architecture, performance, and best practices. Use when the user says "review my game", "code review", "check my game architecture", "is my game well structured", or "audit my game code".
+description: Review an existing game codebase for architecture, performance, and best practices. Use when the user says "review my game", "code review", "check my game architecture", "is my game well structured", or "audit my game code". Do NOT use for making changes — this is read-only analysis. Use improve-game to implement fixes.
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, review, architecture, best-practices, code-quality]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Review Game
 
@@ -68,6 +75,13 @@ Provide a structured report with:
 5. **Monetization Readiness** (out of 4 checks)
 6. **Top Recommendations** - Prioritized list of improvements with plain-English explanations
 7. **What's Working Well** - Positive findings
+
+## Example Usage
+
+```
+/review-game examples/flappy-bird
+```
+Result: Architecture 6/6, Performance 4/5, Code Quality 4/4, Monetization 2/4 → Top recommendations: add Play.fun SDK, add object pooling for pipes, add delta time capping. Positive findings: clean EventBus usage, proper GameState reset, well-organized directory structure.
 
 ## Next Step
 

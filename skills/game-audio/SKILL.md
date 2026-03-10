@@ -1,15 +1,33 @@
 ---
 name: game-audio
 description: Game audio engineer using Web Audio API for procedural music and sound effects in browser games. Zero dependencies. Use when adding music or SFX to a game.
+argument-hint: "[topic]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, audio, music, sfx, web-audio-api, bgm]
 ---
 
 # Game Audio Engineer (Web Audio API)
 
 You are an expert game audio engineer. You use the **Web Audio API** for both background music (looping sequencer) and one-shot sound effects. Zero dependencies — everything is built into the browser.
 
+## Performance Notes
+
+- Take your time with each step. Quality is more important than speed.
+- Do not skip validation steps — they catch issues early.
+- Read the full context of each file before making changes.
+- Test every sound in the browser. Web Audio timing is different from what you expect.
+
 ## Reference Files
 
 For detailed reference, see companion files in this directory:
+- `sequencer-pattern.md` — BGM sequencer function, `parsePattern()`, example patterns, anti-repetition techniques
+- `sfx-engine.md` — `playTone()`, `playNotes()`, `playNoise()`, all SFX presets
+- `mute-button.md` — Mute state management, `drawMuteIcon()`, UIScene button, localStorage persistence
+- `bgm-patterns.md` — Strudel BGM pattern examples
+- `strudel-reference.md` — Strudel.cc API reference
 - `mixing-guide.md` — Volume levels table and style guidelines per genre
 
 ## Tech Stack
@@ -93,268 +111,13 @@ export const audioManager = new AudioManager();
 
 ## BGM Sequencer Pattern
 
-BGM uses a step sequencer that schedules oscillator notes ahead of time in a recurring loop. This gives sample-accurate timing with zero drift.
+See `sequencer-pattern.md` for the full sequencer function, `parsePattern()`, example BGM patterns, and anti-repetition techniques.
 
-```js
-// music.js — BGM patterns using Web Audio API sequencer
+## SFX Engine (Web Audio API -- one-shot)
 
-const NOTES = {
-  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
-  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-  C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, R: 0, // R = rest
-};
+See `sfx-engine.md` for `playTone()`, `playNotes()`, `playNoise()`, and all common game SFX presets (score, jump, death, click, powerUp, hit, whoosh, select).
 
-/**
- * Simple step sequencer — schedules notes in a loop using Web Audio API.
- * Returns { stop() } to cancel the loop.
- *
- * @param {AudioContext} ctx
- * @param {GainNode} dest - destination node (master gain)
- * @param {Array<Array<{freq, type, gain, duration}>>} layers - parallel note sequences
- * @param {number} bpm - beats per minute
- * @param {number} stepsPerBeat - subdivisions per beat (default 2 = eighth notes)
- */
-function sequencer(ctx, dest, layers, bpm, stepsPerBeat = 2) {
-  const stepDuration = 60 / bpm / stepsPerBeat;
-  let nextStepTime = ctx.currentTime + 0.05; // small initial buffer
-  let stepIndex = 0;
-  let stopped = false;
-  let timerId = null;
-
-  function scheduleStep() {
-    if (stopped) return;
-
-    // Schedule notes while we're ahead of the playback cursor
-    while (nextStepTime < ctx.currentTime + 0.1) {
-      for (const layer of layers) {
-        const note = layer[stepIndex % layer.length];
-        if (note && note.freq > 0) {
-          const osc = ctx.createOscillator();
-          osc.type = note.type || 'square';
-          osc.frequency.setValueAtTime(note.freq, nextStepTime);
-
-          if (note.freqEnd) {
-            osc.frequency.exponentialRampToValueAtTime(note.freqEnd, nextStepTime + (note.duration || stepDuration));
-          }
-
-          const g = ctx.createGain();
-          const noteGain = note.gain ?? 0.15;
-          g.gain.setValueAtTime(noteGain, nextStepTime);
-          g.gain.exponentialRampToValueAtTime(0.001, nextStepTime + (note.duration || stepDuration * 0.9));
-
-          const f = ctx.createBiquadFilter();
-          f.type = 'lowpass';
-          f.frequency.setValueAtTime(note.lpf || 3000, nextStepTime);
-
-          osc.connect(f).connect(g).connect(dest);
-          osc.start(nextStepTime);
-          osc.stop(nextStepTime + (note.duration || stepDuration));
-        }
-      }
-
-      stepIndex++;
-      nextStepTime += stepDuration;
-    }
-
-    timerId = setTimeout(scheduleStep, 25); // check every 25ms
-  }
-
-  scheduleStep();
-  return { stop() { stopped = true; clearTimeout(timerId); } };
-}
-
-// Helper: convert a string pattern like "C4 R E4 G4" into note objects
-function parsePattern(str, type = 'square', gain = 0.15, lpf = 3000) {
-  return str.split(' ').map(n => {
-    if (n === 'R' || n === '~') return { freq: 0 };
-    return { freq: NOTES[n] || 0, type, gain, lpf };
-  });
-}
-
-// --- Example BGM patterns ---
-
-export function gameplayBGM(ctx, dest) {
-  return sequencer(ctx, dest, [
-    // Melody — square wave
-    parsePattern('C4 E4 G4 E4 C4 D4 E4 C4 D4 F4 A4 F4 D4 E4 F4 D4', 'square', 0.14, 2200),
-    // Bass — triangle wave
-    parsePattern('C3 R C3 R G3 R G3 R F3 R F3 R C3 R C3 R', 'triangle', 0.18, 500),
-    // Arpeggio texture — quiet square
-    parsePattern('C5 E5 G5 E5 C5 E5 G5 E5 D5 F4 A4 F4 D5 F4 A4 F4', 'square', 0.04, 1000),
-    // Kick drum — low sine
-    parsePattern('C3 R R R C3 R R R C3 R R R C3 R R R', 'sine', 0.25, 200),
-  ], 130, 2);
-}
-
-export function gameOverTheme(ctx, dest) {
-  return sequencer(ctx, dest, [
-    // Slow descending melody
-    parsePattern('B4 R A4 R G4 R E4 R D4 R C4 R R R R R', 'triangle', 0.18, 1800),
-    // Pad chord
-    parsePattern('A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3 A3', 'sine', 0.10, 1200),
-  ], 60, 2);
-}
-```
-
-### Anti-Repetition Techniques
-
-The #1 complaint about procedural game music is repetitiveness. Use these techniques:
-
-1. **Multiple phrase variations** — Write 2-4 melody arrays and cycle through them:
-```js
-const melodies = [
-  parsePattern('C4 E4 G4 E4 C4 D4 E4 C4'),
-  parsePattern('G4 A4 B4 A4 G4 E4 D4 E4'),
-  parsePattern('E4 G4 A4 G4 E4 D4 C4 D4'),
-];
-// In sequencer, index melody layers by Math.floor(stepIndex / stepsPerPhrase) % melodies.length
-```
-
-2. **Different layer lengths** — Make bass 12 steps while melody is 16. They realign after LCM(12,16)=48 steps.
-
-3. **Random note omission** — In the sequencer loop, skip notes with `Math.random() > 0.85` for organic variation.
-
-4. **Filter sweep** — Gradually change `lpf` values over time for timbral movement.
-
-**Rule of thumb**: Effective loop length should be 30+ seconds before exact repetition.
-
-## SFX Engine (Web Audio API — one-shot)
-
-```js
-// sfx.js — Web Audio API one-shot sounds
-import { audioManager } from './AudioManager.js';
-
-function playTone(freq, type, duration, gain = 0.3, filterFreq = 4000) {
-  const ctx = audioManager.getCtx();
-  const now = ctx.currentTime;
-
-  const osc = ctx.createOscillator();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, now);
-
-  const gainNode = ctx.createGain();
-  gainNode.gain.setValueAtTime(gain, now);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(filterFreq, now);
-
-  osc.connect(filter).connect(gainNode).connect(audioManager.getMaster());
-  osc.start(now);
-  osc.stop(now + duration);
-}
-
-function playNotes(notes, type, noteDuration, gap, gain = 0.3, filterFreq = 4000) {
-  const ctx = audioManager.getCtx();
-  const now = ctx.currentTime;
-
-  notes.forEach((freq, i) => {
-    const start = now + i * gap;
-    const osc = ctx.createOscillator();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, start);
-
-    const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(gain, start);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, start + noteDuration);
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(filterFreq, start);
-
-    osc.connect(filter).connect(gainNode).connect(audioManager.getMaster());
-    osc.start(start);
-    osc.stop(start + noteDuration);
-  });
-}
-
-function playNoise(duration, gain = 0.2, lpfFreq = 4000, hpfFreq = 0) {
-  const ctx = audioManager.getCtx();
-  const now = ctx.currentTime;
-  const bufferSize = ctx.sampleRate * duration;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-
-  const gainNode = ctx.createGain();
-  gainNode.gain.setValueAtTime(gain, now);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-  const lpf = ctx.createBiquadFilter();
-  lpf.type = 'lowpass';
-  lpf.frequency.setValueAtTime(lpfFreq, now);
-
-  let chain = source.connect(lpf).connect(gainNode);
-
-  if (hpfFreq > 0) {
-    const hpf = ctx.createBiquadFilter();
-    hpf.type = 'highpass';
-    hpf.frequency.setValueAtTime(hpfFreq, now);
-    source.disconnect();
-    chain = source.connect(hpf).connect(lpf).connect(gainNode);
-  }
-
-  chain.connect(audioManager.getMaster());
-  source.start(now);
-  source.stop(now + duration);
-}
-
-// --- Common Game SFX ---
-// Note frequencies: C4=261.63, D4=293.66, E4=329.63, F4=349.23,
-// G4=392.00, A4=440.00, B4=493.88, C5=523.25, E5=659.25, B5=987.77
-
-export function scoreSfx() {
-  playNotes([659.25, 987.77], 'square', 0.12, 0.07, 0.3, 5000);
-}
-
-export function jumpSfx() {
-  const ctx = audioManager.getCtx();
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(261.63, now);
-  osc.frequency.exponentialRampToValueAtTime(1046.5, now + 0.1);
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.2, now);
-  g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-  const f = ctx.createBiquadFilter();
-  f.type = 'lowpass';
-  f.frequency.setValueAtTime(3000, now);
-  osc.connect(f).connect(g).connect(audioManager.getMaster());
-  osc.start(now);
-  osc.stop(now + 0.12);
-}
-
-export function deathSfx() {
-  playNotes([392, 329.63, 261.63, 220, 174.61], 'square', 0.2, 0.1, 0.25, 2000);
-}
-
-export function clickSfx() {
-  playTone(523.25, 'sine', 0.08, 0.2, 5000);
-}
-
-export function powerUpSfx() {
-  playNotes([261.63, 329.63, 392, 523.25, 659.25], 'square', 0.1, 0.06, 0.3, 5000);
-}
-
-export function hitSfx() {
-  playTone(65.41, 'square', 0.15, 0.3, 800);
-}
-
-export function whooshSfx() {
-  playNoise(0.25, 0.15, 6000, 800);
-}
-
-export function selectSfx() {
-  playTone(523.25, 'sine', 0.2, 0.25, 6000);
-}
-```
-
-## AudioBridge (wiring EventBus → audio)
+## AudioBridge (wiring EventBus -> audio)
 
 ```js
 import { eventBus, Events } from '../core/EventBus.js';
@@ -379,90 +142,7 @@ export function initAudioBridge() {
 
 ## Mute State Management
 
-Store `isMuted` in GameState and respect it via the master gain node:
-
-```js
-// AudioBridge — handle mute toggle event
-eventBus.on(Events.AUDIO_TOGGLE_MUTE, () => {
-  gameState.isMuted = !gameState.isMuted;
-  try { localStorage.setItem('muted', gameState.isMuted); } catch (_) {}
-  audioManager.setMuted(gameState.isMuted);
-  if (gameState.isMuted) audioManager.stopMusic();
-});
-```
-
-Muting via `masterGain.gain.value = 0` silences both BGM and SFX through a single control point. No need to check mute state in every SFX function.
-
-### Mute Button
-
-Reference implementation for drawing a speaker icon with the Phaser Graphics API:
-
-```js
-function drawMuteIcon(gfx, muted, size) {
-  gfx.clear();
-  const s = size;
-
-  // Speaker body — rectangle + triangle cone
-  gfx.fillStyle(0xffffff);
-  gfx.fillRect(-s * 0.15, -s * 0.15, s * 0.15, s * 0.3);
-  gfx.fillTriangle(-s * 0.15, -s * 0.3, -s * 0.15, s * 0.3, -s * 0.45, 0);
-
-  if (!muted) {
-    // Sound waves — two arcs
-    gfx.lineStyle(2, 0xffffff);
-    gfx.beginPath();
-    gfx.arc(0, 0, s * 0.2, -Math.PI / 4, Math.PI / 4);
-    gfx.strokePath();
-    gfx.beginPath();
-    gfx.arc(0, 0, s * 0.35, -Math.PI / 4, Math.PI / 4);
-    gfx.strokePath();
-  } else {
-    // X mark
-    gfx.lineStyle(3, 0xff4444);
-    gfx.lineBetween(s * 0.05, -s * 0.25, s * 0.35, s * 0.25);
-    gfx.lineBetween(s * 0.05, s * 0.25, s * 0.35, -s * 0.25);
-  }
-}
-```
-
-Create the button in UIScene (runs as a parallel scene, visible on all screens):
-
-```js
-// In UIScene.create():
-_createMuteButton() {
-  const ICON_SIZE = 16;
-  const MARGIN = 12;
-  const x = this.cameras.main.width - MARGIN - ICON_SIZE;
-  const y = this.cameras.main.height - MARGIN - ICON_SIZE;
-
-  this.muteBg = this.add.circle(x, y, ICON_SIZE + 4, 0x000000, 0.3)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(100);
-
-  this.muteIcon = this.add.graphics().setDepth(100);
-  this.muteIcon.setPosition(x, y);
-  drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
-
-  this.muteBg.on('pointerdown', () => {
-    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
-    drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
-  });
-
-  this.input.keyboard.on('keydown-M', () => {
-    eventBus.emit(Events.AUDIO_TOGGLE_MUTE);
-    drawMuteIcon(this.muteIcon, gameState.isMuted, ICON_SIZE);
-  });
-}
-```
-
-Persist preference via `localStorage`:
-
-```js
-// GameState — read on construct
-constructor() {
-  this.isMuted = localStorage.getItem('muted') === 'true';
-}
-```
+See `mute-button.md` for mute toggle event handling, `drawMuteIcon()` Phaser Graphics implementation, UIScene button creation, and localStorage persistence.
 
 ## Integration Checklist
 

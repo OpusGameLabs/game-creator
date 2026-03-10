@@ -1,12 +1,19 @@
 ---
 name: quick-game
-description: Rapidly scaffold and implement a playable game — no assets, design, audio, deploy, or monetize. Get something on screen fast. Use when the user says "quick game", "fast prototype", "just get something playable", or wants a game without the full pipeline. For the complete pipeline, use make-game instead.
+description: Rapidly scaffold and implement a playable game — no assets, design, audio, deploy, or monetize. Get something on screen fast. Use when the user says "quick game", "fast prototype", "just get something playable", or wants a game without the full pipeline. For the complete pipeline, use make-game instead. Do NOT use for production games (use make-game for the full pipeline).
 argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, prototype, scaffold, fast]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Quick Game (Fast Prototype)
 
@@ -98,6 +105,30 @@ After the subagent returns:
 1. Run `npm run build` in the project directory to confirm no errors
 2. If the build fails, fix the issues (up to 2 retries)
 3. If Playwright MCP is available, navigate to the dev server, take a screenshot, and do a quick visual check
+
+## Example Usage
+
+### 2D game
+```
+/quick-game 2d asteroid-dodge
+```
+Result: Copies Phaser template → implements player ship, asteroid spawning, collision death, score counter, restart flow → dev server running at localhost:3000 in ~2 minutes. Shapes only, no polish.
+
+### From tweet
+```
+/quick-game https://x.com/user/status/123456
+```
+Result: Fetches tweet → abstracts game concept → scaffolds and implements a playable prototype inspired by the tweet content.
+
+## Troubleshooting
+
+### Game scaffolds but won't start
+**Cause:** Vite config or import paths incorrect.
+**Fix:** Verify vite.config.js has correct root. Check that main.js is referenced in index.html.
+
+### Missing core files
+**Cause:** Scaffold skipped EventBus/GameState/Constants.
+**Fix:** Every game needs core/EventBus.js, core/GameState.js, core/Constants.js. Re-run scaffold or create manually.
 
 ### Done
 

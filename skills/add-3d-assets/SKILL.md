@@ -1,12 +1,19 @@
 ---
 name: add-3d-assets
-description: Replace primitive 3D shapes with real GLB models — animated characters, world props, buildings, and scenery for Three.js games. Use when the user says "add 3D models", "replace the boxes with real models", "add GLB assets", or "make the 3D game look real". For 2D pixel art, use add-assets instead.
+description: Replace primitive 3D shapes with real GLB models — animated characters, world props, buildings, and scenery for Three.js games. Use when the user says "add 3D models", "replace the boxes with real models", "add GLB assets", or "make the 3D game look real". For 2D pixel art, use add-assets instead. Do NOT use for 2D pixel art (use add-assets) or gameplay changes (use add-feature).
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, 3d, assets, glb, models, threejs]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Add 3D Assets
 
@@ -125,6 +132,42 @@ node <plugin-root>/scripts/find-3d-asset.mjs --query "barrel" --source polyhaven
 - Adjust `MODEL_CONFIG` values (scale, rotationY, offsetY) per model
 - Run `npm run build` to confirm no errors
 - Generate `ATTRIBUTION.md` from `.meta.json` files
+
+## Example Usage
+
+### With Meshy AI
+```
+/add-3d-assets examples/space-explorer
+```
+Result: Generates custom knight model via Meshy → rigs and animates (Idle/Walk/Run) → replaces BoxGeometry player with animated GLB → adds OrbitControls camera → world props from free libraries.
+
+### Without Meshy (fallback)
+```
+/add-3d-assets examples/3d-platformer
+```
+Result: Copies Soldier.glb from character library → configures SkeletonUtils.clone() → fadeToAction animation crossfade → replaces all primitives with library/downloaded models.
+
+## Troubleshooting
+
+### Model stuck in T-pose (not animating)
+**Cause:** Using `.clone(true)` instead of `SkeletonUtils.clone()` breaks skeleton bindings on animated GLB models.
+**Fix:** Always use `SkeletonUtils.clone()` from `three/addons/utils/SkeletonUtils.js` for any model with animations. Regular `.clone()` copies the mesh but not the skeleton bindings.
+
+### Meshy AI generation fails or returns low quality
+**Cause:** Vague prompts or wrong generation mode selected.
+**Fix:** Use specific, descriptive prompts (e.g., "low-poly medieval wooden treasure chest, game asset" not "chest"). For characters, use image-to-3D mode with a reference image. Set art style to "game-asset" or "low-poly" for better game integration.
+
+### Rigging fails on generated model
+**Cause:** The model geometry is not suitable for auto-rigging (too complex, non-manifold, or not humanoid).
+**Fix:** Simplify the prompt to produce cleaner geometry. Ensure the model is a single connected mesh in a humanoid pose. Non-humanoid models (props, vehicles) should not be rigged — use them as static assets instead.
+
+### meshopt decoder error on load
+**Cause:** Some GLB files use meshopt compression which requires a decoder not loaded by default.
+**Fix:** Add the meshopt decoder before loading: `import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'; loader.setMeshoptDecoder(MeshoptDecoder);`
+
+### Model facing wrong direction
+**Cause:** Different model sources use different forward directions. Mixamo models face -Z, some others face +Z.
+**Fix:** Store a `facingOffset` per character model. Apply it as `model.rotation.y = facingOffset + movementAngle`. Common values: Soldier/Xbot need `+Math.PI`, Robot/Fox need `+0`.
 
 ## Next Step
 

@@ -1,6 +1,12 @@
 ---
 name: fetch-tweet
 description: Fetch tweet content directly from fxtwitter API. Use when given a tweet/X URL to extract the tweet text, author, media, and engagement stats without loading x.com.
+argument-hint: "[tweet-url]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [twitter, tweet, fetch, fxtwitter, social-media]
 ---
 
 # Fetch Tweet

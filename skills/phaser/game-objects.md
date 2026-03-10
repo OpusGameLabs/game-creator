@@ -212,3 +212,69 @@ this.sys.updateList.add(this.player);
 // Option 3: Use Group with runChildUpdate
 const enemies = this.add.group({ runChildUpdate: true });
 ```
+
+## Button Pattern (Container + Graphics + Text)
+
+Buttons require careful z-ordering. Use a Container holding Graphics (background) then Text (label) — in that order. The Container itself is interactive.
+
+**ALWAYS use this exact pattern for clickable buttons.** Do not use Zone, do not draw Graphics on top of Text, and do not set interactivity on anything other than the Container.
+
+```js
+createButton(scene, x, y, label, callback) {
+  const btnW = Math.max(GAME.WIDTH * UI.BTN_W_RATIO, 160);
+  const btnH = Math.max(GAME.HEIGHT * UI.BTN_H_RATIO, UI.MIN_TOUCH);
+  const radius = UI.BTN_RADIUS;
+
+  const container = scene.add.container(x, y);
+
+  // 1. Graphics background (added FIRST — renders behind text)
+  const bg = scene.add.graphics();
+  bg.fillStyle(COLORS.BTN_PRIMARY, 1);
+  bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, radius);
+  container.add(bg);
+
+  // 2. Text label (added SECOND — renders on top of background)
+  const fontSize = Math.round(GAME.HEIGHT * UI.BODY_RATIO);
+  const text = scene.add.text(0, 0, label, {
+    fontSize: fontSize + 'px',
+    fontFamily: UI.FONT,
+    color: COLORS.BTN_TEXT,
+    fontStyle: 'bold',
+  }).setOrigin(0.5);
+  container.add(text);
+
+  // 3. Make the CONTAINER interactive (not the graphics or text)
+  container.setSize(btnW, btnH);
+  container.setInteractive({ useHandCursor: true });
+
+  const fillBtn = (gfx, color) => {
+    gfx.clear();
+    gfx.fillStyle(color, 1);
+    gfx.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, radius);
+  };
+
+  container.on('pointerover', () => {
+    fillBtn(bg, COLORS.BTN_PRIMARY_HOVER);
+    scene.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 80 });
+  });
+  container.on('pointerout', () => {
+    fillBtn(bg, COLORS.BTN_PRIMARY);
+    scene.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 80 });
+  });
+  container.on('pointerdown', () => {
+    fillBtn(bg, COLORS.BTN_PRIMARY_PRESS);
+    container.setScale(0.95);
+  });
+  container.on('pointerup', () => {
+    container.setScale(1);
+    callback();
+  });
+
+  return container;
+}
+```
+
+**Broken patterns** (do NOT use):
+- Drawing Graphics on top of Text (hides the label)
+- Using a Zone for interactivity with Graphics drawn over it (Zone becomes unreachable)
+- Setting `setAlpha(0)` on an interactive object and layering visuals over it

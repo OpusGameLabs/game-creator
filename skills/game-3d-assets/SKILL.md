@@ -1,6 +1,12 @@
 ---
 name: game-3d-assets
 description: 3D asset engineer that finds, downloads, and integrates GLB/GLTF models into Three.js browser games. Use when a 3D game needs real models instead of primitive BoxGeometry/SphereGeometry shapes.
+argument-hint: "[topic]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, 3d, assets, glb, gltf, threejs, animation, sketchfab]
 ---
 
 # Game 3D Asset Engineer (Model Pipeline)
@@ -395,6 +401,28 @@ node scripts/find-3d-asset.mjs --query "barrel" --source polyhaven --output publ
 - Confirm character faces movement direction
 - Orbit camera with mouse drag, zoom with scroll
 - Run `npm run build` to confirm no errors
+
+## Troubleshooting
+
+### Model stuck in T-pose (not animating)
+**Cause:** Using `.clone(true)` instead of `SkeletonUtils.clone()` breaks skeleton bindings on animated GLB models.
+**Fix:** Always use `SkeletonUtils.clone()` from `three/addons/utils/SkeletonUtils.js` for any model with animations. Regular `.clone()` copies the mesh but not the skeleton bindings.
+
+### Sketchfab download returns 403 Forbidden
+**Cause:** The Sketchfab API requires authentication for model downloads, or the model license doesn't permit downloading.
+**Fix:** Ensure `SKETCHFAB_TOKEN` is set in environment. Check the model's license on Sketchfab — only CC-licensed models can be downloaded via API. Try alternative sources (Poly Haven, Poly.pizza) which don't require auth for free models.
+
+### meshopt decoder error on model load
+**Cause:** Some GLB files use meshopt compression which requires a decoder not loaded by default in Three.js.
+**Fix:** Add the meshopt decoder before loading: `import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'; loader.setMeshoptDecoder(MeshoptDecoder);`
+
+### Animation not playing after model loads
+**Cause:** Animation clips not connected to the model's AnimationMixer, or clip names don't match expected values.
+**Fix:** Create an `AnimationMixer` for the model, then use `mixer.clipAction(clip).play()`. Log `gltf.animations.map(a => a.name)` to see available clip names — they vary by model source. Define a `clipMap` per character to map generic names (idle, walk, run) to actual clip names.
+
+### Camera fights with OrbitControls (jittering)
+**Cause:** Manual camera position updates conflict with OrbitControls trying to maintain its own camera state.
+**Fix:** Don't set `camera.position` directly when using OrbitControls. Instead, update `controls.target` to follow the player, and let OrbitControls manage the camera position relative to the target. Call `controls.update()` once per frame in the animation loop.
 
 ## Checklist
 

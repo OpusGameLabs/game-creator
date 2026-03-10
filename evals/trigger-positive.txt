@@ -1,0 +1,100 @@
+# make-game triggers
+make a game
+build me a flappy bird clone
+create a 2D platformer game
+make a 3D space shooter
+build a browser game from this tweet: [url]
+I want to make a game about cats
+create a new game called asteroid dodge
+
+# add-assets triggers
+add sprites to my game
+replace the shapes with real art
+add pixel art characters
+make the characters look real
+add game assets
+
+# add-3d-assets triggers
+add 3D models to my game
+replace the boxes with real models
+add GLB assets to the scene
+make the 3D game look real
+
+# monetize-game / playdotfun triggers
+monetize my game
+add Play.fun to this game
+add token rewards
+register my game on Play.fun
+get a play.fun URL
+add a leaderboard
+
+# game-deploy triggers
+deploy my game
+publish my game to the web
+put my game on GitHub Pages
+deploy to here.now
+
+# add-audio triggers
+add music to my game
+add sound effects
+add BGM and SFX
+
+# improve-game triggers
+improve my game
+make my game better
+what's wrong with my game
+polish my game
+
+# design-game triggers
+make my game look better
+add particles and polish
+improve the visual design
+
+# qa-game triggers
+add tests to my game
+test my game with Playwright
+add visual regression tests
+
+# review-game triggers
+review my game code
+check my game architecture
+audit my game
+
+# use-template triggers
+use a template
+start from flappy-bird template
+clone the platformer template
+
+# meshyai triggers
+generate a 3D model with Meshy
+create a character model from this image
+use Meshy AI to make a sword model
+
+# add-feature triggers
+add a double-jump to my game
+add a power-up system
+add a leaderboard to the game
+I want to add a dash ability
+add a new feature to my game
+
+# quick-game triggers
+quick game
+make a fast prototype
+just get something playable
+quick 2d platformer
+
+# record-promo triggers
+record a video of my game
+make a promo for my game
+capture gameplay footage
+make a trailer
+
+# fetch-tweet triggers
+fetch this tweet
+get the content of this tweet
+extract text from this X post
+
+# worldlabs triggers
+generate a 3D world
+create an environment with World Labs
+make a 3D scene from this image

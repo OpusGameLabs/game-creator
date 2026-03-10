@@ -1,6 +1,12 @@
 ---
 name: threejs-game
 description: Build 3D browser games with Three.js using event-driven modular architecture. Use when creating a new 3D game, adding 3D game features, setting up Three.js scenes, or working on any Three.js game project.
+argument-hint: "[topic]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, 3d, threejs, webgl, event-driven, modular]
 ---
 
 # Three.js Game Development
@@ -9,11 +15,19 @@ You are an expert Three.js game developer. Follow these opinionated patterns whe
 
 > **Reference**: See `reference/llms.txt` (quick guide) and `reference/llms-full.txt` (full API + TSL) for official Three.js LLM documentation. Prefer patterns from those files when they conflict with this skill.
 
+## Performance Notes
+
+- Take your time with each step. Quality is more important than speed.
+- Do not skip validation steps — they catch issues early.
+- Read the full context of each file before making changes.
+- Profile before optimizing. The bottleneck is rarely where you think.
+
 ## Reference Files
 
 For detailed reference, see companion files in this directory:
+- `core-patterns.md` — Full EventBus, GameState, Constants, and Game.js orchestrator code
 - `tsl-guide.md` — Three.js Shading Language reference (NodeMaterial classes, when to use TSL)
-- `input-patterns.md` — Gyroscope input, virtual joystick implementation, input priority system
+- `input-patterns.md` — Gyroscope input, virtual joystick, unified analog InputSystem, input priority system
 
 ## Tech Stack
 
@@ -121,212 +135,23 @@ src/
 
 ## Core Patterns (Non-Negotiable)
 
+Every Three.js game requires these four core modules. Full implementation code is in `core-patterns.md`.
+
 ### 1. EventBus Singleton
 
-ALL inter-module communication goes through an EventBus. Modules never import each other directly for communication.
-
-```js
-class EventBus {
-  constructor() {
-    this.listeners = new Map();
-  }
-
-  on(event, callback) {
-    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event).add(callback);
-    return () => this.off(event, callback);
-  }
-
-  once(event, callback) {
-    const wrapper = (...args) => {
-      this.off(event, wrapper);
-      callback(...args);
-    };
-    this.on(event, wrapper);
-  }
-
-  off(event, callback) {
-    const cbs = this.listeners.get(event);
-    if (cbs) {
-      cbs.delete(callback);
-      if (cbs.size === 0) this.listeners.delete(event);
-    }
-  }
-
-  emit(event, data) {
-    const cbs = this.listeners.get(event);
-    if (cbs) cbs.forEach(cb => {
-      try { cb(data); } catch (e) { console.error(`EventBus error [${event}]:`, e); }
-    });
-  }
-
-  clear(event) {
-    event ? this.listeners.delete(event) : this.listeners.clear();
-  }
-}
-
-export const eventBus = new EventBus();
-
-// Define ALL events as constants — use domain:action naming
-export const Events = {
-  // Group by domain: player:*, enemy:*, game:*, ui:*, etc.
-};
-```
+ALL inter-module communication goes through an EventBus (`core/EventBus.js`). Modules never import each other directly for communication. Provides `on`, `once`, `off`, `emit`, and `clear` methods. Events use `domain:action` naming (e.g., `player:hit`, `game:over`). See `core-patterns.md` for the full implementation.
 
 ### 2. Centralized GameState
 
-One singleton holds ALL game state. Systems read from it, events update it.
-
-```js
-import { PLAYER_CONFIG } from './Constants.js';
-
-class GameState {
-  constructor() {
-    this.player = {
-      health: PLAYER_CONFIG.HEALTH,
-      score: 0,
-    };
-    this.game = {
-      started: false,
-      paused: false,
-      isPlaying: false,
-    };
-  }
-
-  reset() {
-    this.player.health = PLAYER_CONFIG.HEALTH;
-    this.player.score = 0;
-    this.game.started = false;
-    this.game.paused = false;
-    this.game.isPlaying = false;
-  }
-}
-
-export const gameState = new GameState();
-```
+One singleton (`core/GameState.js`) holds ALL game state. Systems read from it, events update it. Must include a `reset()` method that restores a clean slate for restarts. See `core-patterns.md` for the full implementation.
 
 ### 3. Constants File
 
-Every magic number, balance value, asset path, and configuration goes in `Constants.js`. Never hardcode values in game logic.
-
-```js
-export const PLAYER_CONFIG = {
-  HEALTH: 100,
-  SPEED: 5,
-  JUMP_FORCE: 8,
-};
-
-export const ENEMY_CONFIG = {
-  SPEED: 3,
-  HEALTH: 50,
-  SPAWN_RATE: 2000,
-};
-
-export const WORLD = {
-  WIDTH: 100,
-  HEIGHT: 50,
-  GRAVITY: 9.8,
-  FOG_DENSITY: 0.04,
-};
-
-export const CAMERA = {
-  FOV: 75,
-  NEAR: 0.01,
-  FAR: 100,
-};
-
-export const COLORS = {
-  AMBIENT: 0x404040,
-  DIRECTIONAL: 0xffffff,
-  FOG: 0x000000,
-};
-
-export const ASSET_PATHS = {
-  // model paths, texture paths, etc.
-};
-```
+Every magic number, balance value, asset path, and configuration goes in `core/Constants.js`. Never hardcode values in game logic. Organize by domain: `PLAYER_CONFIG`, `ENEMY_CONFIG`, `WORLD`, `CAMERA`, `COLORS`, `ASSET_PATHS`. See `core-patterns.md` for the full implementation.
 
 ### 4. Game.js Orchestrator
 
-The Game class initializes everything and runs the render loop. Uses `renderer.setAnimationLoop()` — the official Three.js pattern (handles WebGPU async correctly and pauses when the tab is hidden):
-
-```js
-import * as THREE from 'three';
-import { CAMERA, COLORS, WORLD } from './Constants.js';
-
-class Game {
-  constructor() {
-    this.clock = new THREE.Clock();
-    this.init();
-  }
-
-  init() {
-    this.setupRenderer();
-    this.setupScene();
-    this.setupCamera();
-    this.setupSystems();
-    this.setupUI();
-    this.setupEventListeners();
-    this.renderer.setAnimationLoop(() => this.animate());
-  }
-
-  setupRenderer() {
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('game-container').appendChild(this.renderer.domElement);
-    window.addEventListener('resize', () => this.onWindowResize());
-  }
-
-  setupScene() {
-    this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(COLORS.FOG, WORLD.FOG_DENSITY);
-
-    this.scene.add(new THREE.AmbientLight(COLORS.AMBIENT, 0.5));
-    const dirLight = new THREE.DirectionalLight(COLORS.DIRECTIONAL, 1);
-    dirLight.position.set(5, 10, 5);
-    this.scene.add(dirLight);
-  }
-
-  setupCamera() {
-    this.camera = new THREE.PerspectiveCamera(
-      CAMERA.FOV,
-      window.innerWidth / window.innerHeight,
-      CAMERA.NEAR,
-      CAMERA.FAR,
-    );
-  }
-
-  setupSystems() {
-    // Initialize game systems
-  }
-
-  setupUI() {
-    // Initialize UI overlays
-  }
-
-  setupEventListeners() {
-    // Subscribe to EventBus events
-  }
-
-  onWindowResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  animate() {
-    const delta = Math.min(this.clock.getDelta(), 0.1); // Cap delta to prevent spiral
-    // Update all systems with delta
-    this.renderer.render(this.scene, this.camera);
-  }
-}
-
-export default Game;
-```
+The Game class (`core/Game.js`) initializes everything and runs the render loop. Uses `renderer.setAnimationLoop()` -- the official Three.js pattern (handles WebGPU async correctly and pauses when the tab is hidden). Sets up renderer, scene, camera, systems, UI, and event listeners in `init()`. See `core-patterns.md` for the full implementation.
 
 ## Renderer Selection
 
@@ -436,45 +261,7 @@ All games MUST work on desktop AND mobile unless explicitly specified otherwise.
 
 ### Unified Analog InputSystem
 
-Use a dedicated InputSystem that merges keyboard, gyroscope, and touch into a single analog interface. Game logic reads `moveX`/`moveZ` (-1..1) and never knows the source:
-
-```js
-class InputSystem {
-  constructor() {
-    this.keys = {};
-    this.moveX = 0;  // -1..1
-    this.moveZ = 0;  // -1..1
-    this.isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-      (navigator.maxTouchPoints > 1);
-    document.addEventListener('keydown', (e) => { this.keys[e.code] = true; });
-    document.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
-  }
-
-  /** Call from a user gesture (e.g. PLAY button) to init gyro/joystick. */
-  async initMobile() {
-    // Request gyroscope permission (required on iOS 13+)
-    // If denied/unavailable, show virtual joystick fallback
-  }
-
-  /** Call once per frame. Merges all sources into moveX/moveZ. */
-  update() {
-    let mx = 0, mz = 0;
-    // Keyboard (always active, acts as override)
-    if (this.keys['ArrowLeft'] || this.keys['KeyA']) mx -= 1;
-    if (this.keys['ArrowRight'] || this.keys['KeyD']) mx += 1;
-    if (this.keys['ArrowUp'] || this.keys['KeyW']) mz -= 1;
-    if (this.keys['ArrowDown'] || this.keys['KeyS']) mz += 1;
-    const kbActive = mx !== 0 || mz !== 0;
-    if (!kbActive) {
-      // Read from gyro or joystick (whichever is active)
-    }
-    this.moveX = Math.max(-1, Math.min(1, mx));
-    this.moveZ = Math.max(-1, Math.min(1, mz));
-  }
-}
-```
-
-For detailed gyroscope input, virtual joystick implementation, and input priority patterns, see `input-patterns.md`.
+Use a dedicated InputSystem that merges keyboard, gyroscope, and touch into a single analog interface. Game logic reads `moveX`/`moveZ` (-1..1) and never knows the source. Keyboard input is always active as an override; on mobile, the system initializes gyroscope (with iOS 13+ permission request) or falls back to a virtual joystick. See `input-patterns.md` for the full implementation, including GyroscopeInput, VirtualJoystick, and input priority patterns.
 
 ## When Adding Features
 

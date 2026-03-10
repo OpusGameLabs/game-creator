@@ -1,6 +1,9 @@
 ---
 name: meshyai
 description: Generate custom 3D models from text or images using Meshy AI, then auto-rig and animate them for Three.js games. The preferred source for all 3D game assets. Use when the user says "generate a 3D model", "create a character model", "use Meshy", or needs a custom GLB model that doesn't exist in free libraries.
+argument-hint: "[text-prompt or image-path]"
+license: MIT
+compatibility: Requires MESHY_API_KEY environment variable and internet access for Meshy AI API calls.
 metadata:
   author: OpusGameLabs
   version: 1.3.0
@@ -10,6 +13,21 @@ metadata:
 # Meshy AI — 3D Model Generation, Rigging & Animation
 
 You are an expert at generating custom 3D models with Meshy AI and integrating them into Three.js browser games. **Meshy is the preferred source for all 3D game assets** — it generates exactly what you need from a text description or reference image, with consistent art style and game-ready topology.
+
+## Performance Notes
+
+- Take your time with each step. Quality is more important than speed.
+- Do not skip validation steps — they catch issues early.
+- Read the full context of each file before making changes.
+- Always run post-generation verification. Never assume orientation or scale.
+
+## Reference Files
+
+| File | Description |
+|------|-------------|
+| [api-reference.md](./api-reference.md) | Full API endpoint specs, payloads, responses, task statuses, and asset retention policy |
+| [rigging-pipeline.md](./rigging-pipeline.md) | Complete generate -> rig -> animate -> integrate pipeline with fadeToAction pattern and code examples |
+| [verification-patterns.md](./verification-patterns.md) | Auto-orientation check, auto-scale fitting, floor alignment code patterns |
 
 ## Why Meshy First
 
@@ -189,124 +207,7 @@ node scripts/optimize-glb.mjs public/assets/models/barrel.glb --texture-size 512
 
 ## API Reference
 
-Base URL: `https://api.meshy.ai/openapi`
-
-### Text to 3D
-
-**POST** `/v2/text-to-3d` — Create preview or refine task
-
-Preview payload:
-```json
-{
-  "mode": "preview",
-  "prompt": "a cartoon knight with sword and shield",
-  "ai_model": "latest",
-  "topology": "triangle",
-  "target_polycount": 10000
-}
-```
-
-Refine payload:
-```json
-{
-  "mode": "refine",
-  "preview_task_id": "<preview-task-id>",
-  "enable_pbr": true,
-  "texture_prompt": "hand-painted fantasy style"
-}
-```
-
-**GET** `/v2/text-to-3d/:id` — Retrieve task (poll this)
-
-Response when complete:
-```json
-{
-  "id": "task-uuid",
-  "status": "SUCCEEDED",
-  "progress": 100,
-  "model_urls": {
-    "glb": "https://assets.meshy.ai/...",
-    "fbx": "https://assets.meshy.ai/...",
-    "obj": "https://assets.meshy.ai/...",
-    "usdz": "https://assets.meshy.ai/..."
-  },
-  "texture_urls": [
-    { "base_color": "https://..." }
-  ],
-  "thumbnail_url": "https://..."
-}
-```
-
-Optional parameters:
-- `ai_model`: `meshy-5`, `meshy-6`, `latest` (default: `latest`)
-- `model_type`: `standard` or `lowpoly`
-- `topology`: `quad` or `triangle` (default: `triangle`)
-- `target_polycount`: 100–300,000 (default: 10,000)
-- `symmetry_mode`: `off`, `auto`, `on` (default: `auto`)
-- `pose_mode`: `a-pose`, `t-pose`, or empty string
-- `enable_pbr`: generates metallic, roughness, and normal maps
-
-### Image to 3D
-
-**POST** `/v1/image-to-3d` — Create task
-
-```json
-{
-  "image_url": "https://example.com/photo.png",
-  "ai_model": "latest",
-  "enable_pbr": false,
-  "should_texture": true,
-  "topology": "triangle",
-  "target_polycount": 10000
-}
-```
-
-**GET** `/v1/image-to-3d/:id` — Retrieve task
-
-Supports `image_url` as public URL, base64 data URI (`data:image/png;base64,...`), or multi-image via **POST** `/v1/multi-image-to-3d` (1–4 images from different angles).
-
-### Rigging
-
-**POST** `/v1/rigging` — Create rigging task
-
-```json
-{
-  "input_task_id": "<text-to-3d or image-to-3d task id>",
-  "height_meters": 1.7
-}
-```
-
-**GET** `/v1/rigging/:id` — Retrieve task
-
-Result includes:
-- `rigged_character_glb_url` — rigged GLB ready for Three.js
-- `rigged_character_fbx_url` — rigged FBX
-- `basic_animations` — walking/running GLB URLs included free
-
-### Animation
-
-**POST** `/v1/animations` — Create animation task
-
-```json
-{
-  "rig_task_id": "<rigging-task-id>",
-  "action_id": 1
-}
-```
-
-**GET** `/v1/animations/:id` — Retrieve task
-
-Result includes `animation_glb_url`, `animation_fbx_url`.
-
-### Task Statuses
-
-All tasks progress through: `PENDING` → `IN_PROGRESS` → `SUCCEEDED` / `FAILED` / `CANCELED`
-
-Poll at 5-second intervals. Tasks typically complete in 30s–5min depending on complexity.
-
-### Asset Retention
-
-Meshy retains generated assets for **3 days** (unlimited for Enterprise). Download promptly.
+See [api-reference.md](./api-reference.md) for full endpoint specs, payloads, responses, task statuses, and asset retention policy.
 
 ## Quick Reference: Static Props (no rig needed)
 
@@ -325,143 +226,11 @@ scene.add(barrel);
 
 ## Post-Generation Verification (MANDATORY)
 
-After loading any Meshy-generated model, **always verify orientation and scale** before proceeding. Meshy models have unpredictable facing directions and scales. Skipping this step leads to backwards-facing characters and models that overflow their containers.
-
-### Auto-Orientation Check
-
-Meshy models typically face +Z, but this varies. After loading, **log the bounding box and visually verify** via Playwright MCP or dev tools:
-
-```js
-// Add this immediately after loading any GLB
-model.updateMatrixWorld(true);
-const box = new THREE.Box3().setFromObject(model);
-const size = box.getSize(new THREE.Vector3());
-const center = box.getCenter(new THREE.Vector3());
-console.log(`[Model] ${slug} — size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
-console.log(`[Model] ${slug} — center: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
-```
-
-**Fixing facing direction:**
-- Start with `rotationY: Math.PI` (180 degrees) — most Meshy models need this to face -Z
-- If the model faces +Z by default and needs to face the camera: `rotationY: 0`
-- If in doubt: take a screenshot, check which way the face/front is pointing, adjust
-- Store `rotationY` in Constants.js per model — never hardcode in entity files
-
-### Auto-Scale Fitting
-
-Models must fit within their game context. After loading:
-
-```js
-// Calculate scale to fit a target height
-const box = new THREE.Box3().setFromObject(model);
-const currentHeight = box.max.y - box.min.y;
-const targetHeight = 2.0; // desired height in world units
-const autoScale = targetHeight / currentHeight;
-model.scale.setScalar(autoScale);
-```
-
-For container fitting (e.g., robots inside a ring):
-```js
-// Ensure model fits within container bounds
-const containerWidth = RING.PLATFORM_WIDTH * 0.8; // 80% of ring width
-const modelWidth = box.max.x - box.min.x;
-if (modelWidth * currentScale > containerWidth) {
-  const fitScale = containerWidth / modelWidth;
-  model.scale.setScalar(Math.min(currentScale, fitScale));
-}
-```
-
-**Always take a Playwright screenshot after model integration** to visually verify:
-1. Characters face the correct direction
-2. Characters fit within their environment
-3. Characters don't clip through floors/walls/each other
-
-### Floor Alignment
-
-Center the model on X/Z and plant feet on Y=0:
-```js
-const box = new THREE.Box3().setFromObject(model);
-const center = box.getCenter(new THREE.Vector3());
-model.position.y = -box.min.y;      // feet on ground
-model.position.x = -center.x;       // centered X
-model.position.z = -center.z;       // centered Z
-```
+See [verification-patterns.md](./verification-patterns.md) for auto-orientation check, auto-scale fitting, and floor alignment code patterns.
 
 ## Rigging: Mandatory for Humanoid Characters
 
-**Every humanoid character MUST be rigged.** Static models require hacky programmatic animation (moving wrapper groups) that looks artificial. Rigged models get proper skeletal animation — walk, run, punch, etc.
-
-### When to Rig
-
-| Model type | Rig? | Why |
-|-----------|------|-----|
-| Humanoid character (player, NPC, enemy) | **YES — always** | Skeletal animation for walk/run/idle/attack |
-| Animal with legs | **YES** | Walk/run animations |
-| Vehicle, prop, building | No | Static or simple rotation |
-| Abstract shape, particle | No | Procedural animation |
-
-### Full Pipeline: Generate → Rig → Animate → Integrate
-
-**Step 1: Generate the model**
-```bash
-MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
-  --mode text-to-3d \
-  --prompt "a stylized robot boxer, low poly game character, full body" \
-  --pbr --polycount 15000 \
-  --output public/assets/models/ --slug robot
-```
-
-**Step 2: Rig** (reads refineTaskId from meta.json automatically)
-```bash
-MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
-  --mode rig \
-  --task-id <refine-task-id-from-meta.json> \
-  --height 1.7 \
-  --output public/assets/models/ --slug robot-rigged
-```
-
-Rigging returns:
-- `rigged_character_glb_url` — rigged GLB with skeleton (use this as the base model)
-- `basic_animations.walking` — walking animation GLB (free, included)
-- `basic_animations.running` — running animation GLB (free, included)
-
-**Step 3: Add custom animations** (optional, for game-specific actions)
-```bash
-# Each action_id corresponds to a different animation
-MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
-  --mode animate \
-  --task-id <rig-task-id> \
-  --action-id <id> \
-  --output public/assets/models/ --slug robot-punch
-```
-
-**Step 4: Integrate** with `loadAnimatedModel()` + `AnimationMixer`:
-```js
-import { loadAnimatedModel } from './level/AssetLoader.js';
-import * as THREE from 'three';
-
-// Load rigged model (SkeletonUtils.clone preserves bone bindings)
-const { model, clips } = await loadAnimatedModel('assets/models/robot-rigged.glb');
-const mixer = new THREE.AnimationMixer(model);
-
-// Log clip names — they vary per model
-console.log('Clips:', clips.map(c => c.name));
-
-// Load additional animation GLBs and add their clips to the same mixer
-const walkData = await loadAnimatedModel('assets/models/robot-walk.glb');
-const walkClip = walkData.clips[0];
-const walkAction = mixer.clipAction(walkClip);
-
-// fadeToAction pattern for smooth transitions
-function fadeToAction(nextAction, duration = 0.3) {
-  if (activeAction) activeAction.fadeOut(duration);
-  nextAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(duration).play();
-  activeAction = nextAction;
-}
-
-// In update loop:
-mixer.update(delta);
-```
+See [rigging-pipeline.md](./rigging-pipeline.md) for the full generate -> rig -> animate -> integrate pipeline, including when to rig, the fadeToAction pattern, and integration code examples.
 
 ## Prompt Engineering Tips
 
@@ -500,6 +269,16 @@ Meshy-generated models slot into the existing 3D asset pipeline:
 ```
 
 All sources output GLB files into `public/assets/models/`. The `AssetLoader.js` doesn't care where the GLB came from — it loads them all the same way.
+
+## Troubleshooting
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| `MESHY_API_KEY` not set | Environment variable missing | Ask the user for their key or run `export MESHY_API_KEY=<key>`. Free keys available at https://app.meshy.ai under Settings -> API Keys. |
+| Task stuck in PENDING | API queue backlog or invalid parameters | Wait 2-3 minutes, then poll status. If still PENDING after 5 minutes, cancel and resubmit with simpler prompt or lower polycount. |
+| Asset download returns 404 | Meshy retains assets for only 3 days | Re-run the generation pipeline. Always download GLBs immediately after task succeeds. Store locally in `public/assets/models/`. |
+| Rigging fails or produces broken skeleton | Model is not a clearly bipedal humanoid, or mesh is untextured | Ensure the model is a textured humanoid with visible limbs. Rigging does not work on animals, vehicles, abstract shapes, or preview-only (untextured) meshes. Re-generate with `--pbr` and a prompt specifying "full body humanoid". |
+| Generated model does not match prompt | Vague or multi-object prompt | Use specific, single-object prompts. Include style cues ("low poly", "stylized", "game character") and avoid combining multiple objects. See Prompt Engineering Tips. |
 
 ## Checklist
 

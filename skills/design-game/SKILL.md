@@ -2,11 +2,18 @@
 name: design-game
 description: Audit and improve the visual design, polish, and player experience of an existing game. Use when the user says "make my game look better", "improve the design", "add polish", "add juice", "add particles", "fix the UI", or "make it more visually appealing". Do NOT use for gameplay logic changes (use add-feature instead).
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, design, polish, ui, particles, visual]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Design Game
 
@@ -58,6 +65,24 @@ Ask the user which improvements they want, or implement all if they say so. Foll
 
 - Run `npm run build` to confirm no errors
 - Summarize all changes made in plain English
+
+## Example Usage
+
+### Full design pass
+```
+/design-game examples/asteroid-dodge
+```
+Result: Audits visuals → scores Background 2/5, Particles 1/5, Typography 3/5 → adds sky gradient background, star parallax, explosion particles on asteroid destroy, screen shake on hit, smooth scene transitions. All values in Constants.js.
+
+## Troubleshooting
+
+### Visual changes cause performance drops
+**Cause:** Too many particle emitters or gradient fills per frame.
+**Fix:** Limit active particles (pool and reuse). Use cached gradient textures instead of recreating per-frame.
+
+### Design changes break layout on different screen sizes
+**Cause:** Hardcoded pixel positions instead of using PX scale factor.
+**Fix:** All positions and sizes should use Constants.js PX-relative values.
 
 ## Next Step
 

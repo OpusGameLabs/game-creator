@@ -1,6 +1,12 @@
 ---
 name: game-designer
 description: Game UI/UX designer that analyzes and improves the visual polish, atmosphere, and player experience of browser games. Use when a game needs visual improvements, better backgrounds, particles, animations, screen transitions, juice/feel, or overall aesthetic upgrades.
+argument-hint: "[topic]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, design, polish, ui, particles, visual, juice]
 ---
 
 # Game UI/UX Designer

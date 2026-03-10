@@ -1,7 +1,8 @@
 ---
 name: record-promo
-description: Record an autonomous 50 FPS promo video of your game for social media. Use when the user says "record a video", "make a promo", "capture gameplay", "record gameplay footage", or "make a trailer for my game".
+description: Record an autonomous 50 FPS promo video of your game for social media. Use when the user says "record a video", "make a promo", "capture gameplay", "record gameplay footage", or "make a trailer for my game". Do NOT use for gameplay testing (use qa-game).
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
@@ -63,6 +64,13 @@ ffmpeg -y -ss 5 -i output/promo.mp4 -frames:v 1 -update 1 output/promo-thumbnail
 ```
 
 Read the thumbnail image and display it. Report duration, frame rate, and file size.
+
+## Example Usage
+
+```
+/record-promo examples/flappy-bird
+```
+Result: Patches out death → generates input sequence for the game's controls → captures 13s of autonomous gameplay at 1080x1920 (9:16) → converts to 50 FPS MP4 → `output/promo.mp4` ready for TikTok/Reels.
 
 Tell the user:
 > Promo video recorded! 50 FPS, mobile portrait (1080×1920).

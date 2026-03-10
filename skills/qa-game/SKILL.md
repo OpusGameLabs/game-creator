@@ -1,7 +1,8 @@
 ---
 name: qa-game
-description: Add Playwright QA tests to a game — visual regression, gameplay verification, and performance. Use when the user says "add tests", "test my game", "add QA", "check for bugs", or "add visual regression tests".
+description: Add Playwright QA tests to a game — visual regression, gameplay verification, and performance. Use when the user says "add tests", "test my game", "add QA", "check for bugs", or "add visual regression tests". Do NOT use for manual playtesting or gameplay design.
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
@@ -121,6 +122,13 @@ Tell the user in plain English:
 - How many tests were created and what they check
 - How to run them: `npm test` (headless), `npm run test:headed` (see the browser), `npm run test:ui` (interactive dashboard)
 - "These tests are your safety net. Run them after making changes to make sure nothing broke."
+
+## Example Usage
+
+```
+/qa-game examples/flappy-bird
+```
+Result: Installs Playwright → creates 15 tests (boot, scene transitions, input, scoring, restart, game-over, visual regression, FPS, load time) → generates `tests/` directory with fixtures and helpers → all tests pass. Run `npm test` anytime after changes.
 
 ## Next Step
 

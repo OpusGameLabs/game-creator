@@ -1,8 +1,19 @@
 ---
 name: add-feature
-description: Add a new gameplay feature to your game — just describe what you want
+description: Add a new gameplay feature to an existing browser game following its architecture patterns. Use when the user says "add a feature", "add double-jump", "add a power-up", "add a leaderboard", or describes a specific game mechanic to implement. Do NOT use for visual-only changes (use design-game) or replacing shapes with sprites (use add-assets).
 argument-hint: "[feature-description]"
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, feature, gameplay, mechanic, power-up]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Add Feature
 
@@ -55,12 +66,36 @@ Follow these rules strictly:
 - Ensure event listeners are properly cleaned up if applicable
 - Summarize what was added in plain English
 
+## Troubleshooting
+
+### Game breaks after adding feature
+**Cause:** New code conflicts with existing EventBus events or GameState fields.
+**Fix:** Check for event name collisions in EventBus.js. Ensure new state fields have defaults in GameState.reset().
+
+### Feature works but breaks existing gameplay
+**Cause:** Modified shared constants or collision groups.
+**Fix:** Add new constants rather than changing existing ones. Test original gameplay after changes.
+
 ## Output
 
 Tell the user:
 1. What the feature does (from the player's perspective)
 2. What files were created or changed
 3. How to test it — "Run `npm run dev` and try [specific action]"
+
+## Example Usage
+
+### Adding a power-up
+```
+/add-feature add a speed boost power-up that spawns randomly
+```
+Result: Creates `src/entities/PowerUp.js`, adds `POWER_UP` events to EventBus, adds spawn timing and duration to Constants.js, wires into Game.js. Player collects power-up → speed doubles for 8 seconds.
+
+### Adding a scoring mechanic
+```
+/add-feature add combo multiplier that increases when you score quickly
+```
+Result: Adds `comboMultiplier` and `comboTimer` to GameState, creates combo logic in scoring system, adds `COMBO_CHANGED` event for UI updates.
 
 ## Tips
 

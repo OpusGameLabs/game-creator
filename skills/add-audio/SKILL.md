@@ -1,12 +1,19 @@
 ---
 name: add-audio
-description: Add music and sound effects to a game using the Web Audio API — background music, gameplay themes, and SFX. Zero dependencies. Use when the user says "add music", "add sound effects", "add audio", "make it sound good", "add BGM", or "add SFX to my game".
+description: Add music and sound effects to a game using the Web Audio API — background music, gameplay themes, and SFX. Zero dependencies. Use when the user says "add music", "add sound effects", "add audio", "make it sound good", "add BGM", or "add SFX to my game". Do NOT use for gameplay features or visual design.
 argument-hint: "[path-to-game]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, audio, music, sfx, web-audio-api]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Add Audio
 
@@ -55,6 +62,24 @@ Explain in plain English: "Background music will automatically loop during each 
 - Run `npm run build` to confirm no errors
 - List all files created/modified
 - Remind the user: "Click/tap once to activate audio, then you'll hear the music"
+
+## Example Usage
+
+### Full audio pass
+```
+/add-audio examples/flappy-bird
+```
+Result: Creates `src/audio/AudioManager.js`, `music.js` (gameplay + game-over BGM patterns), `sfx.js` (flap, score, death, button SFX) → wires via AudioBridge → mute toggle on M key. First click activates audio.
+
+## Troubleshooting
+
+### No sound plays
+**Cause:** AudioContext not resumed after user interaction (browser autoplay policy).
+**Fix:** Ensure AudioContext.resume() is called on first user input (click/tap/keydown). Check for AUDIO_INIT event wiring.
+
+### Audio causes lag spikes
+**Cause:** Creating new OscillatorNodes every frame.
+**Fix:** SFX should be one-shot (create, connect, start, stop). BGM uses a single looping sequencer. Never create nodes in update().
 
 ## Next Step
 

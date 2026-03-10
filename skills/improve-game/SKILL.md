@@ -1,12 +1,19 @@
 ---
 name: improve-game
-description: Analyze a game, find what needs work, and implement the highest-impact improvements. Use when the user says "improve my game", "make my game better", "fix my game", "what's wrong with my game", or "polish my game". Run repeatedly — each pass finds the next most impactful thing to fix.
+description: Analyze a game, find what needs work, and implement the highest-impact improvements. Use when the user says "improve my game", "make my game better", "fix my game", "what's wrong with my game", or "polish my game". Run repeatedly — each pass finds the next most impactful thing to fix. Do NOT use for adding specific new features (use add-feature) or initial game creation (use make-game).
 argument-hint: "[area-to-focus]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   tags: [game, improve, audit, fix, polish]
 ---
+
+## Performance Notes
+
+- Take your time to do this thoroughly
+- Quality is more important than speed
+- Do not skip validation steps
 
 # Improve Game
 
@@ -141,6 +148,30 @@ When `$ARGUMENTS` includes a focus area keyword, weight these specific checks:
 **"mobile"** — touch input implemented (tap zones, virtual joystick, or gyroscope), responsive canvas (`Phaser.Scale.FIT` or CSS `width:100%`), 44px minimum touch targets, virtual joystick or tap zones for movement, gyroscope support for tilt games, no hover-only interactions, tested on mobile viewport (Pixel 5 emulation). Read `InputSystem.js`, all scene/system `update()` methods, `index.html` viewport meta, and `Constants.js` for touch target sizes.
 
 **"ux"** — onboarding (does the player know what to do?), feedback (does every action have a response?), difficulty curve (is it too hard/easy?), replayability (is there a reason to play again?)
+
+## Example Usage
+
+### General improvement
+```
+/improve-game
+```
+Result: Deep audit → scores 38/65 → identifies top 6 improvements (difficulty progression, screen shake, better game-over, particle effects, mobile touch, restart safety) → asks which to implement → implements selected → score rises to 52/65.
+
+### Focused improvement
+```
+/improve-game gameplay
+```
+Result: Weights gameplay checks higher → finds enemy variety is low and difficulty is flat → adds 3 enemy types with distinct behaviors, progressive speed ramp, and score-based difficulty tiers.
+
+## Troubleshooting
+
+### Improvements break existing gameplay
+**Cause:** Changes to shared systems (physics, scoring) have cascading effects.
+**Fix:** Test each improvement individually. Run existing tests after each change. Revert if a change breaks core gameplay.
+
+### Too many changes at once
+**Cause:** Audit identified 10+ issues and all were implemented simultaneously.
+**Fix:** Prioritize top 3-5 improvements. Ship incrementally. Verify after each change.
 
 ## Tips
 

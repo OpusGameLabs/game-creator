@@ -2,11 +2,13 @@
 name: monetize-game
 description: Register your game on Play.fun (OpenGameProtocol), add the browser SDK, and get a monetized play.fun URL. Use when the user says "monetize my game", "add Play.fun", "add rewards", "register on Play.fun", or "get a play.fun URL". Requires Play.fun MCP server for game registration.
 argument-hint: "[game-path]"
+license: MIT
 metadata:
   author: OpusGameLabs
   version: 1.3.0
   mcp-server: play-fun
   tags: [game, monetize, playfun, rewards, sdk]
+compatibility: Requires Play.fun MCP server (play-fun), Node.js, and internet access for auth and deployment.
 ---
 
 # Monetize Game (Play.fun / OpenGameProtocol)
@@ -300,3 +302,32 @@ curl -s -o /dev/null -w "%{http_code}" "$GAME_URL"
 > - Launch a playcoin for your game (token rewards for players)
 > - Check your leaderboard on Play.fun
 > - Share the play.fun URL on social media
+
+## Example Usage
+
+```
+/monetize-game examples/flappy-bird
+```
+Result: Auth with Play.fun → registers game with anti-cheat limits (maxScorePerSession: 1000) → adds SDK to index.html + creates `src/playfun.js` → wires score events to `addPoints()`, game-over to `savePoints()` → rebuilds → redeploys → live at `https://play.fun/games/<uuid>`. Points widget visible in-game.
+
+## Troubleshooting
+
+### Auth callback blocked by browser
+**Cause:** Pop-up blockers or strict CORS policies prevent the localhost:9876 OAuth callback from completing.
+**Fix:** Try the manual paste flow instead — run the auth script with `--manual` flag, copy the token from the dashboard at https://play.fun/dashboard, and paste it when prompted.
+
+### Game registration returns 4xx error
+**Cause:** Missing required fields (name, description, or URL) or the game URL is not publicly accessible.
+**Fix:** Ensure the game is deployed and accessible at the provided URL before registering. Check that all required fields are filled in. If using here.now, verify the deployment hasn't expired.
+
+### SDK not loading (ad blockers)
+**Cause:** Browser ad blockers and privacy extensions block the Play.fun SDK CDN (`sdk.play.fun`).
+**Fix:** The SDK integration should be non-blocking — if it fails to load, the game still works. Add a try/catch around SDK initialization and log a warning. Test with ad blockers disabled to verify SDK functionality.
+
+### savePoints modal appears during gameplay
+**Cause:** The SDK's point-saving UI overlay triggers at unexpected times, interrupting the player.
+**Fix:** Only call `savePoints()` during natural game pauses (game over screen, level complete). Never call it during active gameplay. Use the `silent: true` option if available to suppress the modal.
+
+### API key not found
+**Cause:** Credentials not configured or expired since last session.
+**Fix:** Visit https://play.fun/dashboard to refresh creator credentials. Re-run the auth flow with `playfun-auth.js` or manually update the `.env` file with fresh `PLAYFUN_API_KEY` and `PLAYFUN_SECRET_KEY` values.

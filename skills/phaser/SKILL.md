@@ -5,6 +5,11 @@ description: >
   Use when creating a new 2D game, adding 2D game features, working with Phaser, or building
   sprite-based web games.
 argument-hint: [topic or question]
+license: MIT
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, 2d, phaser, scenes, sprites, arcade-physics]
 ---
 
 # Phaser 3 Game Development
@@ -197,103 +202,7 @@ this.player.update({ left, right, jump });
 
 ### Responsive Canvas Config (Retina/High-DPI)
 
-For pixel-perfect rendering on any display, size the canvas to match the user's device pixel area (not a fixed base resolution). This prevents CSS-upscaling blur on high-DPI screens.
-
-```typescript
-// Constants.ts
-export const DPR = Math.min(window.devicePixelRatio || 1, 2);
-const isPortrait = window.innerHeight > window.innerWidth;
-const designW = isPortrait ? 540 : 960;
-const designH = isPortrait ? 960 : 540;
-const designAspect = designW / designH;
-
-// Canvas = device pixel area, maintaining design aspect ratio
-const deviceW = window.innerWidth * DPR;
-const deviceH = window.innerHeight * DPR;
-let canvasW, canvasH;
-if (deviceW / deviceH > designAspect) {
-  canvasW = deviceW;
-  canvasH = Math.round(deviceW / designAspect);
-} else {
-  canvasW = Math.round(deviceH * designAspect);
-  canvasH = deviceH;
-}
-
-// PX = canvas pixels per design pixel. Scale ALL absolute values by PX.
-export const PX = canvasW / designW;
-
-export const GAME = {
-  WIDTH: canvasW,      // e.g., 3456 on a 1728×1117 @2x display
-  HEIGHT: canvasH,
-  GRAVITY: 800 * PX,
-};
-
-// GameConfig.ts
-scale: {
-  mode: Phaser.Scale.FIT,
-  autoCenter: Phaser.Scale.CENTER_BOTH,
-  zoom: 1 / DPR,
-},
-roundPixels: true,
-antialias: true,
-
-// All absolute pixel values use PX (not DPR). Proportional values use ratios.
-const groundH = 30 * PX;
-const buttonY = GAME.HEIGHT * 0.55;
-```
-
-### Entity Sizing
-
-Character dimensions must preserve their spritesheet aspect ratio across all orientations. Derive HEIGHT from WIDTH using the sprite's native aspect ratio (200×300 spritesheets = 1.5):
-
-```js
-const SPRITE_ASPECT = 1.5;
-
-// Good — HEIGHT derived from WIDTH, correct in both landscape and portrait
-PLAYER: {
-  WIDTH: GAME.WIDTH * 0.08,
-  HEIGHT: GAME.WIDTH * 0.08 * SPRITE_ASPECT,
-}
-
-// Bad — independent GAME.HEIGHT ratio squishes characters in portrait mode
-PLAYER: {
-  WIDTH: GAME.WIDTH * 0.08,
-  HEIGHT: GAME.HEIGHT * 0.12,
-}
-
-// Bad — fixed size regardless of screen
-PLAYER: {
-  WIDTH: 40 * PX,
-  HEIGHT: 40 * PX,
-}
-```
-
-For **character-driven games** (named characters, personalities, mascots), make characters prominent — use 12–15% of `GAME.WIDTH` for the player width. Use **caricature proportions** (large head ~40–50% of sprite height with exaggerated features, compact body) for personality games to maximize character recognition at any scale. Never define character HEIGHT as `GAME.HEIGHT * ratio` — on mobile portrait, `GAME.HEIGHT` is much larger than `GAME.WIDTH`, breaking the aspect ratio and squishing heads vertically.
-
-**HTML boilerplate** (required for proper scaling):
-
-```html
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
-  #game-container { width: 100%; height: 100%; }
-</style>
-```
-
-### Portrait-First Games
-
-For vertical game types (dodgers, runners, collectors, endless fallers), force portrait mode regardless of device orientation. Set `FORCE_PORTRAIT = true` in Constants.js — this locks `_isPortrait = true` and uses fixed 540×960 design dimensions. On desktop, `Scale.FIT + CENTER_BOTH` automatically pillarboxes with black bars (no CSS changes needed when `background: #000` is set on body).
-
-```js
-// Constants.js — force portrait for vertical games
-const FORCE_PORTRAIT = true;
-const _isPortrait = FORCE_PORTRAIT || window.innerHeight > window.innerWidth;
-const _designW = 540;
-const _designH = 960;
-```
-
-Without this, desktop browsers stretch the game to landscape, ruining the vertical layout. The template default is `FORCE_PORTRAIT = false` (auto-detect orientation).
+See [project-setup.md](project-setup.md) for the full responsive canvas config, entity sizing, HTML boilerplate, and portrait-first game patterns.
 
 ### Visible Touch Controls
 
@@ -329,69 +238,7 @@ For the main player character, use 12–15% of `GAME.WIDTH` (see Entity Sizing a
 
 ### Button Pattern (Container + Graphics + Text)
 
-Buttons require careful z-ordering. Use a Container holding Graphics (background) then Text (label) — in that order. The Container itself is interactive.
-
-**ALWAYS use this exact pattern for clickable buttons.** Do not use Zone, do not draw Graphics on top of Text, and do not set interactivity on anything other than the Container.
-
-```js
-createButton(scene, x, y, label, callback) {
-  const btnW = Math.max(GAME.WIDTH * UI.BTN_W_RATIO, 160);
-  const btnH = Math.max(GAME.HEIGHT * UI.BTN_H_RATIO, UI.MIN_TOUCH);
-  const radius = UI.BTN_RADIUS;
-
-  const container = scene.add.container(x, y);
-
-  // 1. Graphics background (added FIRST — renders behind text)
-  const bg = scene.add.graphics();
-  bg.fillStyle(COLORS.BTN_PRIMARY, 1);
-  bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, radius);
-  container.add(bg);
-
-  // 2. Text label (added SECOND — renders on top of background)
-  const fontSize = Math.round(GAME.HEIGHT * UI.BODY_RATIO);
-  const text = scene.add.text(0, 0, label, {
-    fontSize: fontSize + 'px',
-    fontFamily: UI.FONT,
-    color: COLORS.BTN_TEXT,
-    fontStyle: 'bold',
-  }).setOrigin(0.5);
-  container.add(text);
-
-  // 3. Make the CONTAINER interactive (not the graphics or text)
-  container.setSize(btnW, btnH);
-  container.setInteractive({ useHandCursor: true });
-
-  const fillBtn = (gfx, color) => {
-    gfx.clear();
-    gfx.fillStyle(color, 1);
-    gfx.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, radius);
-  };
-
-  container.on('pointerover', () => {
-    fillBtn(bg, COLORS.BTN_PRIMARY_HOVER);
-    scene.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 80 });
-  });
-  container.on('pointerout', () => {
-    fillBtn(bg, COLORS.BTN_PRIMARY);
-    scene.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 80 });
-  });
-  container.on('pointerdown', () => {
-    fillBtn(bg, COLORS.BTN_PRIMARY_PRESS);
-    container.setScale(0.95);
-  });
-  container.on('pointerup', () => {
-    container.setScale(1);
-    callback();
-  });
-
-  return container;
-}
-```
-
-**Broken patterns** (do NOT use):
-- Drawing Graphics on top of Text (hides the label)
-- Using a Zone for interactivity with Graphics drawn over it (Zone becomes unreachable)
-- Setting `setAlpha(0)` on an interactive object and layering visuals over it
+See [game-objects.md](game-objects.md) for the full button implementation pattern (Container + Graphics + Text with hover/press states) and the list of broken patterns to avoid.
 
 ## Anti-Patterns (Avoid These)
 
@@ -405,7 +252,7 @@ createButton(scene, x, y, label, callback) {
 - **Not cleaning up** — Remove event listeners and timers in `shutdown()` to prevent memory leaks. This is critical for restart-safety — stale listeners cause double-firing and ghost behavior after restart.
 - **Hardcoded values** — Every number belongs in `Constants.ts`. No magic numbers in game logic.
 - **Unwired physics colliders** — Creating a static body with `physics.add.existing(obj, true)` does nothing on its own. You MUST call `physics.add.collider(bodyA, bodyB, callback)` to connect two bodies. Every static collider (ground, walls, platforms) needs an explicit collider or overlap call wiring it to the entities that should interact with it.
-- **Invisible or hidden button elements** — Never set `setAlpha(0)` on an interactive game object and layer Graphics or other display objects on top. **For buttons, always use the Container + Graphics + Text pattern** (see Button Pattern section above). Common broken patterns: (1) Drawing a Graphics rect after adding Text, hiding the label behind it. (2) Creating a Zone for hit area with Graphics drawn over it, making the Zone unreachable. (3) Making Text interactive but covering it with a Graphics background drawn afterward. The fix is always: Container first, Graphics added to container, Text added to container (in that order), Container is the interactive element.
+- **Invisible or hidden button elements** — Never set `setAlpha(0)` on an interactive game object and layer Graphics or other display objects on top. **For buttons, always use the Container + Graphics + Text pattern** (see [game-objects.md](game-objects.md)). Common broken patterns: (1) Drawing a Graphics rect after adding Text, hiding the label behind it. (2) Creating a Zone for hit area with Graphics drawn over it, making the Zone unreachable. (3) Making Text interactive but covering it with a Graphics background drawn afterward. The fix is always: Container first, Graphics added to container, Text added to container (in that order), Container is the interactive element.
 - **No mute toggle** — See the `mute-button` rule. Games with audio must have a mute toggle.
 
 ## Examples
@@ -432,14 +279,14 @@ Before considering a game complete, verify:
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures
 
-## References
+## Reference Files
 
 | File | Topic |
 |------|-------|
 | [conventions.md](conventions.md) | Mandatory game-creator architecture conventions |
-| [project-setup.md](project-setup.md) | Scaffolding, Vite, TypeScript config |
+| [project-setup.md](project-setup.md) | Scaffolding, Vite, TypeScript config, responsive canvas, entity sizing, portrait mode |
 | [scenes-and-lifecycle.md](scenes-and-lifecycle.md) | Scene system deep dive |
-| [game-objects.md](game-objects.md) | Custom objects, groups, containers |
+| [game-objects.md](game-objects.md) | Custom objects, groups, containers, button pattern |
 | [physics-and-movement.md](physics-and-movement.md) | Physics engines, movement patterns |
 | [assets-and-performance.md](assets-and-performance.md) | Assets, optimization, mobile |
 | [patterns.md](patterns.md) | ECS, state machines, singletons |
