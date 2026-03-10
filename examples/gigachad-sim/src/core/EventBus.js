@@ -64,7 +64,7 @@ class EventBus {
 
   emit(event, data) {
     if (!this.listeners[event]) return this;
-    this.listeners[event].forEach(callback => {
+    [...this.listeners[event]].forEach(callback => {
       try {
         callback(data);
       } catch (err) {
