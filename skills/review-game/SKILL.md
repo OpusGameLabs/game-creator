@@ -1,7 +1,11 @@
 ---
 name: review-game
-description: Review an existing game codebase for architecture, performance, and best practices
+description: Review an existing game codebase for architecture, performance, and best practices. Use when the user says "review my game", "code review", "check my game architecture", "is my game well structured", or "audit my game code".
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, review, architecture, best-practices, code-quality]
 ---
 
 # Review Game

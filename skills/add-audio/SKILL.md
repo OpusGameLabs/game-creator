@@ -1,7 +1,11 @@
 ---
 name: add-audio
-description: Add music and sound effects to a game using the Web Audio API — background music, gameplay themes, and SFX. Zero dependencies.
+description: Add music and sound effects to a game using the Web Audio API — background music, gameplay themes, and SFX. Zero dependencies. Use when the user says "add music", "add sound effects", "add audio", "make it sound good", "add BGM", or "add SFX to my game".
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, audio, music, sfx, web-audio-api]
 ---
 
 # Add Audio

@@ -1,7 +1,11 @@
 ---
 name: use-template
-description: Clone a game template from the gallery as a starting point
+description: Clone a game template from the gallery as a starting point. Use when the user says "use a template", "start from a template", "clone flappy-bird", "use the platformer template", or wants to quickly bootstrap a game from an existing example.
 argument-hint: "<template-id> [project-name]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, template, scaffold, clone, gallery]
 ---
 
 # Use Template

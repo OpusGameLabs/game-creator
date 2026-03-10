@@ -1,7 +1,11 @@
 ---
 name: improve-game
-description: Analyze a game, find what needs work, and implement the highest-impact improvements
+description: Analyze a game, find what needs work, and implement the highest-impact improvements. Use when the user says "improve my game", "make my game better", "fix my game", "what's wrong with my game", or "polish my game". Run repeatedly — each pass finds the next most impactful thing to fix.
 argument-hint: "[area-to-focus]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, improve, audit, fix, polish]
 ---
 
 # Improve Game

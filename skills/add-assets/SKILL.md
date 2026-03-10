@@ -1,7 +1,11 @@
 ---
 name: add-assets
-description: Replace geometric shapes with pixel art sprites — recognizable characters, enemies, and items with optional animation
+description: Replace geometric shapes with pixel art sprites — recognizable characters, enemies, and items with optional animation. Use when the user says "add sprites", "replace the shapes with real art", "add pixel art", "make the characters look real", or "add game assets". For 3D games, use add-3d-assets instead.
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, assets, sprites, pixel-art, characters, 2d]
 ---
 
 # Add Assets

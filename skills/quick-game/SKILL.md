@@ -1,7 +1,11 @@
 ---
 name: quick-game
-description: Rapidly scaffold and implement a playable game — no assets, design, audio, deploy, or monetize. Get something on screen fast.
+description: Rapidly scaffold and implement a playable game — no assets, design, audio, deploy, or monetize. Get something on screen fast. Use when the user says "quick game", "fast prototype", "just get something playable", or wants a game without the full pipeline. For the complete pipeline, use make-game instead.
 argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, prototype, scaffold, fast]
 ---
 
 # Quick Game (Fast Prototype)

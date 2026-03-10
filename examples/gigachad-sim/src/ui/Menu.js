@@ -63,7 +63,7 @@ export class Menu {
         width: 24px;
         height: 24px;
         border-radius: 4px;
-        background: ${COLORS.LIFE_FULL === 0xff4444 ? '#ff4444' : '#ff4444'};
+        background: #${COLORS.LIFE_FULL.toString(16).padStart(6, '0')};
         transition: background 0.3s, transform 0.3s;
       `;
       this.livesContainer.appendChild(icon);

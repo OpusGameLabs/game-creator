@@ -1,7 +1,11 @@
 ---
 name: make-game
-description: Full guided pipeline — scaffold, design, audio, deploy, and monetize a game from scratch
+description: Full guided pipeline — scaffold, design, audio, deploy, and monetize a browser game from scratch. Use when the user says "make a game", "build me a game", "create a new game", "make a 2D/3D game", or provides a game concept to build. Do NOT use for modifying existing games (use add-feature or improve-game instead).
 argument-hint: "[2d|3d] [game-name] OR [tweet-url]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, scaffold, pipeline, phaser, threejs, deploy, monetize]
 ---
 
 # Make Game (Full Pipeline)

@@ -1,7 +1,11 @@
 ---
 name: design-game
-description: Audit and improve the visual design, polish, and player experience of an existing game
+description: Audit and improve the visual design, polish, and player experience of an existing game. Use when the user says "make my game look better", "improve the design", "add polish", "add juice", "add particles", "fix the UI", or "make it more visually appealing". Do NOT use for gameplay logic changes (use add-feature instead).
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, design, polish, ui, particles, visual]
 ---
 
 # Design Game

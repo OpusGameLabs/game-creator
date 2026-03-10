@@ -1,7 +1,12 @@
 ---
 name: monetize-game
-description: Register your game on Play.fun (OpenGameProtocol), add the browser SDK, and get a monetized play.fun URL
+description: Register your game on Play.fun (OpenGameProtocol), add the browser SDK, and get a monetized play.fun URL. Use when the user says "monetize my game", "add Play.fun", "add rewards", "register on Play.fun", or "get a play.fun URL". Requires Play.fun MCP server for game registration.
 argument-hint: "[game-path]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  mcp-server: play-fun
+  tags: [game, monetize, playfun, rewards, sdk]
 ---
 
 # Monetize Game (Play.fun / OpenGameProtocol)

@@ -1,7 +1,11 @@
 ---
 name: qa-game
-description: Add Playwright QA tests to a game — visual regression, gameplay verification, performance, and accessibility
+description: Add Playwright QA tests to a game — visual regression, gameplay verification, and performance. Use when the user says "add tests", "test my game", "add QA", "check for bugs", or "add visual regression tests".
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, qa, testing, playwright, visual-regression]
 ---
 
 # QA Game

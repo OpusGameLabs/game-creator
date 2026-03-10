@@ -1,7 +1,11 @@
 ---
 name: record-promo
-description: Record an autonomous 50 FPS promo video of your game for social media
+description: Record an autonomous 50 FPS promo video of your game for social media. Use when the user says "record a video", "make a promo", "capture gameplay", "record gameplay footage", or "make a trailer for my game".
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, video, promo, recording, playwright, ffmpeg]
 ---
 
 # Record Promo Video

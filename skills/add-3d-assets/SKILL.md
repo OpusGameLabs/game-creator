@@ -1,7 +1,11 @@
 ---
 name: add-3d-assets
-description: Replace primitive 3D shapes with real GLB models — animated characters, world props, buildings, and scenery for Three.js games
+description: Replace primitive 3D shapes with real GLB models — animated characters, world props, buildings, and scenery for Three.js games. Use when the user says "add 3D models", "replace the boxes with real models", "add GLB assets", or "make the 3D game look real". For 2D pixel art, use add-assets instead.
 argument-hint: "[path-to-game]"
+metadata:
+  author: OpusGameLabs
+  version: 1.3.0
+  tags: [game, 3d, assets, glb, models, threejs]
 ---
 
 # Add 3D Assets
