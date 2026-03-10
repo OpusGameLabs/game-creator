@@ -253,6 +253,40 @@ See `examples/worldlabs-arcade/` — a complete, tested demo with:
 - Collider-mesh ground raycasting
 - Panorama skybox
 
+## Troubleshooting
+
+### Scene appears upside down (Y-flip)
+**Cause:** World Labs SPZ files use Y-inverted coordinates compared to Three.js convention.
+**Fix:** Apply `rotation.x = Math.PI` to both the splat mesh and collider mesh. Then adjust position.z to compensate: `position.z += (minZ + maxZ)`. Do NOT use `scale.y = -1` on a parent group — SparkJS breaks with negative parent scale.
+
+### Raycast hits ceiling instead of floor
+**Cause:** After Y-flip, the coordinate system is inverted. Downward raycasts hit what was originally the floor (now the ceiling in flipped space).
+**Fix:** Raycast UPWARD from Y=-50 with direction `(0, 1, 0)` to hit the visual floor first. The floor is the lowest surface after the flip.
+
+### Collider mesh raycasts return no hits
+**Cause:** The collider mesh's world matrix hasn't been updated after setting rotation/position, especially before the first render frame.
+**Fix:** Call `_colliderMesh.updateMatrixWorld(true)` immediately after setting rotation and position, before any raycast operations.
+
+### Scene appears doubled / world inside a world
+**Cause:** Using the World Labs panorama as `scene.background` shows the same environment as a giant sphere surrounding the 3D scene.
+**Fix:** Don't use the panorama as scene background. Use a solid color (`scene.background = new THREE.Color(0x87CEEB)`) or a custom skybox instead.
+
+### Generation times out or takes too long
+**Cause:** World Labs generation typically takes 3-8 minutes. Complex scenes or high server load can extend this.
+**Fix:** Poll the operation status endpoint every 10-15 seconds. Check `progress.status` for `"IN_PROGRESS"` vs `"COMPLETE"`. If stuck beyond 15 minutes, create a new generation request — don't retry the same operation.
+
+### Cannot find SparkJS package
+**Cause:** The package name is `@sparkjsdev/spark`, not `@worldlabs/spark` or other variations.
+**Fix:** Install with `npm install @sparkjsdev/spark`. Import `SplatMesh` from this package. It integrates directly into the Three.js scene — no separate render pass needed.
+
+### Media upload fails with 404
+**Cause:** Using the wrong endpoint for media upload preparation.
+**Fix:** Use `POST /media-assets:prepare_upload` (NOT `/media-assets`). This returns a signed URL for PUT upload. The colon syntax is intentional — it's a custom action on the resource.
+
+### API returns 401 Unauthorized
+**Cause:** Using the wrong authentication header format.
+**Fix:** Use `WLT-Api-Key: <your-key>` header, NOT `Authorization: Bearer <your-key>`. The World Labs API uses a custom header format.
+
 ## Checklist
 
 - [ ] `WORLDLABS_API_KEY` environment variable is set
