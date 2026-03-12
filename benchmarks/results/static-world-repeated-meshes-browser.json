@@ -1,0 +1,37 @@
+{
+  "comparisons": {
+    "averageFpsDelta": 1.3069858820404647,
+    "averageFrameTimeDeltaMs": -0.3711111111111123,
+    "averageRenderCpuTimeDeltaMs": -15.987777777766393,
+    "averageRenderCallsDelta": -19424.411111111112,
+    "frameTimeP95DeltaMs": -0.09999999999990905,
+    "renderCpuTimeP95DeltaMs": -17.300000000279397,
+    "passes": true
+  },
+  "generatedAt": "2026-03-11T16:47:19.499Z",
+  "results": [
+    {
+      "averageFps": 58.69501418462843,
+      "averageFrameTimeMs": 17.037222222222223,
+      "averageRenderCpuTimeMs": 16.192777777781398,
+      "averageRenderCalls": 19426.411111111112,
+      "averageTriangles": 233106.93333333332,
+      "frameTimeP95Ms": 16.800000000000182,
+      "renderCpuTimeP95Ms": 17.800000000279397,
+      "sampleFrames": 180,
+      "variant": "baseline"
+    },
+    {
+      "averageFps": 60.00200006666889,
+      "averageFrameTimeMs": 16.66611111111111,
+      "averageRenderCpuTimeMs": 0.20500000001500465,
+      "averageRenderCalls": 2,
+      "averageTriangles": 235202,
+      "frameTimeP95Ms": 16.700000000000273,
+      "renderCpuTimeP95Ms": 0.5,
+      "sampleFrames": 180,
+      "variant": "optimized"
+    }
+  ],
+  "scenarioId": "static-world-repeated-meshes-browser"
+}

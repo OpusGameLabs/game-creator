@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-03-11T16:22:00.683Z",
+  "scenario": {
+    "candidates": {
+      "baseline": {
+        "description": "One Mesh per repeated prop in a dense static world.",
+        "id": "baseline-individual-meshes"
+      },
+      "optimized": {
+        "description": "A single InstancedMesh for repeated props in a dense static world.",
+        "id": "optimized-instanced-mesh"
+      }
+    },
+    "id": "static-world-repeated-meshes",
+    "metadata": {
+      "instanceCount": 19600,
+      "worldDepth": 140,
+      "worldWidth": 140
+    },
+    "notes": "This first harness slice measures scene-graph and CPU traversal proxies. Browser renderer timing should be layered onto the same scenario later."
+  },
+  "summary": {
+    "comparisons": [
+      {
+        "baselineCandidateId": "baseline-individual-meshes",
+        "deltas": {
+          "buildP95Ms": -60.34587600000003,
+          "estimatedDrawCalls": -19599,
+          "instancedMeshCount": 1,
+          "meshCount": -19600,
+          "objectCount": -19599,
+          "traversalP95Ms": -5.39020800000003,
+          "uniqueGeometryCount": 0,
+          "uniqueMaterialCount": 0
+        },
+        "optimizedCandidateId": "optimized-instanced-mesh",
+        "passes": true,
+        "reasons": [
+          "estimated draw calls decreased",
+          "p95 traversal cost did not regress",
+          "mesh count decreased"
+        ]
+      }
+    ],
+    "results": [
+      {
+        "candidateId": "baseline-individual-meshes",
+        "metrics": {
+          "buildP95Ms": 63.34695900000003,
+          "traversalP95Ms": 5.392291999999998,
+          "estimatedDrawCalls": 19600,
+          "instancedMeshCount": 0,
+          "meshCount": 19600,
+          "objectCount": 19601,
+          "uniqueGeometryCount": 1,
+          "uniqueMaterialCount": 1
+        }
+      },
+      {
+        "candidateId": "optimized-instanced-mesh",
+        "metrics": {
+          "buildP95Ms": 3.001082999999994,
+          "traversalP95Ms": 0.0020839999999680003,
+          "estimatedDrawCalls": 1,
+          "instancedMeshCount": 1,
+          "meshCount": 0,
+          "objectCount": 2,
+          "uniqueGeometryCount": 1,
+          "uniqueMaterialCount": 1
+        }
+      }
+    ],
+    "scenarioId": "static-world-repeated-meshes"
+  }
+}

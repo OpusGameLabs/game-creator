@@ -29,6 +29,8 @@ For detailed reference, see companion files in this directory:
 - `tsl-guide.md` — Three.js Shading Language reference (NodeMaterial classes, when to use TSL)
 - `input-patterns.md` — Gyroscope input, virtual joystick, unified analog InputSystem, input priority system
 
+For performance optimization patterns with benchmarked evidence, see the **threejs-perf** skill (`skills/threejs-perf/SKILL.md`).
+
 ## Tech Stack
 
 - **Renderer**: Three.js (`three@0.183.0+`, ESM imports)
@@ -215,7 +217,7 @@ All `.overlay` elements (game-over, pause, menus) must include padding to avoid 
 - **Cap pixel ratio**: `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))` — avoids GPU overload on high-DPI screens
 - **Object pooling**: Reuse `Vector3`, `Box3`, temp objects in hot loops to minimize GC. Avoid per-frame allocations — preallocate and reuse.
 - **Disable shadows on first pass** — Only enable shadow maps when specifically needed and tested on mobile. Dynamic shadows are the single most expensive rendering feature.
-- **Keep draw calls low** — Fewer unique materials and geometries = fewer draw calls. Merge static geometry where possible. Use instanced meshes for repeated objects.
+- **Keep draw calls low** — Fewer unique materials and geometries = fewer draw calls. Merge static geometry where possible. Use instanced meshes for repeated objects. See `skills/threejs-perf/` for benchmarked InstancedMesh patterns (19,600 → 1 draw call).
 - **Prefer simple materials** — Use `MeshBasicMaterial` or `MeshStandardMaterial`. Avoid `MeshPhysicalMaterial`, custom shaders, or complex material setups unless specifically needed.
 - **No postprocessing by default** — Skip bloom, SSAO, motion blur, and other postprocessing passes on first implementation. These tank mobile performance. Add only after gameplay is solid and perf budget allows.
 - **Keep geometry/material count small** — A game with 10 unique materials renders faster than one with 100. Reuse materials across objects with the same appearance.

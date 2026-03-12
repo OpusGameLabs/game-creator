@@ -35,7 +35,7 @@ Launch a `Task` subagent with these instructions:
 > **Project path**: `<project-dir>`
 > **Engine**: `<2d|3d>`
 > **Game concept**: `<user's game description>`
-> **Skill to load**: `phaser` and `game-architecture` (2D) or `threejs-game` and `game-architecture` (3D)
+> **Skill to load**: `phaser` and `game-architecture` (2D) or `threejs-game`, `threejs-perf`, and `game-architecture` (3D)
 >
 > **Core loop first** — implement in this order:
 > 1. Input (touch + keyboard from the start — never keyboard-only)

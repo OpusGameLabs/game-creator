@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Three.js Skills Benchmark Lab</title>
+    <style>
+      :root {
+        --bg: #0b0e11;
+        --sidebar: #111418;
+        --sidebar-hover: #1a1f25;
+        --sidebar-active: #1e2730;
+        --text: #e5eef5;
+        --muted: #7b8a99;
+        --line: rgba(255, 255, 255, 0.08);
+        --accent: #e84040;
+        --accent-dim: rgba(232, 64, 64, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        color: var(--text);
+        background: var(--bg);
+        font:
+          13px/1.4 ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 280px;
+        min-width: 280px;
+        height: 100%;
+        overflow-y: auto;
+        background: var(--sidebar);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-header {
+        padding: 20px 18px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .sidebar-header h1 {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+
+      .sidebar-header p {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .nav-group {
+        padding: 10px 0;
+      }
+
+      .nav-group-label {
+        padding: 6px 18px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 18px 9px 20px;
+        color: var(--text);
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.12s;
+        font-size: 13px;
+        border-left: 3px solid transparent;
+      }
+
+      .nav-item:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .nav-item.active {
+        background: var(--sidebar-active);
+        border-left-color: var(--accent);
+      }
+
+      .nav-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .nav-text .label {
+        display: block;
+        font-weight: 500;
+      }
+
+      .nav-text .desc {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 1px;
+      }
+
+      /* ── Main area ── */
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--sidebar);
+        border-bottom: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+
+      .toolbar .title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-right: auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toggle-group {
+        display: flex;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .toggle-btn {
+        padding: 5px 14px;
+        font-size: 12px;
+        font-family: inherit;
+        background: transparent;
+        color: var(--muted);
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .toggle-btn:not(:last-child) {
+        border-right: 1px solid var(--line);
+      }
+
+      .toggle-btn.active {
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .toggle-btn:hover:not(.active) {
+        background: var(--sidebar-hover);
+        color: var(--text);
+      }
+
+      .action-btn {
+        padding: 5px 14px;
+        font-size: 12px;
+        font-family: inherit;
+        font-weight: 500;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .action-btn:hover {
+        opacity: 0.85;
+      }
+
+      /* ── Viewport ── */
+      .viewport {
+        flex: 1;
+        position: relative;
+      }
+
+      .viewport iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+      }
+
+      .viewport .placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .spinner-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        z-index: 2;
+        transition: opacity 0.3s;
+      }
+
+      .spinner-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>Benchmark Lab</h1>
+        <p>Three.js Agent Skills — browser-visible benchmark scenarios.</p>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Scene Scale</div>
+
+        <a class="nav-item" data-path="static-world-repeated-meshes">
+          <span class="nav-dot" style="background: #44aa77"></span>
+          <span class="nav-text">
+            <span class="label">Static World</span>
+            <span class="desc">19,600 repeated meshes vs instanced</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="procedural-city">
+          <span class="nav-dot" style="background: #556688"></span>
+          <span class="nav-text">
+            <span class="label">Procedural City</span>
+            <span class="desc">5,000 buildings, individual vs merged geometry</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="morphing-terrain">
+          <span class="nav-dot" style="background: #22aa66"></span>
+          <span class="nav-text">
+            <span class="label">Morphing Terrain</span>
+            <span class="desc">40,000 vertices, geometry rebuild vs update</span>
+          </span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Entities</div>
+
+        <a class="nav-item" data-path="moving-entities-wave-field">
+          <span class="nav-dot" style="background: #4ea7d8"></span>
+          <span class="nav-text">
+            <span class="label">Wave Field</span>
+            <span class="desc">8,000 animated entities</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="bouncy-balls-drop">
+          <span class="nav-dot" style="background: #e84040"></span>
+          <span class="nav-text">
+            <span class="label">Bouncy Balls</span>
+            <span class="desc">10,000 spheres with physics</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="flocking-boids">
+          <span class="nav-dot" style="background: #ffaa44"></span>
+          <span class="nav-text">
+            <span class="label">Flocking Boids</span>
+            <span class="desc">6,000 entities with emergent swarm behavior</span>
+          </span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Particles</div>
+
+        <a class="nav-item" data-path="particle-storm">
+          <span class="nav-dot" style="background: #44aaff"></span>
+          <span class="nav-text">
+            <span class="label">Particle Storm</span>
+            <span class="desc">30,000 particles in a vortex</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="firework-show">
+          <span class="nav-dot" style="background: #ff6644"></span>
+          <span class="nav-text">
+            <span class="label">Firework Show</span>
+            <span class="desc">20,000 particles with burst lifecycle</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="starfield-warp">
+          <span class="nav-dot" style="background: #aabbff"></span>
+          <span class="nav-text">
+            <span class="label">Starfield Warp</span>
+            <span class="desc">15,000 stars streaking at lightspeed</span>
+          </span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Assets</div>
+
+        <a class="nav-item" data-path="asset-startup-texture-burst">
+          <span class="nav-dot" style="background: #cc8833"></span>
+          <span class="nav-text">
+            <span class="label">Texture Burst</span>
+            <span class="desc">Sequential vs parallel asset loading</span>
+          </span>
+        </a>
+
+        <a class="nav-item" data-path="lazy-loading-gallery">
+          <span class="nav-dot" style="background: #aa66cc"></span>
+          <span class="nav-text">
+            <span class="label">Lazy Loading</span>
+            <span class="desc">Blocking build vs progressive chunked loading</span>
+          </span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="main">
+      <div class="toolbar">
+        <span class="title" id="toolbar-title">Static World</span>
+        <div class="toggle-group">
+          <button class="toggle-btn" data-variant="baseline">Baseline</button>
+          <button class="toggle-btn active" data-variant="optimized">Optimized</button>
+        </div>
+        <button class="action-btn" id="restart-btn">Restart</button>
+      </div>
+
+      <div class="viewport" id="viewport"></div>
+    </div>
+
+    <script>
+      const viewport = document.getElementById("viewport");
+      const toolbarTitle = document.getElementById("toolbar-title");
+      const navItems = document.querySelectorAll(".nav-item");
+      const toggleBtns = document.querySelectorAll(".toggle-btn");
+      const restartBtn = document.getElementById("restart-btn");
+
+      let currentPath = "static-world-repeated-meshes";
+      let currentVariant = "optimized";
+
+      function loadScenario() {
+        if (!currentPath) return;
+
+        const url = `/benchmarks/browser/${currentPath}/?variant=${currentVariant}`;
+
+        viewport.innerHTML = "";
+
+        const overlay = document.createElement("div");
+        overlay.className = "spinner-overlay";
+        overlay.innerHTML = '<div class="spinner"></div>';
+        viewport.appendChild(overlay);
+
+        const iframe = document.createElement("iframe");
+        iframe.src = url;
+        iframe.addEventListener("load", () => {
+          overlay.classList.add("hidden");
+          setTimeout(() => overlay.remove(), 300);
+        });
+        viewport.appendChild(iframe);
+      }
+
+      navItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          navItems.forEach((n) => n.classList.remove("active"));
+          item.classList.add("active");
+
+          currentPath = item.dataset.path;
+          toolbarTitle.textContent = item.querySelector(".label").textContent;
+          loadScenario();
+        });
+      });
+
+      toggleBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          toggleBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentVariant = btn.dataset.variant;
+          loadScenario();
+        });
+      });
+
+      restartBtn.addEventListener("click", () => {
+        loadScenario();
+      });
+
+      // Auto-load default scenario
+      const defaultNav = document.querySelector('[data-path="static-world-repeated-meshes"]');
+      defaultNav.classList.add("active");
+      loadScenario();
+    </script>
+  </body>
+</html>

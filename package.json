@@ -1,6 +1,13 @@
 {
   "devDependencies": {
-    "gh-pages": "^6.3.0"
+    "@types/node": "^24.0.0",
+    "@types/three": "^0.180.0",
+    "gh-pages": "^6.3.0",
+    "puppeteer": "^24.7.1",
+    "three": "^0.183.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "yaml": "^2.8.1"
   },
   "name": "game-creator",
   "version": "1.3.0",
@@ -20,7 +27,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:gallery": "node gallery/build.js",
-    "capture:thumbnails": "node gallery/capture-screenshots.js"
+    "capture:thumbnails": "node gallery/capture-screenshots.js",
+    "benchmark:static-world": "tsx tools/benchmark/run-static-world.ts",
+    "benchmark:static-world:browser": "tsx tools/benchmark/run-static-world-browser.ts",
+    "benchmark:moving-entities": "tsx tools/benchmark/run-moving-entities.ts",
+    "validate:skills": "tsx tools/validate/index.ts",
+    "check:types": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

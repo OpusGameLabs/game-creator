@@ -1,0 +1,32 @@
+{
+  "comparisons": {
+    "estimatedDrawCallsDelta": -7999,
+    "passes": true,
+    "traversalP95DeltaMs": -1.7425830000000246,
+    "updateP95DeltaMs": -0.5986259999999675
+  },
+  "generatedAt": "2026-03-11T16:46:55.275Z",
+  "results": [
+    {
+      "candidateId": "baseline-individual-moving-meshes",
+      "metrics": {
+        "estimatedDrawCalls": 8000,
+        "instancedMeshCount": 0,
+        "meshCount": 8000,
+        "traversalP95Ms": 1.7496250000000373,
+        "updateP95Ms": 1.1109589999999798
+      }
+    },
+    {
+      "candidateId": "optimized-instanced-moving-entities",
+      "metrics": {
+        "estimatedDrawCalls": 1,
+        "instancedMeshCount": 1,
+        "meshCount": 0,
+        "traversalP95Ms": 0.007042000000012649,
+        "updateP95Ms": 0.5123330000000124
+      }
+    }
+  ],
+  "scenarioId": "moving-entities-wave-field"
+}
