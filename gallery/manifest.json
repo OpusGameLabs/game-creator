@@ -238,5 +238,29 @@
     "source": "examples/trump-mog",
     "thumbnail": "thumbnails/trump-mog.png",
     "demoUrl": null
+  },
+  {
+    "id": "mini-world",
+    "name": "Mini World",
+    "description": "Third-person 3D exploration with instanced forests, coin collection, and physics. Demonstrates InstancedMesh performance patterns.",
+    "engine": "3d",
+    "genre": ["exploration", "demo"],
+    "complexity": "intermediate",
+    "features": ["instancing", "physics", "third-person", "performance"],
+    "source": "examples/mini-world",
+    "thumbnail": "thumbnails/mini-world.png",
+    "demoUrl": null
+  },
+  {
+    "id": "bot-arena",
+    "name": "Bot Arena",
+    "description": "Airport terminal with 1000 AI bots and hitscan gunplay. Demonstrates instanced moving entities at scale.",
+    "engine": "3d",
+    "genre": ["shooter", "demo"],
+    "complexity": "intermediate",
+    "features": ["instancing", "ai-bots", "fps", "performance"],
+    "source": "examples/bot-arena",
+    "thumbnail": "thumbnails/bot-arena.png",
+    "demoUrl": null
   }
 ]

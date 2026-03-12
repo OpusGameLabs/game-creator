@@ -14,6 +14,7 @@ settings.json              # Default settings (activates game-creator agent)
 skills/
   phaser/SKILL.md          # 2D game patterns (Phaser 3, scene-based, multi-file)
   threejs-game/SKILL.md    # 3D game patterns (Three.js, event-driven)
+  threejs-perf/SKILL.md    # Three.js performance patterns with benchmark evidence (instancing, moving entities)
   game-assets/SKILL.md     # Pixel art sprites (code-only, no external files)
   game-designer/SKILL.md   # Visual polish (gradients, particles, juice, transitions)
   game-audio/SKILL.md      # Procedural audio (Web Audio API BGM + SFX)
@@ -44,6 +45,24 @@ scripts/
   example-actions.json     # Example action payloads for iterate-client.js
   find-3d-asset.mjs        # Search & download GLB models (Sketchfab, Poly Haven, Poly.pizza)
   meshy-generate.mjs       # Generate 3D models with Meshy AI (text-to-3d, image-to-3d, rig, animate)
+benchmarks/
+  harness/                 # Benchmark measurement (metrics.ts) + comparison scoring (compare.ts)
+  scenarios/               # Node.js benchmark scenarios (baseline vs optimized candidates)
+  browser/                 # 11 interactive HTML5 benchmarks with Benchmark Lab UI (index.html)
+  results/                 # JSON benchmark result artifacts (proving measured improvements)
+  README.md                # Benchmark infrastructure overview
+standard/
+  spec/agent-skills.md     # Open agent-skills canonical format v0 specification
+  examples/                # Example skill implementing the canonical spec
+  compatibility/           # Agent ecosystem compatibility notes
+  schemas/                 # Machine-checkable schema definitions (planned)
+tools/
+  validate/index.ts        # Validates skill frontmatter, benchmark linkage, performance claims
+  benchmark/               # Benchmark runners: Node.js (run-static-world.ts, run-moving-entities.ts) and browser (run-static-world-browser.ts, server.ts)
+src/
+  benchmark/types.ts       # TypeScript type definitions for benchmark metrics & results
+docs/
+  threejs-performance/     # Design docs: agent-skills design, benchmark designs, implementation plan
 3d-character-library/
   manifest.json            # Index of animated GLB characters with clip maps
   models/                  # Soldier.glb, Xbot.glb, RobotExpressive.glb, Fox.glb
@@ -68,6 +87,8 @@ examples/
   flappy-bird/             # Complete example game (see below)
   nick-land-dodger/        # Dodge game with photo-composite character + promo video
   3d-asset-test/           # 3D asset pipeline demo (animated characters, model loading, OrbitControls)
+  mini-world/              # 3D exploration demo: instanced forests, coin collection, physics (~5000 lines)
+  bot-arena/               # 1000 AI bots in airport terminal: instanced moving entities, hitscan gunplay
 ```
 
 **Game creation directory**: When the `/make-game` pipeline is launched from within the `game-creator` repository (i.e., the current working directory is `game-creator/` or a subdirectory), new games **must be created in `examples/`** (e.g., `examples/<game-name>/`). This keeps the repo organized and ensures example games are versioned alongside the plugin. When launched from any other directory, games are created in the current working directory as normal.
@@ -146,8 +167,12 @@ BGM uses a Web Audio API step sequencer. SFX use one-shot OscillatorNodes. All a
 | Package | Version | Purpose |
 |---------|---------|---------|
 | phaser | ^3.90.0 | 2D game engine (Phaser template) |
-| three | ^0.183.0 | 3D game engine (Three.js template) |
+| three | ^0.183.0 | 3D game engine (Three.js template + benchmarks) |
 | vite | ^7.3.1 | Build tool (dev) |
+| typescript | ^5.9.0 | Type checking for benchmarks/tools (dev) |
+| tsx | ^4.20.0 | Run TypeScript directly (dev) |
+| puppeteer | ^24.7.1 | Browser benchmark automation (dev) |
+| yaml | ^2.8.1 | YAML frontmatter parsing for skill validator (dev) |
 
 Audio uses the built-in Web Audio API (zero dependencies). Strudel.cc (`@strudel/web`, AGPL-3.0) is available as an optional upgrade for richer BGM — see the game-audio skill.
 
@@ -175,16 +200,16 @@ skills/phaser/
   performance.md              # Optimization tips, texture atlases, object pooling
 ```
 
-**Skills with companion files:** `phaser` (8), `game-qa` (7), `game-audio` (6), `meshyai` (3), `game-assets` (3), `threejs-game` (3+), `make-game` (3).
+**Skills with companion files:** `phaser` (8), `game-qa` (7), `game-audio` (6), `meshyai` (3), `game-assets` (3), `threejs-game` (3), `threejs-perf` (2 + templates/), `make-game` (3).
 
 ## Reference vs User-Invocable Skills
 
 Skills come in two flavors with a deliberate separation of concerns:
 
 - **User-invocable skills** (17) — Triggered by slash commands (e.g., `/add-audio`). These handle the full user-facing workflow: detect the game, load reference skills, run the pipeline, validate output. They have `argument-hint` in frontmatter.
-- **Reference skills** (10) — Deep domain knowledge loaded by other skills (or directly via `/load`). They contain patterns, code examples, and conventions but don't drive a workflow themselves.
+- **Reference skills** (11) — Deep domain knowledge loaded by other skills (or directly via `/load`). They contain patterns, code examples, and conventions but don't drive a workflow themselves.
 
-Four domains have both a reference and a user-invocable skill:
+Five domains have both a reference and a user-invocable skill:
 
 | Reference Skill | User-Invocable Skill | Why Both Exist |
 |-----------------|---------------------|----------------|
@@ -192,6 +217,7 @@ Four domains have both a reference and a user-invocable skill:
 | `game-qa` | `qa-game` | `game-qa` has Playwright patterns reused by `qa-game` AND the QA subagent in `make-game` |
 | `game-assets` | `add-assets` | `game-assets` has pixel art patterns reused by `add-assets` AND `make-game` step 1.5 |
 | `game-designer` | `design-game` | `game-designer` has visual polish patterns reused by `design-game` AND `make-game` step 2 |
+| `threejs-perf` | (loaded by `threejs-game`) | `threejs-perf` has benchmarked instancing patterns reused by `threejs-game` AND `make-game` step 1 (3D) |
 
 This separation avoids duplicating domain knowledge across multiple skills. The reference skill is the single source of truth; the user-invocable skill orchestrates the workflow and loads the reference skill for domain knowledge.
 
@@ -209,6 +235,14 @@ This separation avoids duplicating domain knowledge across multiple skills. The 
 
 **Quick iterate loop**: `node scripts/iterate-client.js --url http://localhost:3000 --actions-json '[{"buttons":["space"],"frames":4}]'` — captures screenshots, text state, and console errors. Use after every meaningful code change for tight feedback.
 
+**Run benchmarks**: `npm run benchmark:static-world` (Node.js, CPU-side) or `npm run benchmark:static-world:browser` (Puppeteer, full GPU pipeline). Also `npm run benchmark:moving-entities`.
+
+**Open Benchmark Lab**: Serve the repo root and navigate to `/benchmarks/browser/` for interactive side-by-side comparisons across 11 scenarios.
+
+**Validate skills (canonical spec format)**: `npm run validate:skills` — checks frontmatter, benchmark linkage, performance claim detection.
+
+**Type check**: `npm run check:types` — runs `tsc --noEmit` over benchmarks, tools, and src.
+
 ## Notes
 
 - Playwright screenshot tests use high pixel tolerance (3000 maxDiffPixels) because parallax clouds scroll between captures.
@@ -219,7 +253,7 @@ This separation avoids duplicating domain knowledge across multiple skills. The 
 
 The gallery is a browsable page of all game templates (examples + starters) at `_site/gallery/index.html`.
 
-**Source of truth**: `gallery/manifest.json` — 20 entries with id, name, description, engine, genre, complexity, features, source path, thumbnail, and demoUrl.
+**Source of truth**: `gallery/manifest.json` — 22 entries with id, name, description, engine, genre, complexity, features, source path, thumbnail, and demoUrl.
 
 **Build the gallery**: `npm run build:gallery` (runs `node gallery/build.js`). Reads manifest, generates `_site/gallery/index.html`, copies thumbnails.
 
@@ -259,6 +293,97 @@ The `/monetize-game` command (and Step 5 of `/make-game`) registers games on [Pl
 **SDK**: CDN script (`https://sdk.play.fun/latest`) + `src/playfun.js` that wires EventBus events (score changes, game over) to Play.fun points tracking. Non-blocking — if SDK fails to load, game still works.
 
 **Anti-cheat**: Games are registered with `maxScorePerSession`, `maxSessionsPerDay`, and `maxCumulativePointsPerDay` based on the game's scoring system.
+
+## Three.js Performance Benchmarks
+
+The `benchmarks/` directory contains a complete benchmark infrastructure for proving Three.js performance patterns with measured evidence. Integrated from the `threejs-skills` repository.
+
+### Benchmark Lab (Interactive)
+
+`benchmarks/browser/index.html` — A dashboard with 11 interactive HTML5 benchmarks. Each scenario runs side-by-side baseline vs optimized variants and displays FPS, frame time, draw calls, and render CPU time in a HUD.
+
+**Scenarios (4 categories):**
+
+| Category | Scenarios |
+|----------|-----------|
+| Scene Scale | static-world-repeated-meshes, procedural-city |
+| Moving Entities | moving-entities-wave-field, bouncy-balls-drop, flocking-boids |
+| Particles | particle-storm, firework-show, starfield-warp |
+| Assets | asset-startup-texture-burst, lazy-loading-gallery, morphing-terrain |
+
+Each scenario supports `?variant=baseline` and `?variant=optimized` URL params. Results are stored in `window.__BENCHMARK_RESULT__` for automation.
+
+### Node.js Benchmarks (Headless)
+
+CPU-side measurement without GPU rendering. Measures scene-graph traversal, build time, draw call counting.
+
+```bash
+npm run benchmark:static-world        # 19,600 static objects
+npm run benchmark:moving-entities     # 8,000 moving entities
+```
+
+### Browser Benchmarks (Puppeteer)
+
+Full GPU pipeline via headless Chromium. Measures real FPS, frame time, render calls.
+
+```bash
+npm run benchmark:static-world:browser
+```
+
+### Harness Architecture
+
+- `harness/metrics.ts` — `benchmarkCandidate()`: 9 build samples + 25 traversal samples → p95 percentiles
+- `harness/compare.ts` — `runScenario()`: pairs baseline vs optimized → pass/fail scoring
+- **Pass criteria**: Draw calls decreased AND traversal p95 did not regress
+- Results saved as JSON in `benchmarks/results/`
+
+### Proven Results
+
+| Scenario | Draw calls | Traversal p95 | Build p95 |
+|----------|-----------|---------------|-----------|
+| Static World (19.6k objects) | 19,600 → 1 | 5.39ms → 0.002ms | 63.3ms → 3.0ms |
+| Moving Entities (8k objects) | 8,000 → 1 | 1.75ms → 0.007ms | — |
+
+### Adding New Benchmarks
+
+See `benchmarks/browser/CONTRIBUTING.md` for the step-by-step guide: file structure, HTML shell, JS skeleton, shared utilities, materials guide, and 11-item checklist.
+
+## Agent-Skills Canonical Standard
+
+The `standard/` directory defines the open `agent-skills` v0 canonical format — an agent-agnostic specification for packaging skills with benchmark metadata.
+
+**Spec**: `standard/spec/agent-skills.md` — defines SKILL.md frontmatter (required: `name`, `slug`, `description`; optional: `version`, `tags`, `benchmark`), body content expectations, companion directories, validation rules, and benchmark metadata requirements.
+
+**Key rule**: Any skill that claims performance impact MUST declare `benchmark` metadata (scenarios, metrics with direction, evidence threshold). The validator enforces this.
+
+**Validator**: `npm run validate:skills` — scans `skills/` and `standard/examples/` for SKILL.md files, validates frontmatter, checks benchmark linkage for performance claims.
+
+**Example skill**: `standard/examples/example-skill/SKILL.md` — reference implementation of the canonical format.
+
+## Performance Demo Examples
+
+### Mini World (`examples/mini-world/`)
+
+Third-person 3D exploration (~5000 lines). Demonstrates InstancedMesh patterns in a real game context:
+- 60 instanced trees (2 InstancedMeshes: trunks + leaves)
+- 30 instanced rocks
+- 20 collectible coins with floating animation
+- 12-platform spiral staircase
+- Physics: WASD movement, jump, gravity, friction, collision
+- Third-person camera follow with shadows and PBR materials
+- Win condition: collect all coins
+
+Uses CDN import maps (standalone HTML, no build step).
+
+### Bot Arena (`examples/bot-arena/`)
+
+Airport terminal with 1000 AI bots and hitscan gunplay (MW2 Terminal inspired). Demonstrates instanced moving entities at scale:
+- 1000 bots via InstancedMesh with per-frame position updates
+- Full terminal architecture (columns, seats, windows)
+- Crosshair + hitmarker UI, kill counter
+- Raycast-based hitscan shooting
+
+Uses CDN import maps (standalone HTML, no build step).
 
 ## Troubleshooting
 

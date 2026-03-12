@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bot Arena — Terminal</title>
+    <style>
+      * { margin: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #000; cursor: crosshair; }
+      canvas { display: block; width: 100%; height: 100%; }
+
+      .crosshair {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 20px; height: 20px; pointer-events: none; z-index: 10;
+      }
+      .crosshair::before, .crosshair::after {
+        content: ''; position: absolute; background: rgba(255,255,255,0.8);
+      }
+      .crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
+      .crosshair::after { width: 20px; height: 2px; top: 9px; left: 0; }
+
+      /* Hitmarker — X shape that flashes on kill */
+      .hitmarker {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 28px; height: 28px; pointer-events: none; z-index: 11;
+        opacity: 0; transition: opacity 0.05s;
+      }
+      .hitmarker.show { opacity: 1; }
+      .hitmarker::before, .hitmarker::after {
+        content: ''; position: absolute; background: #ff3333;
+        width: 3px; height: 28px; left: 12.5px; top: 0;
+        border-radius: 1px;
+      }
+      .hitmarker::before { transform: rotate(45deg); }
+      .hitmarker::after { transform: rotate(-45deg); }
+
+      .hud {
+        position: fixed; top: 0; left: 0; right: 0;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 20px; pointer-events: none; z-index: 10;
+        font: bold 16px/1 system-ui, sans-serif; color: #fff;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+      }
+      .hud .kills { color: #ff4444; font-size: 22px; }
+      .hud .alive { color: #88ccff; }
+      .hud .fps { color: #aaa; font-size: 13px; font-weight: 400; }
+
+      .overlay {
+        position: fixed; inset: 0; z-index: 20;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+        color: #e0e8f0; font: 16px/1.6 system-ui, sans-serif; text-align: center;
+      }
+      .overlay h1 { font-size: 36px; margin-bottom: 8px; font-weight: 700; }
+      .overlay .sub { color: #8899aa; font-size: 14px; margin-top: 12px; }
+      .overlay.hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="crosshair" id="crosshair"></div>
+    <div class="hitmarker" id="hitmarker"></div>
+    <div class="hud">
+      <div class="kills" id="kills">0 kills</div>
+      <div class="alive" id="alive">1000 alive</div>
+      <div class="fps" id="fps"></div>
+    </div>
+    <div class="overlay" id="overlay">
+      <h1>Bot Arena</h1>
+      <div>1,000 bots in an airport terminal. Click to start.</div>
+      <div class="sub">WASD move &middot; Mouse aim &middot; Click shoot</div>
+    </div>
+    <canvas id="c"></canvas>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
