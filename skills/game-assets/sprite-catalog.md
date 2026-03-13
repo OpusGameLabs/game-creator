@@ -21,7 +21,7 @@ For games featuring real people or named personalities (Altman, Amodei, Musk, Zu
 
 - **Dimensions**: 200x300 per frame (frameWidth: 200, frameHeight: 300)
 - **Spritesheet**: Horizontal strip with all expressions
-- **Source**: Pre-built in the character library at `character-library/` (relative to plugin root)
+- **Source**: Pre-built in the character library at `assets/characters/` (relative to plugin root)
 - Head occupies 65% of sprite height — large, recognizable photo on a small cartoon body
 - Must be the largest entity on screen — supporting entities stay at Medium (16x16) or Small (12x12)
 

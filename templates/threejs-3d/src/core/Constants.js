@@ -52,7 +52,7 @@ export const COLORS = {
 };
 
 // Default character — Soldier from three.js repo
-// Copy GLB from 3d-character-library/ to public/assets/models/ during game scaffold
+// Copy GLB from assets/3d-characters/ to public/assets/models/ during game scaffold
 // Or download: curl -L -o public/assets/models/Soldier.glb "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/Soldier.glb"
 export const CHARACTER = {
   path: 'assets/models/Soldier.glb',

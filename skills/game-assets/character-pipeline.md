@@ -4,7 +4,7 @@
 
 ### Character Library
 
-Location: `character-library/` (relative to plugin root)
+Location: `assets/characters/` (relative to plugin root)
 
 The library contains pre-built characters with photo-realistic heads composited onto South Park-style cartoon bodies. Each character has:
 - Multiple expression sprites (normal, happy, angry, surprised)
@@ -14,7 +14,7 @@ The library contains pre-built characters with photo-realistic heads composited 
 **Check the library first** before creating any personality sprite. If the character exists, copy their sprites into the game — no pixel art needed.
 
 ```
-character-library/
+assets/characters/
   manifest.json                    # Index of all built characters
   characters/
     donald-trump/
@@ -52,7 +52,7 @@ export const EXPRESSION_HOLD_MS = 600;
 
 During game build, copy character sprites into the game:
 ```
-character-library/characters/<slug>/sprites/ → game-dir/public/assets/characters/<slug>/
+assets/characters/characters/<slug>/sprites/ → game-dir/public/assets/characters/<slug>/
 ```
 
 In the Phaser preloader:

@@ -14,8 +14,8 @@
 - **Input scheme**: A/D or Arrow keys for left/right dodge, Space to throw. Touch: left/right halves for movement, quick tap to throw.
 
 ## Characters (3D)
-- **Trump (player)**: Tier 1 — pre-built in 3d-character-library (idle/clap/dance/point/talk/twist)
-- **Biden (opponent)**: Tier 1 — pre-built in 3d-character-library (idle only)
+- **Trump (player)**: Tier 1 — pre-built in assets/3d-characters (idle/clap/dance/point/talk/twist)
+- **Biden (opponent)**: Tier 1 — pre-built in assets/3d-characters (idle only)
 
 ## Decisions / Known Issues
 - Both models are "gesture" type (no walk/run) — characters slide while playing idle animation

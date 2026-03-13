@@ -19,8 +19,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:gallery": "node gallery/build.js",
-    "capture:thumbnails": "node gallery/capture-screenshots.js"
+    "build:site": "node site/build.js",
+    "build:gallery": "node site/build.js",
+    "capture:thumbnails": "node site/capture-screenshots.js"
   },
   "repository": {
     "type": "git",

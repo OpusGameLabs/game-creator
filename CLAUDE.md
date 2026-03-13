@@ -44,12 +44,16 @@ scripts/
   example-actions.json     # Example action payloads for iterate-client.js
   find-3d-asset.mjs        # Search & download GLB models (Sketchfab, Poly Haven, Poly.pizza)
   meshy-generate.mjs       # Generate 3D models with Meshy AI (text-to-3d, image-to-3d, rig, animate)
-3d-character-library/
-  manifest.json            # Index of animated GLB characters with clip maps
-  models/                  # Soldier.glb, Xbot.glb, RobotExpressive.glb, Fox.glb
-gallery/
+assets/
+  characters/              # 2D South Park-style spritesheets (photo-composite)
+    manifest.json
+    characters/
+  3d-characters/           # Animated GLB characters with clip maps
+    manifest.json
+    models/                # Soldier.glb, Xbot.glb, RobotExpressive.glb, Fox.glb
+site/
   manifest.json              # Source of truth: metadata for all templates
-  build.js                   # Node script: manifest → _site/gallery/index.html
+  build.js                   # Unified build → _site/index.html + _site/gallery/index.html
   capture-screenshots.js     # Playwright: auto-capture thumbnails for each game
   thumbnails/                # 400x225 PNGs (committed to git)
   telemetry/
@@ -215,25 +219,25 @@ This separation avoids duplicating domain knowledge across multiple skills. The 
 - Headless Chromium reports low FPS (~7-9). FPS threshold in tests is set to 5. Use Playwright MCP for accurate FPS measurement.
 - The `playdotfun` skill is a git submodule at `submodules/playdotfun` (repo: `github.com/playdotfun/skills`). The symlink `skills/playdotfun → ../submodules/playdotfun/skills` makes SKILL.md resolve correctly. After cloning, run `git submodule update --init` to pull the submodule.
 
-## Template Gallery
+## Site & Template Gallery
 
-The gallery is a browsable page of all game templates (examples + starters) at `_site/gallery/index.html`.
+The site is built from `site/` and output to `_site/`. Two pages: landing page (`_site/index.html`) and template gallery (`_site/gallery/index.html`). Both share CSS, nav, and footer via a unified build script.
 
-**Source of truth**: `gallery/manifest.json` — 20 entries with id, name, description, engine, genre, complexity, features, source path, thumbnail, and demoUrl.
+**Source of truth**: `site/manifest.json` — 20 entries with id, name, description, engine, genre, complexity, features, source path, thumbnail, and demoUrl.
 
-**Build the gallery**: `npm run build:gallery` (runs `node gallery/build.js`). Reads manifest, generates `_site/gallery/index.html`, copies thumbnails.
+**Build the site**: `npm run build:site` (runs `node site/build.js`). Generates both `_site/index.html` (landing page with data-driven game cards from manifest) and `_site/gallery/index.html` (filterable gallery). Copies thumbnails. Fetches telemetry stats.
 
-**Capture thumbnails**: `npm run capture:thumbnails` (runs `node gallery/capture-screenshots.js`). For each template, reuses existing QA screenshots from `output/` or boots the game in headless Chromium. Output: 400x225 PNGs in `gallery/thumbnails/`.
+**Capture thumbnails**: `npm run capture:thumbnails` (runs `node site/capture-screenshots.js`). For each template, reuses existing QA screenshots from `output/` or boots the game in headless Chromium. Output: 400x225 PNGs in `site/thumbnails/`.
 
 **Clone a template**: `/use-template <template-id> [project-name]` — copies template source, updates package.json/title, runs npm install. 10-second copy vs 10-minute `/make-game` pipeline.
 
-**Adding a new template to the gallery**: Add an entry to `gallery/manifest.json`, run `npm run capture:thumbnails`, then `npm run build:gallery`.
+**Adding a new template to the gallery**: Add an entry to `site/manifest.json`, run `npm run capture:thumbnails`, then `npm run build:site`.
 
 ## Template Telemetry
 
 Anonymous, append-only telemetry tracks template usage (clones and clicks). No user data or IPs logged.
 
-**Backend**: `gallery/telemetry/` — Express + PostgreSQL, deployed on Railway.
+**Backend**: `site/telemetry/` — Express + PostgreSQL, deployed on Railway.
 
 **Endpoints**:
 - `GET /t?event=clone|click&template=<id>&source=gallery|skill&v=1` — ingestion (returns 204)
@@ -244,7 +248,7 @@ Anonymous, append-only telemetry tracks template usage (clones and clicks). No u
 - Gallery page fires `click` event on "Use Template" button
 - `/use-template` skill fires `clone` event after successful copy (respects `DO_NOT_TRACK` / `DISABLE_TELEMETRY` env vars)
 
-**Gallery integration**: `gallery/build.js` fetches `/stats` at build time, enriches manifest with clone counts, and embeds them in the HTML. Sort controls (Default/Popular/Trending) re-order cards client-side.
+**Gallery integration**: `site/build.js` fetches `/stats` at build time, enriches manifest with clone counts, and embeds them in the HTML. Sort controls (Default/Popular/Trending) re-order cards client-side.
 
 **Environment**: Set `TELEMETRY_URL` to override the default Railway URL. `DATABASE_URL` is required for the backend.
 
@@ -262,7 +266,7 @@ The `/monetize-game` command (and Step 5 of `/make-game`) registers games on [Pl
 
 ## Troubleshooting
 
-See `docs/troubleshooting.md` for common issues including:
+See `TROUBLESHOOTING.md` for common issues including:
 - Skill triggering (wrong skill loads, skill doesn't trigger, negative tests)
 - Build failures (module not found, port conflicts, empty dist)
 - Playwright/QA (browser not found, low FPS in headless, visual regression tolerance)

@@ -43,7 +43,7 @@ If `MESHY_API_KEY` is not available and the user declines to set one up, fall ba
 
 | Fallback | Source | Best for |
 |----------|--------|----------|
-| `3d-character-library/` | Pre-built GLBs | Quick animated humanoids (Soldier, Xbot, Robot, Fox) |
+| `assets/3d-characters/` | Pre-built GLBs | Quick animated humanoids (Soldier, Xbot, Robot, Fox) |
 | `find-3d-asset.mjs` | Sketchfab, Poly Haven, Poly.pizza | Searching existing free model libraries |
 | Procedural geometry | Code | BoxGeometry/SphereGeometry as last resort |
 

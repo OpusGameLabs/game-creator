@@ -225,16 +225,16 @@ Before launching the asset subagent, check if the game uses personality characte
 
 **1. Read `design-brief.md`** to identify personality characters and their slugs.
 
-**2. Resolve the character library path** — find `character-library/manifest.json` relative to the plugin root:
-   - Check `character-library/manifest.json` relative to the plugin install directory
-   - Check common plugin cache paths (e.g., `~/.claude/plugins/cache/local-plugins/game-creator/*/character-library/`)
+**2. Resolve the character library path** — find `assets/characters/manifest.json` relative to the plugin root:
+   - Check `assets/characters/manifest.json` relative to the plugin install directory
+   - Check common plugin cache paths (e.g., `~/.claude/plugins/cache/local-plugins/game-creator/*/assets/characters/`)
 
 **3. For each personality, try these tiers in order:**
 
 **Tier 1 — Pre-built (best)**: Check if slug exists in `manifest.json`. If yes, copy sprites:
 ```bash
 mkdir -p <project-dir>/public/assets/characters/<slug>/
-cp <plugin-root>/character-library/characters/<slug>/sprites/* \
+cp <plugin-root>/assets/characters/characters/<slug>/sprites/* \
    <project-dir>/public/assets/characters/<slug>/
 ```
 Result: 4-expression spritesheet ready. Done.
@@ -404,9 +404,9 @@ For named personalities, be specific: `"a cartoon caricature of Trump, blonde ha
 
 For multiple characters, generate each with a distinct description for visual variety. Run generate->rig in parallel for different characters to save time.
 
-**Tier 2 — Pre-built in `3d-character-library/`** (Meshy unavailable): Check `manifest.json` for a name/theme match. Copy the GLB:
+**Tier 2 — Pre-built in `assets/3d-characters/`** (Meshy unavailable): Check `manifest.json` for a name/theme match. Copy the GLB:
 ```bash
-cp <plugin-root>/3d-character-library/models/<model>.glb \
+cp <plugin-root>/assets/3d-characters/models/<model>.glb \
    <project-dir>/public/assets/models/<slug>.glb
 ```
 
@@ -417,7 +417,7 @@ node <plugin-root>/scripts/find-3d-asset.mjs \
   --max-faces 10000 --list-only
 ```
 
-**Tier 4 — Generic library fallback**: Use the best match from `3d-character-library/`:
+**Tier 4 — Generic library fallback**: Use the best match from `assets/3d-characters/`:
 - **Soldier** — action/military/default human
 - **Xbot** — sci-fi/tech/futuristic
 - **RobotExpressive** — cartoon/casual/fun (most animations)

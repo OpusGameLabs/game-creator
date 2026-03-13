@@ -36,12 +36,12 @@ Procedural circles and rectangles are fast to scaffold, but players can't tell a
 
 | Tier | Use for | Source |
 |------|---------|--------|
-| **South Park characters** (default for personalities) | Named people / CEO characters | Character library at `character-library/` (relative to plugin root) — photo heads composited onto cartoon bodies with expression spritesheets |
+| **South Park characters** (default for personalities) | Named people / CEO characters | Character library at `assets/characters/` (relative to plugin root) — photo heads composited onto cartoon bodies with expression spritesheets |
 | **Real images** (logos, photos) | Company logos, brand marks when game features a named company | Download to `public/assets/` with pixel art fallback |
 | **Meme/reference images** | Source tweet `image_url` — embed as background, splash, or texture when it enhances thematic identity | Download to `public/assets/` |
 | **Pixel art** (fallback) | Non-personality characters, items, game objects, enemies | Code-only 2D arrays rendered at runtime |
 
-**South Park characters** are the default for named personalities (Altman, Amodei, Musk, Zuckerberg, Nadella, Pichai, Huang, Karpathy, Trump, Biden, Obama). The character library at `character-library/` (relative to plugin root) contains pre-built spritesheets with multiple expressions. Each spritesheet has frames for: normal (0), happy (1), angry (2), surprised (3). Games load these as Phaser spritesheets and wire expression changes to game events.
+**South Park characters** are the default for named personalities (Altman, Amodei, Musk, Zuckerberg, Nadella, Pichai, Huang, Karpathy, Trump, Biden, Obama). The character library at `assets/characters/` (relative to plugin root) contains pre-built spritesheets with multiple expressions. Each spritesheet has frames for: normal (0), happy (1), angry (2), surprised (3). Games load these as Phaser spritesheets and wire expression changes to game events.
 
 **Pixel art** is the fallback for personality characters not yet in the library and the default for non-personality entities (enemies, items, game objects).
 

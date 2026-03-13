@@ -31,14 +31,14 @@ Wait for user confirmation before proceeding. The user can override the engine (
 ## Celebrity Detection
 
 After determining the game concept, scan the concept description, tweet text, and any mentioned people for celebrity/public figure names. Check against:
-1. `character-library/manifest.json` (relative to plugin root) — exact slug match or name match
+1. `assets/characters/manifest.json` (relative to plugin root) — exact slug match or name match
 2. Common name recognition — politicians, tech CEOs, world leaders, entertainers
 
 If celebrities are detected:
 - Set `hasCelebrities = true` and list detected names
 - Note in `progress.md` which characters are pre-built vs need building
 - **2D**: The Step 1.5 subagent will use photo-composite characters for these
-- **3D**: For each celebrity, try: (1) generate with Meshy AI — `"a cartoon caricature of <Name>, <distinguishing features>, low poly game character"` then rig for animation, (2) check `3d-character-library/manifest.json` for a pre-built match, (3) search Sketchfab with `find-3d-asset.mjs`, (4) fall back to best-matching library model. Meshy generation produces the best results for named personalities since it can capture specific visual features.
+- **3D**: For each celebrity, try: (1) generate with Meshy AI — `"a cartoon caricature of <Name>, <distinguishing features>, low poly game character"` then rig for animation, (2) check `assets/3d-characters/manifest.json` for a pre-built match, (3) search Sketchfab with `find-3d-asset.mjs`, (4) fall back to best-matching library model. Meshy generation produces the best results for named personalities since it can capture specific visual features.
 
 ## API Keys (3D games only)
 

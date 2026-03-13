@@ -16,10 +16,10 @@ Clone a game template from the gallery into a new project. This is a fast copy â
 ## Behavior
 
 1. **Parse arguments**: `<template-id> [project-name]`
-   - If no arguments provided, read `gallery/manifest.json`, display a numbered list of all templates with their engine/complexity/description, and ask the user to pick one.
+   - If no arguments provided, read `site/manifest.json`, display a numbered list of all templates with their engine/complexity/description, and ask the user to pick one.
    - `template-id` is required. `project-name` defaults to `template-id`.
 
-2. **Look up template** in `gallery/manifest.json` by `id`. If not found, show available IDs and abort.
+2. **Look up template** in `site/manifest.json` by `id`. If not found, show available IDs and abort.
 
 3. **Determine target directory**:
    - If current working directory is inside the `game-creator` repository â†’ `examples/<project-name>/`
@@ -56,7 +56,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Find game-creator root (contains gallery/manifest.json)
+// Find game-creator root (contains site/manifest.json)
 function findRoot(dir) {
   let d = dir;
   while (d !== path.dirname(d)) {

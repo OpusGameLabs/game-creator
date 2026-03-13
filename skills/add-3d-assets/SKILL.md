@@ -63,7 +63,7 @@ Split entities into two categories:
 | Player | "a heroic knight, low poly game character, full body, t-pose" | Generate → rig → animate |
 | Enemy | "a goblin warrior with a club, low poly game character" | Generate → rig → animate |
 
-If Meshy unavailable, fall back to `3d-character-library/`:
+If Meshy unavailable, fall back to `assets/3d-characters/`:
 - **Soldier** — realistic military (Idle, Walk, Run) — best default
 - **Xbot** — stylized mannequin (idle, walk, run + additive poses)
 - **RobotExpressive** — cartoon robot (Idle, Walking, Running, Dance, Jump + 8 more)
@@ -105,7 +105,7 @@ MESHY_API_KEY=<key> node <plugin-root>/scripts/meshy-generate.mjs \
 **Without Meshy (fallback):**
 ```bash
 # Characters — copy from library
-cp <plugin-root>/3d-character-library/models/Soldier.glb public/assets/models/
+cp <plugin-root>/assets/3d-characters/models/Soldier.glb public/assets/models/
 
 # World objects — search and download
 node <plugin-root>/scripts/find-3d-asset.mjs --query "barrel" --source polyhaven \

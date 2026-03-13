@@ -22,7 +22,7 @@ Primitive cubes and spheres are fast to scaffold, but players can't tell a house
 | Tier | Source | Auth | Best for |
 |------|--------|------|----------|
 | **1. Meshy AI** (preferred) | meshy.ai | `MESHY_API_KEY` | Custom characters, props, and scenery from text/image — exact match to game theme |
-| **2. Pre-built character library** | `3d-character-library/` | None | Quick animated humanoids (Soldier, Xbot, Robot, Fox) when Meshy key unavailable |
+| **2. Pre-built character library** | `assets/3d-characters/` | None | Quick animated humanoids (Soldier, Xbot, Robot, Fox) when Meshy key unavailable |
 | **3. Sketchfab** | sketchfab.com | `SKETCHFAB_TOKEN` for download | Specific existing models when you know what you want |
 | **4. Poly Haven** | polyhaven.com | None | CC0 environment props |
 | **5. Poly.pizza** | poly.pizza | `POLY_PIZZA_API_KEY` | 10K+ low-poly CC-BY models |
@@ -59,7 +59,7 @@ These GLB files from the Three.js repo have **Idle + Walk + Run** animations and
 | **RobotExpressive** | `https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb` | Idle, Walking, Running, Dance, Jump + 8 more | 464 KB | MIT |
 | **Fox** | `https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb` | Survey (idle), Walk, Run | 163 KB | CC0/CC-BY 4.0 |
 
-### Gesture Characters (from `3d-character-library/`)
+### Gesture Characters (from `assets/3d-characters/`)
 
 These characters have **gesture/performance animations** instead of walk/run. Best for standing-position games (debate, dance-off, boxing, rhythm):
 
@@ -70,8 +70,8 @@ These characters have **gesture/performance animations** instead of walk/run. Be
 
 Copy from the character library (no auth needed):
 ```bash
-cp <plugin>/3d-character-library/models/trump.glb public/assets/models/
-cp <plugin>/3d-character-library/models/biden.glb public/assets/models/
+cp <plugin>/assets/3d-characters/models/trump.glb public/assets/models/
+cp <plugin>/assets/3d-characters/models/biden.glb public/assets/models/
 ```
 
 **Trump clipMap:**
@@ -129,14 +129,14 @@ After rigging, the model comes with basic walk/run animations. Log clip names to
 
 For named personalities, be descriptive: `"a cartoon caricature of <Name>, <hair/glasses/suit details>, low poly game character"`.
 
-**Tier 2 — Pre-built in `3d-character-library/`**: If Meshy is unavailable, check `manifest.json` for a name/theme match. Copy the GLB. Done.
+**Tier 2 — Pre-built in `assets/3d-characters/`**: If Meshy is unavailable, check `manifest.json` for a name/theme match. Copy the GLB. Done.
 
 **Tier 3 — Search Sketchfab for character-specific model**: Use `find-3d-asset.mjs`:
 ```bash
 node scripts/find-3d-asset.mjs --query "<character name> animated character" --max-faces 10000 --list-only
 ```
 
-**Tier 4 — Generic library fallback**: Use the best thematic match from `3d-character-library/`:
+**Tier 4 — Generic library fallback**: Use the best thematic match from `assets/3d-characters/`:
 - **Soldier** — action/military/generic human (default)
 - **Xbot** — sci-fi/tech/futuristic
 - **RobotExpressive** — cartoon/casual (most animations, 13 clips)
@@ -390,7 +390,7 @@ MESHY_API_KEY=<key> node scripts/meshy-generate.mjs \
   --output public/assets/models/ --slug barrel
 
 # Fallback: library characters
-cp <plugin-root>/3d-character-library/models/Soldier.glb public/assets/models/
+cp <plugin-root>/assets/3d-characters/models/Soldier.glb public/assets/models/
 
 # Fallback: search free libraries for props
 node scripts/find-3d-asset.mjs --query "barrel" --source polyhaven --output public/assets/models/
