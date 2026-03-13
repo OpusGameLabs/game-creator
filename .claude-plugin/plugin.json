@@ -5,10 +5,5 @@
   "author": {
     "name": "OpusGameLabs"
   },
-  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "openclaw", "moltbook", "agent-internet", "playfun", "monetization", "opengameprotocol", "play-fun"],
-  "openclaw": {
-    "compatible": true,
-    "install": "npx clawhub@latest install game-creator",
-    "skills_dir": "skills/"
-  }
+  "keywords": ["games", "threejs", "phaser", "gamedev", "3d", "2d", "openclaw", "moltbook", "agent-internet", "playfun", "monetization", "opengameprotocol", "play-fun"]
 }
