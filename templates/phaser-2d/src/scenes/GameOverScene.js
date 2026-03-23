@@ -15,9 +15,10 @@ export class GameOverScene extends Phaser.Scene {
 
     this._transitioning = false;
 
-    // Usable area below Play.fun widget bar
+    // Usable area within Play.fun safe zone (top header + bottom browser chrome)
     const safeTop = SAFE_ZONE.TOP;
-    const usableH = h - safeTop;
+    const safeBottom = SAFE_ZONE.BOTTOM;
+    const usableH = h - safeTop - safeBottom;
 
     // --- Gradient background ---
     this.drawGradient(w, h, COLORS.BG_TOP, COLORS.BG_BOTTOM);

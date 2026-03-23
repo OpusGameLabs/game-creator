@@ -98,22 +98,54 @@ See [project-setup.md](project-setup.md) for full config and tooling details.
 
 ### Play.fun Safe Zone
 
-When games are rendered inside Play.fun (or with the Play.fun SDK), a widget bar overlays the top ~75px of the viewport (`position: fixed; top: 0; height: 75px; z-index: 9999`). The template defines `SAFE_ZONE.TOP` in Constants.js for this purpose.
+When games run inside the Play.fun dashboard on mobile Safari, the SDK sets CSS custom properties on the game iframe's `document.documentElement`:
+
+- `--ogp-safe-top-inset` — space below the Play.fun header bubbles (~68px on mobile)
+- `--ogp-safe-bottom-inset` — space above Safari bottom controls (~148px on mobile)
+
+Both default to `0px` when not running inside the dashboard (desktop, standalone).
+
+The template's `Constants.js` reads these at boot and exposes `SAFE_ZONE.TOP` and `SAFE_ZONE.BOTTOM` in canvas pixels (CSS value × DPR). A static fallback (`GAME.HEIGHT * 0.08`) ensures the top safe zone works even without the SDK.
 
 **Rules:**
-- All UI text, buttons, and HUD elements must be positioned below `SAFE_ZONE.TOP`
-- Gameplay entities should not spawn in the safe zone area
-- The game-over screen, score panels, and restart buttons must all offset from `SAFE_ZONE.TOP`
-- Use `const usableH = GAME.HEIGHT - SAFE_ZONE.TOP` for calculating proportional positions in UI scenes
+- All UI text, buttons, and HUD elements must be positioned below `SAFE_ZONE.TOP` and above `GAME.HEIGHT - SAFE_ZONE.BOTTOM`
+- Gameplay entities should not spawn in the safe zone areas
+- The game-over screen, score panels, and restart buttons must offset from both `SAFE_ZONE.TOP` and `SAFE_ZONE.BOTTOM`
+- Use `const usableH = GAME.HEIGHT - SAFE_ZONE.TOP - SAFE_ZONE.BOTTOM` for calculating proportional positions in UI scenes
+- Game canvas and backgrounds should fill the full viewport (bleed behind browser chrome)
+- Touch controls at the bottom must account for `SAFE_ZONE.BOTTOM`
 
 ```js
 import { SAFE_ZONE } from '../core/Constants.js';
 
 // In any UI scene:
 const safeTop = SAFE_ZONE.TOP;
-const usableH = GAME.HEIGHT - safeTop;
+const safeBottom = SAFE_ZONE.BOTTOM;
+const usableH = GAME.HEIGHT - safeTop - safeBottom;
 const title = this.add.text(cx, safeTop + usableH * 0.15, 'GAME OVER', { ... });
 const button = createButton(scene, cx, safeTop + usableH * 0.6, 'PLAY AGAIN', callback);
+
+// Touch controls / bottom HUD:
+const bottomY = GAME.HEIGHT - safeBottom - 40 * PX;
+```
+
+**How it works in Constants.js:**
+
+```js
+function _readSafeInsets() {
+  const s = getComputedStyle(document.documentElement);
+  const top = parseInt(s.getPropertyValue('--ogp-safe-top-inset')) || 0;
+  const bottom = parseInt(s.getPropertyValue('--ogp-safe-bottom-inset')) || 0;
+  return { top: top * DPR, bottom: bottom * DPR };
+}
+const _insets = _readSafeInsets();
+
+export const SAFE_ZONE = {
+  TOP: Math.max(GAME.HEIGHT * 0.08, _insets.top),
+  BOTTOM: _insets.bottom,
+  LEFT: 0,
+  RIGHT: 0,
+};
 ```
 
 - Communicate between scenes via EventBus (not direct references)

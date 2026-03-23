@@ -255,6 +255,17 @@ initPlayFun().catch(err => console.warn('Play.fun init failed:', err));
 
 The `initPlayFun()` call should be non-blocking — if the SDK fails to load (e.g., ad blocker), the game still works.
 
+#### 4d. Safe area insets
+
+The Play.fun SDK automatically sets CSS custom properties on the game iframe's `document.documentElement` when running inside the dashboard:
+
+- `--ogp-safe-top-inset` — space below the Play.fun header bubbles (~68px on mobile)
+- `--ogp-safe-bottom-inset` — space above Safari bottom controls (~148px on mobile)
+
+Both default to `0px` when not in the dashboard. The game templates already read these values in `Constants.js` (via `SAFE_ZONE.TOP` / `SAFE_ZONE.BOTTOM` for Phaser, or CSS `var()` for Three.js HTML overlays).
+
+**Verify** that all UI elements (score, buttons, touch controls) are positioned within the safe area — not clipped behind the Play.fun header or Safari bottom bar. If the game has custom HUD positioning, update it to reference `SAFE_ZONE` constants or the CSS variables.
+
 ### Step 5: Rebuild and redeploy
 
 ```bash

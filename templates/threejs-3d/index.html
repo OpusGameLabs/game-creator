@@ -23,7 +23,9 @@
       z-index: 20;
       color: #fff;
       padding: 20px;
-      padding-top: max(20px, 8vh); /* Safe zone: Play.fun widget bar is ~75px at top */
+      /* Play.fun SDK safe area — CSS vars set by SDK, fallback to static values */
+      padding-top: max(20px, 8vh, var(--ogp-safe-top-inset, 0px));
+      padding-bottom: var(--ogp-safe-bottom-inset, 0px);
     }
     .overlay.hidden { display: none; }
 
@@ -67,7 +69,7 @@
     /* Virtual joystick (mobile only, created by InputSystem) */
     #joystick-zone {
       position: fixed;
-      bottom: max(20px, 3vh);
+      bottom: max(20px, 3vh, var(--ogp-safe-bottom-inset, 0px));
       left: max(20px, 3vw);
       width: clamp(100px, 20vmin, 140px);
       height: clamp(100px, 20vmin, 140px);

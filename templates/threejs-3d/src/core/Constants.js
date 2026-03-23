@@ -9,11 +9,24 @@ export const GAME = {
 export const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 1);
 
-// Play.fun SDK widget renders a 75px fixed bar at top:0, z-index:9999.
-// All HTML overlays must account for this with padding-top or safe offset.
+// Play.fun SDK safe area insets — set via CSS custom properties on the game iframe:
+//   --ogp-safe-top-inset    (space below Play.fun header bubbles, ~68px on mobile)
+//   --ogp-safe-bottom-inset (space above Safari bottom controls, ~148px on mobile)
+// Both default to 0px when not running inside the Play.fun dashboard.
+// Use CSS var() for HTML overlays; read via JS for programmatic positioning.
+function _readSafeInsets() {
+  const s = getComputedStyle(document.documentElement);
+  return {
+    top: parseInt(s.getPropertyValue('--ogp-safe-top-inset')) || 0,
+    bottom: parseInt(s.getPropertyValue('--ogp-safe-bottom-inset')) || 0,
+  };
+}
+const _insets = _readSafeInsets();
+
 export const SAFE_ZONE = {
-  TOP_PX: 75,          // pixels — use for CSS/HTML overlays
-  TOP_PERCENT: 8,      // percent of viewport height
+  TOP_PX: Math.max(75, _insets.top),
+  BOTTOM_PX: _insets.bottom,
+  TOP_PERCENT: 8,
 };
 
 export const PLAYER = {

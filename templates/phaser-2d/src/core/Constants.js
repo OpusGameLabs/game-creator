@@ -42,12 +42,25 @@ export const GAME = {
   GRAVITY: 800 * PX,
 };
 
-// --- Safe Zone (Play.fun widget overlay) ---
-// The Play.fun SDK widget renders a 75px fixed bar at top:0, z-index:9999.
-// All UI text, buttons, and interactive elements must be positioned below SAFE_ZONE.TOP.
+// --- Safe Zone (Play.fun SDK insets) ---
+// The Play.fun SDK sets CSS custom properties on the game iframe's document:
+//   --ogp-safe-top-inset    (space below Play.fun header bubbles, ~68px on mobile)
+//   --ogp-safe-bottom-inset (space above Safari bottom controls, ~148px on mobile)
+// Both default to 0px when not running inside the Play.fun dashboard.
+// All UI text, buttons, and interactive elements must stay within the safe area.
+// Game canvas / backgrounds should fill the full viewport (bleed behind chrome).
+function _readSafeInsets() {
+  const s = getComputedStyle(document.documentElement);
+  const top = parseInt(s.getPropertyValue('--ogp-safe-top-inset')) || 0;
+  const bottom = parseInt(s.getPropertyValue('--ogp-safe-bottom-inset')) || 0;
+  // CSS vars are in CSS pixels — multiply by DPR to convert to canvas pixels
+  return { top: top * DPR, bottom: bottom * DPR };
+}
+const _insets = _readSafeInsets();
+
 export const SAFE_ZONE = {
-  TOP: GAME.HEIGHT * 0.08,
-  BOTTOM: 0,
+  TOP: Math.max(GAME.HEIGHT * 0.08, _insets.top),
+  BOTTOM: _insets.bottom,
   LEFT: 0,
   RIGHT: 0,
 };
@@ -116,7 +129,7 @@ export const TOUCH = {
   ALPHA_IDLE: 0.35,
   ALPHA_ACTIVE: 0.6,
   MARGIN_X: GAME.WIDTH * 0.08,          // Inset from screen edge
-  MARGIN_BOTTOM: GAME.HEIGHT * 0.06,    // Up from bottom
+  MARGIN_BOTTOM: Math.max(GAME.HEIGHT * 0.06, SAFE_ZONE.BOTTOM + 10 * DPR),
   ARROW_COLOR: 0xffffff,
 };
 

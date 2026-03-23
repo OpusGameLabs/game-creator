@@ -178,35 +178,63 @@ await renderer.init();
 
 ## Play.fun Safe Zone
 
-The Play.fun SDK renders a **75px fixed iframe** at `top: 0; z-index: 9999`. All HTML overlay UI (game-over screens, menus, buttons, text) must account for this.
+When games run inside the Play.fun dashboard on mobile Safari, the SDK sets CSS custom properties on the game iframe's `document.documentElement`:
+
+- `--ogp-safe-top-inset` — space below the Play.fun header bubbles (~68px on mobile)
+- `--ogp-safe-bottom-inset` — space above Safari bottom controls (~148px on mobile)
+
+Both default to `0px` when not running inside the dashboard (desktop, standalone).
 
 ### Constants
 
 ```js
-// In Constants.js
+// In Constants.js — reads SDK CSS vars with static fallbacks
+function _readSafeInsets() {
+  const s = getComputedStyle(document.documentElement);
+  return {
+    top: parseInt(s.getPropertyValue('--ogp-safe-top-inset')) || 0,
+    bottom: parseInt(s.getPropertyValue('--ogp-safe-bottom-inset')) || 0,
+  };
+}
+const _insets = _readSafeInsets();
+
 export const SAFE_ZONE = {
-  TOP_PX: 75,          // pixels — use for CSS/HTML overlays
-  TOP_PERCENT: 8,      // percent of viewport height
+  TOP_PX: Math.max(75, _insets.top),
+  BOTTOM_PX: _insets.bottom,
+  TOP_PERCENT: 8,
 };
 ```
 
 ### CSS Rule
 
-All `.overlay` elements (game-over, pause, menus) must include padding to avoid the widget:
+All `.overlay` elements (game-over, pause, menus) must use the CSS variables for padding:
 
 ```css
 .overlay {
-  padding-top: max(20px, 8vh); /* Safe zone for Play.fun widget bar */
+  padding-top: max(20px, 8vh, var(--ogp-safe-top-inset, 0px));
+  padding-bottom: var(--ogp-safe-bottom-inset, 0px);
+}
+```
+
+Bottom-positioned UI (joysticks, action buttons) must also respect the bottom inset:
+
+```css
+#joystick-zone {
+  bottom: max(20px, 3vh, var(--ogp-safe-bottom-inset, 0px));
+}
+.bottom-hud {
+  margin-bottom: var(--ogp-safe-bottom-inset, 0px);
 }
 ```
 
 ### What to Check
 
-- No text, buttons, or interactive elements in the top ~75px of the viewport
-- Game-over overlays center content in the **usable area** (below the widget), not the full viewport
-- Score displays, titles, and restart buttons are all visible and not hidden behind the widget
+- No text, buttons, or interactive elements in the top or bottom inset areas
+- Game-over overlays center content in the **usable area** (between both insets), not the full viewport
+- Score displays, titles, and restart buttons are all visible and not hidden behind browser chrome
+- Bottom-positioned controls (joysticks, action buttons) are not clipped by Safari bottom bar
 
-**Note**: The 3D canvas itself renders behind the widget, which is fine — only HTML overlay UI needs the safe zone offset. In-world 3D elements (HUD textures, floating text) should avoid the top 8% of screen space.
+**Note**: The 3D canvas itself renders behind the chrome, which is fine — the game should bleed to fill the full viewport. Only HTML overlay UI needs the safe zone offset. In-world 3D elements (HUD textures, floating text) should avoid the top 8% and bottom inset of screen space.
 
 ## Performance Rules
 
@@ -287,6 +315,6 @@ Before considering a game complete, verify:
 - [ ] **Shadows disabled** — Unless explicitly needed and budget allows
 - [ ] **Delta-capped movement** — `Math.min(clock.getDelta(), 0.1)` on every frame
 - [ ] **Mute toggle** — Audio can be muted/unmuted; `isMuted` state is respected
-- [ ] **Safe zone respected** — All HTML overlay UI has `padding-top: max(20px, 8vh)` for Play.fun widget (75px at top)
+- [ ] **Safe zone respected** — All HTML overlay UI uses `var(--ogp-safe-top-inset)` / `var(--ogp-safe-bottom-inset)` for Play.fun safe area; bottom controls offset above the bottom inset
 - [ ] **Build passes** — `npm run build` succeeds with no errors
 - [ ] **No console errors** — Game runs without uncaught exceptions or WebGL failures
