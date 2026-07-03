@@ -4,7 +4,7 @@ description: >
   Build 2D browser games with Phaser 3 using scene-based architecture and centralized state.
   Use when creating a new 2D game, adding 2D game features, working with Phaser, or building
   sprite-based web games.
-argument-hint: [topic or question]
+argument-hint: "[topic or question]"
 license: MIT
 metadata:
   author: OpusGameLabs
